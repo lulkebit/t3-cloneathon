@@ -6,13 +6,13 @@ import { ChatSidebar } from '@/components/ChatSidebar';
 import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
 import { SettingsModal } from '@/components/SettingsModal';
-import { AlertCircle, Key } from 'lucide-react';
+import { Key } from 'lucide-react';
 
 function ChatPageContent() {
   const { profile, isLoading } = useChat();
   const [showSettings, setShowSettings] = useState(false);
 
-  // Show settings automatically if no API key is configured
+  // Show settings automatically if no API key is configured (first-time setup)
   useEffect(() => {
     if (!isLoading && profile && !profile.openrouter_api_key) {
       setShowSettings(true);
@@ -27,7 +27,7 @@ function ChatPageContent() {
     );
   }
 
-  // Show setup prompt if no API key
+  // Show setup prompt if no API key (first-time user experience)
   if (!profile?.openrouter_api_key) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50">
@@ -46,6 +46,7 @@ function ChatPageContent() {
             </button>
           </div>
         </div>
+        {/* Settings modal for first-time setup only */}
         <SettingsModal
           isOpen={showSettings}
           onClose={() => setShowSettings(false)}
@@ -57,7 +58,7 @@ function ChatPageContent() {
   return (
     <div className="h-screen flex bg-white">
       {/* Sidebar */}
-      <ChatSidebar onSettingsClick={() => setShowSettings(true)} />
+      <ChatSidebar />
       
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
@@ -67,12 +68,6 @@ function ChatPageContent() {
         {/* Input */}
         <ChatInput />
       </div>
-
-      {/* Settings Modal */}
-      <SettingsModal
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-      />
     </div>
   );
 }

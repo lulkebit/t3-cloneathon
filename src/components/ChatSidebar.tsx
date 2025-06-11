@@ -1,14 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useChat } from '@/contexts/ChatContext';
 import { Plus, MessageSquare, Trash2, Settings } from 'lucide-react';
 
-interface ChatSidebarProps {
-  onSettingsClick: () => void;
-}
-
-export function ChatSidebar({ onSettingsClick }: ChatSidebarProps) {
+export function ChatSidebar() {
   const {
     conversations,
     activeConversation,
@@ -122,15 +119,15 @@ export function ChatSidebar({ onSettingsClick }: ChatSidebarProps) {
         )}
       </div>
 
-      {/* Settings Button */}
+      {/* Settings Navigation */}
       <div className="p-4 border-t border-gray-200">
-        <button
-          onClick={onSettingsClick}
+        <Link
+          href="/settings"
           className="w-full flex items-center gap-2 text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
         >
           <Settings size={16} />
           Settings
-        </button>
+        </Link>
       </div>
     </div>
   );
