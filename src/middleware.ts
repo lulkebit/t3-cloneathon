@@ -40,10 +40,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Redirect to dashboard if user is authenticated and trying to access login page
-  if (user && (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname === '/')) {
+  // Redirect to chat if user is authenticated and trying to access login page or home
+  if (user && (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname === '/' || request.nextUrl.pathname.startsWith('/dashboard'))) {
     const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
+    url.pathname = '/chat'
     return NextResponse.redirect(url)
   }
 

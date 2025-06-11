@@ -13,9 +13,9 @@ export default function LoginPage() {
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } =     supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        router.push('/dashboard')
+        router.push('/chat')
       }
     })
 
@@ -83,7 +83,7 @@ export default function LoginPage() {
               },
             }}
             providers={['google', 'github']}
-            redirectTo={`${window.location.origin}/dashboard`}
+            redirectTo={`${window.location.origin}/chat`}
           />
         </div>
       </div>
