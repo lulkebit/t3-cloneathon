@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from '@/contexts/ChatContext';
-import { Send, Bot, Loader2, Sparkles, Zap } from 'lucide-react';
+import { Send, Bot, Loader2, Sparkles, Zap, ChevronDown, Check } from 'lucide-react';
 import { getPopularModels } from '@/lib/openrouter';
 
 export function ChatInput() {
@@ -18,6 +18,7 @@ export function ChatInput() {
   const [selectedModel, setSelectedModel] = useState('anthropic/claude-3.5-sonnet');
   const [isLoading, setIsLoading] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState('');
+  const [isModelModalOpen, setIsModelModalOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const popularModels = getPopularModels();
@@ -52,8 +53,7 @@ export function ChatInput() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to send message');
+        throw new Error('Failed to send message');
       }
 
       if (!response.body) {
@@ -62,252 +62,287 @@ export function ChatInput() {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let buffer = '';
-      let currentStreamingMessage = '';
 
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                
-                if (data.error) {
-                  throw new Error(data.error);
-                }
-                
-                if (data.chunk) {
-                  currentStreamingMessage += data.chunk;
-                  setStreamingMessage(currentStreamingMessage);
-                }
-                
-                if (data.done && data.conversationId) {
-                  // Update active conversation and refresh data
-                  if (!activeConversation) {
-                    const response = await fetch('/api/conversations');
-                    if (response.ok) {
-                      const convData = await response.json();
-                      const newConversation = convData.conversations.find(
-                        (conv: any) => conv.id === data.conversationId
-                      );
-                      if (newConversation) {
-                        setActiveConversation(newConversation);
-                      }
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.content) {
+                setStreamingMessage(prev => prev + parsed.content);
+              } else if (parsed.finished) {
+                // Refresh conversations and messages when streaming is complete
+                await Promise.all([
+                  refreshConversations(),
+                  activeConversation?.id ? refreshMessages(activeConversation.id) : Promise.resolve(),
+                ]);
+
+                // Set the active conversation if it was created
+                if (parsed.conversationId && !activeConversation) {
+                  const conversationsResponse = await fetch('/api/conversations');
+                  if (conversationsResponse.ok) {
+                    const conversationsData = await conversationsResponse.json();
+                    const newConversation = conversationsData.find((c: any) => c.id === parsed.conversationId);
+                    if (newConversation) {
+                      setActiveConversation(newConversation);
                     }
                   }
-                  
-                  await Promise.all([
-                    refreshConversations(),
-                    activeConversation 
-                      ? refreshMessages(activeConversation.id)
-                      : refreshMessages(data.conversationId)
-                  ]);
                 }
-              } catch (e) {
-                console.error('Error parsing SSE data:', e);
               }
+            } catch (e) {
+              // Ignore parsing errors
             }
           }
         }
-      } finally {
-        reader.releaseLock();
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      alert(error instanceof Error ? error.message : 'Failed to send message');
     } finally {
       setIsLoading(false);
       setStreamingMessage('');
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
+  const formatModelName = (model: string) => {
+    const parts = model.split('/');
+    if (parts.length === 2) {
+      const [provider, modelName] = parts;
+      return {
+        name: modelName.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        provider: provider.charAt(0).toUpperCase() + provider.slice(1)
+      };
     }
+    return { name: model, provider: '' };
   };
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 50 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className="border-t border-white/10 glass-strong backdrop-blur-xl p-6"
-    >
-      {/* Model Selection */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="mb-6"
-      >
-        <div className="flex items-center gap-3 mb-3">
-          <div className="flex items-center gap-2">
-            <Zap size={16} className="text-blue-400" />
-            <label className="text-sm font-medium text-white/80">AI Model</label>
-          </div>
-        </div>
-        
-        <motion.select
-          value={selectedModel}
-          onChange={(e) => setSelectedModel(e.target.value)}
-          className="w-full input-glass focus-ring disabled:opacity-50"
-          disabled={isLoading}
-          whileFocus={{ scale: 1.01 }}
-        >
-          {popularModels.map((model) => (
-            <option key={model} value={model} className="bg-gray-900 text-white">
-              {model.split('/').pop()} ({model.split('/')[0]})
-            </option>
-          ))}
-        </motion.select>
-      </motion.div>
+  const selectedModelInfo = formatModelName(selectedModel);
 
-      {/* Streaming Message Display */}
+  return (
+    <>
+      {/* Modal Overlay */}
       <AnimatePresence>
-        {streamingMessage && (
+        {isModelModalOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20, height: 0 }}
-            animate={{ opacity: 1, y: 0, height: 'auto' }}
-            exit={{ opacity: 0, y: -20, height: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="mb-6 glass-strong rounded-2xl p-4 border border-white/10 overflow-hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            onClick={() => setIsModelModalOpen(false)}
           >
-            <div className="flex items-start gap-3">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="flex-shrink-0 w-8 h-8 glass rounded-xl flex items-center justify-center"
-              >
-                <Bot size={16} className="text-blue-400" />
-              </motion.div>
-              
-              <div className="flex-1 min-w-0">
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-sm text-white/90 whitespace-pre-wrap leading-relaxed"
-                >
-                  {streamingMessage}
-                </motion.div>
-                
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="flex items-center gap-2 mt-3"
-                >
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                  >
-                    <Loader2 size={14} className="text-blue-400" />
-                  </motion.div>
-                  <span className="text-xs text-white/50">AI is typing...</span>
-                </motion.div>
+            {/* Blurred Background */}
+            <motion.div
+              initial={{ backdropFilter: 'blur(0px)' }}
+              animate={{ backdropFilter: 'blur(20px)' }}
+              exit={{ backdropFilter: 'blur(0px)' }}
+              className="absolute inset-0 bg-black/30"
+            />
+            
+            {/* Modal Content */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="relative w-full max-w-md glass-strong backdrop-blur-xl rounded-2xl border border-white/10 p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 glass rounded-xl flex items-center justify-center">
+                  <Zap size={16} className="text-blue-400" />
+                </div>
+                <h2 className="text-lg font-semibold text-white">Choose AI Model</h2>
               </div>
-            </div>
+
+                             <div className="space-y-2 max-h-80 overflow-y-auto overflow-x-hidden">
+                 {popularModels.map((model) => {
+                   const modelInfo = formatModelName(model);
+                   const isSelected = selectedModel === model;
+                   
+                   return (
+                     <motion.button
+                       key={model}
+                       onClick={() => {
+                         setSelectedModel(model);
+                         setIsModelModalOpen(false);
+                       }}
+                       className={`w-full p-3 rounded-xl border text-left transition-all group ${
+                         isSelected
+                           ? 'glass-strong border-blue-400/30 bg-blue-500/10'
+                           : 'glass-hover border-white/10 hover:border-white/20'
+                       }`}
+                       whileHover={{ y: -1 }}
+                       whileTap={{ scale: 0.98 }}
+                     >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="font-medium text-white/90 text-sm">
+                            {modelInfo.name}
+                          </div>
+                          <div className="text-white/50 text-xs">
+                            {modelInfo.provider}
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center"
+                          >
+                            <Check size={12} className="text-white" />
+                          </motion.div>
+                        )}
+                      </div>
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Message Input */}
-      <motion.form
-        onSubmit={handleSubmit}
-        initial={{ opacity: 0, y: 20 }}
+      {/* Chat Input */}
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="flex gap-4 items-end"
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className="border-t border-white/10 glass-strong backdrop-blur-xl p-6"
       >
-        <div className="flex-1 relative">
-          <motion.textarea
-            ref={textareaRef}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Type your message... (Shift+Enter for new line)"
-            className="w-full input-glass focus-ring resize-none min-h-[56px] max-h-32 py-4 pr-4"
-            rows={1}
+        {/* Model Selection Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-4 flex justify-start"
+        >
+          <motion.button
+            onClick={() => setIsModelModalOpen(true)}
             disabled={isLoading}
-            whileFocus={{ scale: 1.01 }}
-          />
-          
-          {/* Character indicator */}
-          {message.length > 0 && (
+            className="inline-flex items-center gap-2 px-3 py-2 glass-hover border border-white/10 rounded-xl text-sm text-white/80 hover:text-white transition-all disabled:opacity-50"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Bot size={14} className="text-blue-400" />
+            <span>{selectedModelInfo.name}</span>
+            <ChevronDown size={14} className="text-white/40" />
+          </motion.button>
+        </motion.div>
+
+        {/* Streaming Message Display */}
+        <AnimatePresence>
+          {streamingMessage && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute bottom-2 right-3 text-xs text-white/40"
+              initial={{ opacity: 0, y: 20, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: 'auto' }}
+              exit={{ opacity: 0, y: -20, height: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="mb-6 glass-strong rounded-2xl p-4 border border-white/10 overflow-hidden"
             >
-              {message.length}
+              <div className="flex items-start gap-3">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="flex-shrink-0 w-8 h-8 glass rounded-xl flex items-center justify-center"
+                >
+                  <Bot size={16} className="text-blue-400" />
+                </motion.div>
+                <div className="flex-1 min-w-0">
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-white/90 whitespace-pre-wrap text-sm leading-relaxed"
+                  >
+                    {streamingMessage}
+                    <motion.span
+                      animate={{ opacity: [0, 1, 0] }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+                      className="inline-block w-2 h-4 ml-1 bg-blue-400 rounded-sm"
+                    />
+                  </motion.div>
+                </div>
+              </div>
             </motion.div>
           )}
-        </div>
-        
-        <motion.button
-          type="submit"
-          disabled={!message.trim() || isLoading}
-          className="h-14 w-14 btn-primary rounded-2xl flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          animate={isLoading ? { 
-            boxShadow: "0 0 20px rgba(0, 122, 255, 0.5)" 
-          } : {}}
-        >
-          <AnimatePresence mode="wait">
-            {isLoading ? (
-              <motion.div
-                key="loading"
-                initial={{ opacity: 0, rotate: -90 }}
-                animate={{ opacity: 1, rotate: 0 }}
-                exit={{ opacity: 0, rotate: 90 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <Loader2 size={20} className="animate-spin" />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="send"
-                initial={{ opacity: 0, rotate: -90 }}
-                animate={{ opacity: 1, rotate: 0 }}
-                exit={{ opacity: 0, rotate: 90 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <Send size={20} />
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
-          {/* Subtle glow effect when message ready */}
-          {message.trim() && !isLoading && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-blue-400/20 rounded-2xl animate-pulse"
-            />
-          )}
-        </motion.button>
-      </motion.form>
+        </AnimatePresence>
 
-      {/* Helper text */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
-        className="text-xs text-white/40 mt-3 text-center"
-      >
-        Press <kbd className="px-1.5 py-0.5 text-xs bg-white/10 rounded border border-white/20">Enter</kbd> to send, <kbd className="px-1.5 py-0.5 text-xs bg-white/10 rounded border border-white/20">Shift+Enter</kbd> for new line
-      </motion.p>
-    </motion.div>
+        {/* Message Input Form */}
+        <motion.form
+          onSubmit={handleSubmit}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="flex gap-4 items-end"
+        >
+          <div className="flex-1 relative">
+            <motion.textarea
+              ref={textareaRef}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Type your message..."
+              disabled={isLoading}
+              className="w-full min-h-[50px] max-h-32 resize-none input-glass focus-ring disabled:opacity-50 pr-12"
+              rows={1}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+              }}
+              whileFocus={{ scale: 1.01 }}
+            />
+            
+            {/* Character indicator for long messages */}
+            <AnimatePresence>
+              {message.length > 100 && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="absolute bottom-2 right-2 text-xs text-white/40 bg-black/20 rounded px-2 py-1"
+                >
+                  {message.length}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          
+          <motion.button
+            type="submit"
+            disabled={!message.trim() || isLoading}
+            className="w-12 h-12 btn-primary flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            animate={isLoading ? { rotate: 360 } : { rotate: 0 }}
+            transition={isLoading ? { duration: 1, repeat: Infinity, ease: "linear" } : { duration: 0.2 }}
+          >
+            {isLoading ? (
+              <Loader2 size={18} />
+            ) : (
+              <Send size={18} />
+            )}
+          </motion.button>
+        </motion.form>
+
+        {/* Tips */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="mt-4 flex items-center gap-2 text-xs text-white/40"
+        >
+          <Sparkles size={12} />
+          <span>Press Enter to send, Shift+Enter for new line</span>
+        </motion.div>
+      </motion.div>
+    </>
   );
 } 
