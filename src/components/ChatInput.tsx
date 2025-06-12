@@ -28,6 +28,13 @@ export function ChatInput() {
   const [searchQuery, setSearchQuery] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Switch model when active conversation changes
+  useEffect(() => {
+    if (activeConversation && activeConversation.model) {
+      setSelectedModel(activeConversation.model);
+    }
+  }, [activeConversation]);
+
   const popularModels = getPopularModels();
 
   // Mock model creation dates (in a real app, this would come from the API)
