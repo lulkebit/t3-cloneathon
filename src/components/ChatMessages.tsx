@@ -1,14 +1,16 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from '@/contexts/ChatContext';
-import { User, Bot, Sparkles } from 'lucide-react';
+import { User, Bot, Sparkles, Copy, Check, RotateCcw, Loader2 } from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
 export function ChatMessages() {
-  const { messages, activeConversation, isLoading } = useChat();
+  const { messages, activeConversation, isLoading, refreshMessages } = useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [retryingId, setRetryingId] = useState<string | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -17,6 +19,96 @@ export function ChatMessages() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const handleCopy = async (messageId: string, content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedId(messageId);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
+  const handleRetry = async (messageId: string, messageIndex: number) => {
+    if (!activeConversation || retryingId) return;
+    
+    setRetryingId(messageId);
+    
+    try {
+      // Find the user message that preceded this assistant message
+      const userMessage = messages[messageIndex - 1];
+      if (!userMessage || userMessage.role !== 'user') {
+        console.error('Could not find preceding user message');
+        return;
+      }
+
+      // Delete the assistant message
+      const deleteResponse = await fetch(`/api/conversations/${activeConversation.id}/messages/${messageId}`, {
+        method: 'DELETE',
+      });
+
+      if (!deleteResponse.ok) {
+        throw new Error('Failed to delete message');
+      }
+
+      // Get the model from the conversation or use a default
+      const model = activeConversation.model || 'google/gemma-3n-e4b-it:free';
+
+      // Resend the user message to generate a new response
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userMessage.content,
+          model: model,
+          conversationId: activeConversation.id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to regenerate response');
+      }
+
+      // Handle the streaming response
+      if (response.body) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.done) {
+                  // Refresh messages when streaming is complete
+                  await refreshMessages(activeConversation.id);
+                  break;
+                }
+              } catch (e) {
+                // Ignore parsing errors
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error retrying message:', error);
+    } finally {
+      setRetryingId(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -185,13 +277,55 @@ export function ChatMessages() {
                     </div>
                   ) : (
                     // For assistant messages, use markdown rendering
-                    <motion.div
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.03 + 0.2 }}
-                    >
-                      <MarkdownRenderer content={message.content} />
-                    </motion.div>
+                    <div className="relative">
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.03 + 0.2 }}
+                      >
+                        <MarkdownRenderer content={message.content} />
+                      </motion.div>
+                      
+                      {/* Action buttons for assistant messages */}
+                      <div className="flex justify-start gap-4 mt-2">
+                        {/* Copy button */}
+                        <div className="flex flex-col items-center opacity-0 group-hover:opacity-100 transition-all duration-200 group/copy">
+                          <button
+                            onClick={() => handleCopy(message.id, message.content)}
+                            className="p-2 rounded-lg border border-transparent hover:bg-white/10 hover:border-white/20 hover:backdrop-blur-sm hover:scale-105 transition-all duration-200"
+                            title="Copy message"
+                          >
+                            {copiedId === message.id ? (
+                              <Check size={16} className="text-green-400" />
+                            ) : (
+                              <Copy size={16} className="text-white/60 hover:text-white" />
+                            )}
+                          </button>
+                          <span className="text-xs text-white/50 mt-1 opacity-0 group-hover/copy:opacity-100 transition-opacity duration-200">
+                            {copiedId === message.id ? 'Copied!' : 'Copy'}
+                          </span>
+                        </div>
+
+                        {/* Retry button */}
+                        <div className="flex flex-col items-center opacity-0 group-hover:opacity-100 transition-all duration-200 group/retry">
+                          <button
+                            onClick={() => handleRetry(message.id, index)}
+                            disabled={retryingId === message.id || !activeConversation}
+                            className="p-2 rounded-lg border border-transparent hover:bg-white/10 hover:border-white/20 hover:backdrop-blur-sm hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                            title="Retry message"
+                          >
+                            {retryingId === message.id ? (
+                              <Loader2 size={16} className="text-blue-400 animate-spin" />
+                            ) : (
+                              <RotateCcw size={16} className="text-white/60 hover:text-white" />
+                            )}
+                          </button>
+                          <span className="text-xs text-white/50 mt-1 opacity-0 group-hover/retry:opacity-100 transition-opacity duration-200">
+                            {retryingId === message.id ? 'Retrying...' : 'Retry'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
 
