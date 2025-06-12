@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from '@/contexts/ChatContext';
-import { Send, Bot, Loader2, Sparkles, Zap, ChevronDown, Check } from 'lucide-react';
+import { Send, Bot, Loader2, Sparkles, Zap, ChevronDown, Check, Brain } from 'lucide-react';
 import { getPopularModels } from '@/lib/openrouter';
 
 export function ChatInput() {
@@ -15,7 +15,7 @@ export function ChatInput() {
   } = useChat();
 
   const [message, setMessage] = useState('');
-  const [selectedModel, setSelectedModel] = useState('anthropic/claude-3.5-sonnet');
+  const [selectedModel, setSelectedModel] = useState('google/gemma-3n-e4b-it:free');
   const [isLoading, setIsLoading] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState('');
   const [isModelModalOpen, setIsModelModalOpen] = useState(false);
@@ -112,16 +112,31 @@ export function ChatInput() {
     }
   };
 
+  const getProviderLogo = (provider: string) => {
+    const providerLogos: Record<string, string> = {
+      'anthropic': '/logos/anthropic.svg',
+      'openai': '/logos/openai.svg',
+      'google': '/logos/google.svg',
+      'meta-llama': '/logos/meta.svg',
+      'mistralai': '/logos/mistral.svg',
+      'deepseek': '/logos/deepseek.svg'
+    };
+    
+    return providerLogos[provider.toLowerCase()] || null;
+  };
+
   const formatModelName = (model: string) => {
     const parts = model.split('/');
     if (parts.length === 2) {
       const [provider, modelName] = parts;
       return {
         name: modelName.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        provider: provider.charAt(0).toUpperCase() + provider.slice(1)
+        provider: provider.charAt(0).toUpperCase() + provider.slice(1),
+        providerKey: provider,
+        logo: getProviderLogo(provider)
       };
     }
-    return { name: model, provider: '' };
+    return { name: model, provider: '', providerKey: '', logo: null };
   };
 
   const selectedModelInfo = formatModelName(selectedModel);
@@ -168,7 +183,7 @@ export function ChatInput() {
                    const isSelected = selectedModel === model;
                    
                    return (
-                     <motion.button
+                                          <motion.button
                        key={model}
                        onClick={() => {
                          setSelectedModel(model);
@@ -182,26 +197,52 @@ export function ChatInput() {
                        whileHover={{ y: -1 }}
                        whileTap={{ scale: 0.98 }}
                      >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="font-medium text-white/90 text-sm">
-                            {modelInfo.name}
-                          </div>
-                          <div className="text-white/50 text-xs">
-                            {modelInfo.provider}
-                          </div>
-                        </div>
-                        {isSelected && (
-                          <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center"
-                          >
-                            <Check size={12} className="text-white" />
-                          </motion.div>
-                        )}
-                      </div>
-                    </motion.button>
+                       <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-3 flex-1">
+                           {/* Provider Logo */}
+                           <div className="w-8 h-8 flex items-center justify-center rounded-lg glass border border-white/10 flex-shrink-0">
+                             {modelInfo.logo ? (
+                               <img
+                                 src={modelInfo.logo}
+                                 alt={`${modelInfo.provider} logo`}
+                                 className="w-5 h-5 object-contain"
+                                 onError={(e) => {
+                                   // Fallback to placeholder icon if image fails to load
+                                   const target = e.target as HTMLImageElement;
+                                   target.style.display = 'none';
+                                   target.nextElementSibling?.classList.remove('hidden');
+                                 }}
+                               />
+                             ) : null}
+                             <Brain 
+                               size={16} 
+                               className={`text-white/60 ${modelInfo.logo ? 'hidden' : ''}`}
+                             />
+                           </div>
+                           
+                           {/* Model Info */}
+                           <div className="flex-1 min-w-0">
+                             <div className="font-medium text-white/90 text-sm truncate">
+                               {modelInfo.name}
+                             </div>
+                             <div className="text-white/50 text-xs truncate">
+                               {modelInfo.provider}
+                             </div>
+                           </div>
+                         </div>
+                         
+                         {/* Selection Indicator */}
+                         {isSelected && (
+                           <motion.div
+                             initial={{ scale: 0 }}
+                             animate={{ scale: 1 }}
+                             className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0"
+                           >
+                             <Check size={12} className="text-white" />
+                           </motion.div>
+                         )}
+                       </div>
+                     </motion.button>
                   );
                 })}
               </div>
@@ -328,7 +369,26 @@ export function ChatInput() {
              whileHover={{ scale: 1.02 }}
              whileTap={{ scale: 0.98 }}
            >
-             <Bot size={14} className="text-blue-400" />
+             {/* Provider Logo */}
+             <div className="w-5 h-5 flex items-center justify-center rounded flex-shrink-0">
+               {selectedModelInfo.logo ? (
+                 <img
+                   src={selectedModelInfo.logo}
+                   alt={`${selectedModelInfo.provider} logo`}
+                   className="w-4 h-4 object-contain"
+                   onError={(e) => {
+                     // Fallback to placeholder icon if image fails to load
+                     const target = e.target as HTMLImageElement;
+                     target.style.display = 'none';
+                     target.nextElementSibling?.classList.remove('hidden');
+                   }}
+                 />
+               ) : null}
+               <Bot 
+                 size={14} 
+                 className={`text-blue-400 ${selectedModelInfo.logo ? 'hidden' : ''}`}
+               />
+             </div>
              <span>{selectedModelInfo.name}</span>
              <ChevronDown size={14} className="text-white/40" />
            </motion.button>
