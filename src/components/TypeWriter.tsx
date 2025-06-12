@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface TypeWriterProps {
@@ -40,21 +39,9 @@ export function TypeWriter({ text, isComplete = false, speed = 15 }: TypeWriterP
         <MarkdownRenderer content={displayedText} />
       </div>
       
-      <AnimatePresence>
-        {isTyping && !isComplete && (
-          <motion.span
-            initial={{ opacity: 1 }}
-            animate={{ opacity: [1, 0] }}
-            exit={{ opacity: 0 }}
-            transition={{ 
-              duration: 0.8, 
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-            className="inline-block w-0.5 h-5 bg-blue-400 ml-1 align-text-bottom"
-          />
-        )}
-      </AnimatePresence>
+      {isTyping && !isComplete && (
+        <span className="inline-block w-0.5 h-5 bg-blue-400 ml-1 align-text-bottom opacity-75" />
+      )}
     </div>
   );
 } 

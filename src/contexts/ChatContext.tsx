@@ -104,7 +104,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         setProfile(data.profile);
       } else if (response.status === 404 || response.status === 500) {
         // Profile might not exist, try to create it
-        console.log('Profile not found, attempting to create...');
         const createResponse = await fetch('/api/profile/create', {
           method: 'POST',
         });

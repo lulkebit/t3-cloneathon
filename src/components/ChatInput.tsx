@@ -1,12 +1,10 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 import { useChat } from '@/contexts/ChatContext';
-import { Send, Bot, Loader2, Sparkles, Zap, ChevronDown, Check, Brain, Search, X } from 'lucide-react';
+import { Send, Bot, Loader2, ChevronDown, Check, Brain, Search, X } from 'lucide-react';
 import { getPopularModels } from '@/lib/openrouter';
-import { MarkdownRenderer } from './MarkdownRenderer';
 
 export function ChatInput() {
   const {
@@ -183,10 +181,8 @@ export function ChatInput() {
               const parsed = JSON.parse(data);
               if (parsed.chunk && assistantMessageId) {
                 assistantContent += parsed.chunk;
-                console.log('Streaming chunk received:', parsed.chunk, 'Total content:', assistantContent.length, 'chars');
                 updateStreamingMessage(assistantMessageId, assistantContent);
               } else if (parsed.done && assistantMessageId) {
-                console.log('Streaming completed, final content length:', assistantContent.length);
                 // Streaming ist abgeschlossen
                 finalizeMessage(assistantMessageId, assistantContent);
                 
@@ -305,244 +301,149 @@ export function ChatInput() {
   return (
     <>
       {/* Modal Overlay */}
-      <AnimatePresence>
-        {isModelModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            onClick={() => setIsModelModalOpen(false)}
+      {isModelModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setIsModelModalOpen(false)}
+        >
+          {/* Blurred Background */}
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+          
+          {/* Modal Content - Made larger */}
+          <div
+            className="relative w-full max-w-4xl max-h-[80vh] glass-strong backdrop-blur-xl rounded-2xl border border-white/10 p-6 flex flex-col opacity-100 scale-100"
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* Blurred Background */}
-            <motion.div
-              initial={{ backdropFilter: 'blur(0px)' }}
-              animate={{ backdropFilter: 'blur(20px)' }}
-              exit={{ backdropFilter: 'blur(0px)' }}
-              className="absolute inset-0 bg-black/30"
-            />
-            
-            {/* Modal Content - Made larger */}
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="relative w-full max-w-4xl max-h-[80vh] glass-strong backdrop-blur-xl rounded-2xl border border-white/10 p-6 flex flex-col"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between gap-3 mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 glass rounded-xl flex items-center justify-center">
-                    <Zap size={16} className="text-blue-400" />
+            {/* Header */}
+            <div className="flex items-center justify-between gap-3 mb-6">
+              <div className="flex items-center gap-3">
+                <Brain size={24} className="text-blue-400" />
+                <h2 className="text-xl font-bold text-white">Select AI Model</h2>
+              </div>
+              
+              <button
+                onClick={() => setIsModelModalOpen(false)}
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors duration-150"
+              >
+                <X size={20} className="text-white/60 hover:text-white" />
+              </button>
+            </div>
+
+            {/* Search */}
+            <div className="relative mb-6">
+              <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
+              <input
+                type="text"
+                placeholder="Search models..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-blue-400/50 transition-colors duration-150"
+                autoFocus
+              />
+            </div>
+
+            {/* Models Grid - Made scrollable and organized by provider */}
+            <div className="flex-1 overflow-y-auto space-y-6">
+              {filteredAndSortedModels.map(({ provider, models }) => (
+                <div key={provider} className="space-y-3">
+                  {/* Provider Header */}
+                  <div className="flex items-center gap-2 px-2">
+                    <h3 className="text-sm font-medium text-white/70 uppercase tracking-wider">
+                      {provider}
+                    </h3>
+                    <div className="flex-1 h-px bg-white/10"></div>
                   </div>
-                  <h2 className="text-lg font-semibold text-white">Choose AI Model</h2>
-                </div>
-                
-                <button
-                  onClick={() => setIsModelModalOpen(false)}
-                  className="w-8 h-8 glass rounded-xl flex items-center justify-center hover:bg-white/10 transition-colors"
-                >
-                  <X size={16} className="text-white/60" />
-                </button>
-              </div>
-
-              {/* Search Bar */}
-              <div className="relative mb-6">
-                <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
-                <input
-                  type="text"
-                  placeholder="Search models..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 glass rounded-xl border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-blue-400/50"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white/60"
-                  >
-                    <X size={16} />
-                  </button>
-                )}
-              </div>
-
-              {/* Models Grid - Made scrollable and organized by provider */}
-              <div className="flex-1 overflow-y-auto space-y-6">
-                {filteredAndSortedModels.map(({ provider, models }) => (
-                  <div key={provider} className="space-y-3">
-                    {/* Provider Header */}
-                    <div className="flex items-center gap-2 px-2">
-                      <h3 className="text-sm font-medium text-white/70 uppercase tracking-wider">
-                        {provider}
-                      </h3>
-                      <div className="flex-1 h-px bg-white/10"></div>
-                    </div>
-                    
-                    {/* Models Grid for this provider */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                      {models.map((model) => {
-                        const modelInfo = formatModelName(model);
-                        const isSelected = selectedModel === model;
-                        
-                        return (
-                          <motion.button
-                            key={model}
-                            onClick={() => {
-                              setSelectedModel(model);
-                              setIsModelModalOpen(false);
-                            }}
-                            className={`p-4 rounded-xl border text-left transition-all group relative h-24 flex flex-col justify-between ${
-                              isSelected
-                                ? 'glass-strong border-blue-400/30 bg-blue-500/10'
-                                : 'glass-hover border-white/10 hover:border-white/20'
-                            }`}
-                            whileHover={{ y: -1 }}
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            {/* Selection Indicator */}
-                            {isSelected && (
-                              <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                className="absolute top-2 right-2 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center"
-                              >
-                                <Check size={10} className="text-white" />
-                              </motion.div>
-                            )}
-                            
-                            {/* Model Header */}
-                            <div className="flex items-start gap-2">
-                              {/* Provider Logo */}
-                              <div className="w-6 h-6 flex items-center justify-center rounded-md glass border border-white/10 flex-shrink-0">
-                                {modelInfo.logo ? (
-                                  <img
-                                    src={modelInfo.logo}
-                                    alt={`${modelInfo.provider} logo`}
-                                    className="w-4 h-4 object-contain"
-                                    onError={(e) => {
-                                      const target = e.target as HTMLImageElement;
-                                      target.style.display = 'none';
-                                      target.nextElementSibling?.classList.remove('hidden');
-                                    }}
-                                  />
-                                ) : null}
-                                <Brain 
-                                  size={12} 
-                                  className={`text-white/60 ${modelInfo.logo ? 'hidden' : ''}`}
+                  
+                  {/* Models Grid for this provider */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {models.map((model) => {
+                      const modelInfo = formatModelName(model);
+                      const isSelected = selectedModel === model;
+                      
+                      return (
+                        <button
+                          key={model}
+                          onClick={() => {
+                            setSelectedModel(model);
+                            setIsModelModalOpen(false);
+                          }}
+                          className={`p-4 rounded-xl border text-left transition-all group relative h-24 flex flex-col justify-between hover:scale-[0.98] ${
+                            isSelected
+                              ? 'glass-strong border-blue-400/30 bg-blue-500/10'
+                              : 'glass-hover border-white/10 hover:border-white/20'
+                          }`}
+                        >
+                          {/* Selection Indicator */}
+                          {isSelected && (
+                            <div className="absolute top-2 right-2 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                              <Check size={10} className="text-white" />
+                            </div>
+                          )}
+                          
+                          {/* Model Header */}
+                          <div className="flex items-start gap-2">
+                            {/* Provider Logo */}
+                            <div className="w-6 h-6 flex items-center justify-center rounded-md glass border border-white/10 flex-shrink-0">
+                              {modelInfo.logo ? (
+                                <img
+                                  src={modelInfo.logo}
+                                  alt={`${modelInfo.provider} logo`}
+                                  className="w-4 h-4 object-contain"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    target.nextElementSibling?.classList.remove('hidden');
+                                  }}
                                 />
-                              </div>
-                              
-                              {/* Model Name */}
-                              <div className="flex-1 min-w-0">
-                                <div className="font-medium text-white/90 text-xs truncate">
-                                  {modelInfo.name}
-                                </div>
-                              </div>
+                              ) : null}
+                              <Brain 
+                                size={12} 
+                                className={`text-white/60 ${modelInfo.logo ? 'hidden' : ''}`}
+                              />
                             </div>
                             
-                            {/* Model Footer */}
-                            <div className="space-y-1">
-                              {modelInfo.createdDate && (
-                                <div className="text-white/40 text-xs">
-                                  {modelInfo.createdDate}
-                                </div>
-                              )}
+                            {/* Model Name */}
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-white/90 text-xs truncate">
+                                {modelInfo.name}
+                              </div>
                             </div>
-                          </motion.button>
-                        );
-                      })}
-                    </div>
+                          </div>
+                          
+                          {/* Model Footer */}
+                          <div className="space-y-1">
+                            {modelInfo.createdDate && (
+                              <div className="text-white/40 text-xs">
+                                {modelInfo.createdDate}
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
-                ))}
-                
-                {filteredAndSortedModels.length === 0 && (
-                  <div className="text-center py-8 text-white/40">
-                    No models found matching "{searchQuery}"
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                </div>
+              ))}
+              
+              {filteredAndSortedModels.length === 0 && (
+                <div className="text-center py-8 text-white/40">
+                  No models found matching "{searchQuery}"
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Chat Input */}
       <div className="p-4 flex justify-center">
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="w-full max-w-4xl glass-strong backdrop-blur-xl rounded-2xl border border-white/10 p-4 shadow-xl"
-        >
+        <div className="w-full max-w-4xl glass-strong backdrop-blur-xl rounded-2xl border border-white/10 p-4 shadow-xl">
 
-          {/* Streaming Message Display */}
-          <AnimatePresence>
-            {streamingMessage && (
-              <motion.div
-                initial={{ opacity: 0, y: 20, height: 0 }}
-                animate={{ opacity: 1, y: 0, height: 'auto' }}
-                exit={{ opacity: 0, y: -20, height: 0 }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="mb-6 overflow-hidden"
-              >
-                {/* Message Header */}
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="flex items-center gap-3 mb-3"
-                >
-                  {/* Avatar */}
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-400/30">
-                    <Bot size={16} className="text-blue-400" />
-                  </div>
-
-                  {/* Name */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-blue-400">Assistant</span>
-                    <span className="text-xs text-white/40">typing...</span>
-                  </div>
-                </motion.div>
-
-                {/* Message Content */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.15 }}
-                  className="ml-11 relative max-w-4xl"
-                >
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="relative"
-                  >
-                    <MarkdownRenderer 
-                      content={streamingMessage} 
-                      className="streaming-message"
-                    />
-                    <motion.span
-                      animate={{ opacity: [0, 1, 0] }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-                      className="inline-block w-0.5 h-4 ml-1 bg-blue-400 absolute"
-                    />
-                  </motion.div>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
           {/* Message Input Form */}
-          <motion.form
-            onSubmit={handleSubmit}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="w-full"
-          >
+          <form onSubmit={handleSubmit} className="w-full">
             <div className="relative group/send">
-              <motion.textarea
+              <textarea
                 ref={textareaRef}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
@@ -556,17 +457,14 @@ export function ChatInput() {
                     handleSubmit(e);
                   }
                 }}
-                whileFocus={{ scale: 1.01 }}
               />
               
               {/* Send button inside textarea */}
-              <div className="absolute right-3 top-1/2 translate-y-1 flex flex-col items-center group/sendbutton">
-                <motion.button
+              <div className="absolute right-3 top-1/2 translate-y-1 flex flex-col items-center">
+                <button
                   type="submit"
                   disabled={!message.trim() || isLoading}
-                  className="p-2 rounded-lg border border-transparent hover:bg-white/10 hover:border-white/20 hover:backdrop-blur-sm hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  className="p-2 rounded-lg hover:bg-white/10 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150"
                   title="Send message"
                 >
                   {isLoading ? (
@@ -574,41 +472,24 @@ export function ChatInput() {
                   ) : (
                     <Send size={20} className="text-white/60 hover:text-white" />
                   )}
-                </motion.button>
-                <span className="text-xs text-white/50 mt-1 opacity-0 group-hover/sendbutton:opacity-100 transition-opacity duration-200">
-                  {isLoading ? 'Sending...' : 'Send'}
-                </span>
+                </button>
               </div>
               
               {/* Character indicator for long messages */}
-              <AnimatePresence>
-                {message.length > 100 && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    className="absolute bottom-2 left-3 text-xs text-white/40 bg-black/20 rounded px-2 py-1"
-                  >
-                    {message.length}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {message.length > 100 && (
+                <div className="absolute bottom-2 left-3 text-xs text-white/40 bg-black/20 rounded px-2 py-1">
+                  {message.length}
+                </div>
+              )}
             </div>
-          </motion.form>
+          </form>
 
           {/* Model Selection Button */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="mt-3 flex justify-start"
-          >
-            <motion.button
+          <div className="mt-3 flex justify-start">
+            <button
               onClick={() => setIsModelModalOpen(true)}
               disabled={isLoading}
-              className="inline-flex items-center gap-2 px-3 py-2 glass-hover border border-white/10 rounded-xl text-sm text-white/80 hover:text-white transition-all disabled:opacity-50"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              className="inline-flex items-center gap-2 px-3 py-2 glass-hover border border-white/10 rounded-xl text-sm text-white/80 hover:text-white hover:scale-[1.02] transition-all disabled:opacity-50"
             >
               {/* Provider Logo */}
               <div className="w-5 h-5 flex items-center justify-center rounded flex-shrink-0">
@@ -632,9 +513,9 @@ export function ChatInput() {
               </div>
               <span>{selectedModelInfo.name}</span>
               <ChevronDown size={14} className="text-white/40" />
-            </motion.button>
-          </motion.div>
-        </motion.div>
+            </button>
+          </div>
+        </div>
       </div>
     </>
   );
