@@ -83,7 +83,7 @@ export default function LoginPage() {
               },
             }}
             providers={['google', 'github']}
-            redirectTo={`${window.location.origin}/chat`}
+            redirectTo={typeof window !== 'undefined' ? `${window.location.origin}/chat` : '/chat'}
           />
         </div>
       </div>
