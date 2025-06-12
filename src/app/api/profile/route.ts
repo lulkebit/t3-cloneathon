@@ -20,7 +20,6 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('Profile fetch error:', error);
       if (error.code === 'PGRST116') {
-        // No rows returned - profile doesn't exist
         return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
       }
       return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 });
@@ -48,7 +47,6 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'OpenRouter API key is required' }, { status: 400 });
     }
 
-    // Validate the API key
     const openRouter = new OpenRouterService(openrouter_api_key);
     const isValid = await openRouter.validateApiKey();
 

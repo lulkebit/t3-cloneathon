@@ -24,10 +24,8 @@ export function ChatSidebar() {
   const handleDeleteClick = (e: React.MouseEvent, conversationId: string) => {
     e.stopPropagation();
     if (confirmingDeleteId === conversationId) {
-      // If already confirming, proceed with deletion
       handleDeleteConversation(conversationId);
     } else {
-      // Show confirmation
       setConfirmingDeleteId(conversationId);
     }
   };
@@ -65,7 +63,6 @@ export function ChatSidebar() {
 
   return (
     <>
-      {/* Floating buttons when collapsed */}
       <AnimatePresence>
         {isCollapsed && (
           <motion.div
@@ -85,7 +82,6 @@ export function ChatSidebar() {
                 <ChevronRight size={16} />
               </motion.button>
               
-                             {/* Hover tooltip */}
                <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/expand:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
                  Expand Sidebar
                </div>
@@ -104,7 +100,6 @@ export function ChatSidebar() {
                 <Plus size={16} />
               </motion.button>
               
-                              {/* Hover tooltip */}
                 <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/newchat:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
                   New Chat
                 </div>
@@ -113,7 +108,6 @@ export function ChatSidebar() {
         )}
       </AnimatePresence>
 
-      {/* Expanded sidebar */}
       <AnimatePresence>
         {!isCollapsed && (
           <motion.div
@@ -124,7 +118,6 @@ export function ChatSidebar() {
             className="bg-black/20 backdrop-blur-sm border-r border-white/5 flex flex-col h-full overflow-hidden"
           >
             {isLoading ? (
-              /* Loading state */
               <motion.div 
                 className="p-4 flex flex-col h-full"
                 initial={{ opacity: 0 }}
@@ -151,9 +144,7 @@ export function ChatSidebar() {
                 </motion.div>
               </motion.div>
             ) : (
-              /* Normal sidebar content */
               <>
-                {/* Header */}
                 <motion.div 
                   className="p-4 border-b border-white/5 flex items-center gap-2"
                   initial={{ opacity: 0, y: -20 }}
@@ -191,7 +182,6 @@ export function ChatSidebar() {
                   </div>
                 </motion.div>
 
-                {/* Conversations List */}
                 <motion.div 
                   className="flex-1 overflow-y-auto p-2 space-y-1"
                   initial={{ opacity: 0 }}
@@ -254,7 +244,6 @@ export function ChatSidebar() {
                           whileHover={{ scale: 1.02, x: 4 }}
                           whileTap={{ scale: 0.98 }}
                         >
-                          {/* Active indicator */}
                           {activeConversation?.id === conversation.id && (
                             <motion.div
                               layoutId="activeIndicator"
@@ -347,7 +336,6 @@ export function ChatSidebar() {
                   </AnimatePresence>
                 </motion.div>
 
-                {/* Settings Navigation */}
                 <motion.div 
                   className="p-4 border-t border-white/5"
                   initial={{ opacity: 0, y: 20 }}

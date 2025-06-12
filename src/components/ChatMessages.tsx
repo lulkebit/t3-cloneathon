@@ -8,7 +8,6 @@ import { MarkdownRenderer } from './MarkdownRenderer';
 import { LoadingIndicator } from './LoadingIndicator';
 import { TypeWriter } from './TypeWriter';
 
-// Helper function to get provider logo from model string
 const getProviderLogo = (model: string) => {
   const providerLogos: Record<string, string> = {
     'anthropic': '/logos/anthropic.svg',
@@ -19,12 +18,10 @@ const getProviderLogo = (model: string) => {
     'deepseek': '/logos/deepseek.svg'
   };
   
-  // Extract provider from model string (e.g., "anthropic/claude-3-haiku" -> "anthropic")
   const provider = model.split('/')[0];
   return providerLogos[provider.toLowerCase()] || null;
 };
 
-// Helper function to format model name for display
 const formatModelName = (model: string) => {
   const parts = model.split('/');
   if (parts.length === 2) {
@@ -34,11 +31,9 @@ const formatModelName = (model: string) => {
   return model;
 };
 
-// Helper function to get user display name from user metadata
 const getUserDisplayName = (user: any) => {
   if (!user?.user_metadata) return 'You';
   
-  // Try different possible name fields in order of preference
   const metadata = user.user_metadata;
   return metadata.full_name || 
          metadata.name || 
@@ -80,14 +75,12 @@ export function ChatMessages() {
     setRetryingId(messageId);
     
     try {
-      // Find the user message that preceded this assistant message
       const userMessage = messages[messageIndex - 1];
       if (!userMessage || userMessage.role !== 'user') {
         console.error('Could not find preceding user message');
         return;
       }
 
-      // Delete the assistant message
       const deleteResponse = await fetch(`/api/conversations/${activeConversation.id}/messages/${messageId}`, {
         method: 'DELETE',
       });
@@ -96,10 +89,8 @@ export function ChatMessages() {
         throw new Error('Failed to delete message');
       }
 
-      // Get the model from the conversation or use a default
       const model = activeConversation.model || 'google/gemma-3n-e4b-it:free';
 
-      // Resend the user message to generate a new response
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -116,7 +107,6 @@ export function ChatMessages() {
         throw new Error('Failed to regenerate response');
       }
 
-      // Handle the streaming response
       if (response.body) {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -136,12 +126,10 @@ export function ChatMessages() {
               try {
                 const parsed = JSON.parse(data);
                 if (parsed.done) {
-                  // Refresh messages when streaming is complete
                   await refreshMessages(activeConversation.id);
                   break;
                 }
               } catch (e) {
-                // Ignore parsing errors
               }
             }
           }
@@ -198,7 +186,6 @@ export function ChatMessages() {
 
   return (
     <div className="flex-1 overflow-y-auto relative">
-      {/* Message Container - aligned with input width */}
       <div className="w-full max-w-4xl mx-auto px-6 py-8 space-y-6">
         {messages.map((message, index) => (
           <motion.div
@@ -208,11 +195,9 @@ export function ChatMessages() {
             transition={{ duration: 0.2, ease: "easeOut" }}
             className={`group ${message.role === 'user' ? 'flex flex-col items-end' : ''}`}
           >
-            {/* Message Header */}
             <div className={`flex items-center gap-3 mb-3 ${
               message.role === 'user' ? 'flex-row-reverse' : ''
             }`}>
-              {/* Avatar */}
               <div className={`w-8 h-8 rounded-full flex items-center justify-center overflow-hidden ${
                 message.role === 'user' 
                   ? 'bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-400/30' 
@@ -253,7 +238,6 @@ export function ChatMessages() {
                 }`} />
               </div>
 
-              {/* Name and timestamp */}
               <div className={`flex items-center gap-2 ${
                 message.role === 'user' ? 'flex-row-reverse' : ''
               }`}>
@@ -276,7 +260,6 @@ export function ChatMessages() {
               </div>
             </div>
 
-            {/* Message Content */}
             <div className={`relative ${
               message.role === 'user' 
                 ? 'mr-11' 
@@ -284,12 +267,10 @@ export function ChatMessages() {
             }`} style={{
               maxWidth: message.role === 'assistant' ? 'calc(100% - 2.75rem - 2.75rem)' : 'calc(100% - 2.75rem - 2.75rem)'
             }}>
-              {/* Message content with markdown rendering */}
               <div className={`${
                 message.role === 'user' ? 'text-right' : 'text-left'
               }`}>
                 {message.role === 'user' ? (
-                  // For user messages, use markdown rendering with right alignment
                   <div className={`prose prose-sm max-w-none ${
                     message.role === 'user' ? 'text-right' : 'text-left'
                   }`}>
@@ -300,7 +281,6 @@ export function ChatMessages() {
                     />
                   </div>
                 ) : (
-                  // For assistant messages, handle loading, streaming, and completed states
                   <div className="relative">
                     <div>
                       {message.isLoading ? (
@@ -316,9 +296,7 @@ export function ChatMessages() {
                       )}
                     </div>
                     
-                    {/* Action buttons for assistant messages */}
                     <div className="flex justify-start gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      {/* Copy button */}
                       <div className="relative group/copy">
                         <button
                           onClick={() => handleCopy(message.id, message.content)}
@@ -331,13 +309,11 @@ export function ChatMessages() {
                           )}
                         </button>
                         
-                        {/* Hover tooltip */}
                         <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/copy:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
                           {copiedId === message.id ? 'Copied!' : 'Copy'}
                         </div>
                       </div>
 
-                      {/* Retry button */}
                       <div className="relative group/retry">
                         <button
                           onClick={() => handleRetry(message.id, index)}
@@ -351,7 +327,6 @@ export function ChatMessages() {
                           )}
                         </button>
                         
-                        {/* Hover tooltip */}
                         <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/retry:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
                           {retryingId === message.id ? 'Retrying...' : 'Retry'}
                         </div>

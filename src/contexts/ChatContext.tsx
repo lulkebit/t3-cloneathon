@@ -34,7 +34,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Handle URL changes for browser back/forward navigation
   useEffect(() => {
     const handlePopState = () => {
       const pathname = window.location.pathname;
@@ -56,7 +55,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [conversations, activeConversation]);
 
-  // Überwache URL-Änderungen auch bei Conversation-Updates
   useEffect(() => {
     const pathname = window.location.pathname;
     const chatIdMatch = pathname.match(/^\/chat\/(.+)$/);
@@ -89,7 +87,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         const data = await response.json();
         const serverMessages = data.messages || [];
         
-        // Behalte nur optimistische Nachrichten, die noch nicht durch Server-Nachrichten ersetzt wurden
         setMessages(prev => {
           const optimisticMessages = prev.filter(msg => msg.isOptimistic);
           return [...serverMessages, ...optimisticMessages];
@@ -107,12 +104,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         const data = await response.json();
         setProfile(data.profile);
       } else if (response.status === 404 || response.status === 500) {
-        // Profile might not exist, try to create it
         const createResponse = await fetch('/api/profile/create', {
           method: 'POST',
         });
         if (createResponse.ok) {
-          // Retry fetching the profile
           const retryResponse = await fetch('/api/profile');
           if (retryResponse.ok) {
             const retryData = await retryResponse.json();
@@ -159,7 +154,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Neue Funktionen für optimistic updates
   const addOptimisticMessage = (message: Omit<Message, 'id' | 'created_at'>): string => {
     const optimisticId = `optimistic-${Date.now()}-${Math.random()}`;
     const optimisticMessage: Message = {
@@ -209,13 +203,11 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (activeConversation) {
-      // Behalte optimistische Nachrichten für die aktuelle Conversation, lösche alle anderen
       setMessages(prev => prev.filter(msg => 
         msg.isOptimistic && msg.conversation_id === activeConversation.id
       ));
       refreshMessages(activeConversation.id);
     } else {
-      // Leere Messages wenn kein Chat aktiv ist
       setMessages([]);
     }
   }, [activeConversation]);

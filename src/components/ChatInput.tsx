@@ -26,7 +26,6 @@ export function ChatInput() {
   const [searchQuery, setSearchQuery] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Switch model when active conversation changes
   useEffect(() => {
     if (activeConversation && activeConversation.model) {
       setSelectedModel(activeConversation.model);
@@ -35,7 +34,6 @@ export function ChatInput() {
 
   const popularModels = getPopularModels();
 
-  // Mock model creation dates (in a real app, this would come from the API)
   const modelCreationDates: Record<string, string> = {
     'anthropic/claude-3.5-sonnet': '2024-10-22',
     'openai/gpt-4o': '2024-05-13',
@@ -65,7 +63,6 @@ export function ChatInput() {
     setIsLoading(true);
     setStreamingMessage('');
     
-    // Reset textarea height
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
@@ -75,19 +72,15 @@ export function ChatInput() {
     let assistantMessageId: string | undefined;
     
     try {
-      // Prüfe ob wir in einem bestehenden Chat sind oder einen neuen erstellen müssen
       if (activeConversation) {
-        // Bestehender Chat: Verwende aktuelle Conversation
         conversationId = activeConversation.id;
         
-        // Zeige sofort die Benutzernachricht an
         userMessageId = addOptimisticMessage({
           conversation_id: conversationId!,
           role: 'user',
           content: userMessage,
         });
 
-        // Zeige Loading-Indikator für AI-Antwort
         assistantMessageId = addOptimisticMessage({
           conversation_id: conversationId!,
           role: 'assistant',
@@ -95,7 +88,6 @@ export function ChatInput() {
           isLoading: true,
         });
       } else {
-        // Neuer Chat: Erstelle sofort einen neuen Chat auf dem Server
         const createConversationResponse = await fetch('/api/conversations', {
           method: 'POST',
           headers: {
@@ -114,20 +106,16 @@ export function ChatInput() {
         const conversationData = await createConversationResponse.json();
         conversationId = conversationData.conversation.id;
         
-        // Aktualisiere die Conversation-Liste
         await refreshConversations();
         
-        // Navigiere sofort zum neuen Chat
         window.history.pushState(null, '', `/chat/${conversationId}`);
         
-        // Zeige die Benutzernachricht sofort an
         userMessageId = addOptimisticMessage({
           conversation_id: conversationId!,
           role: 'user',
           content: userMessage,
         });
 
-        // Zeige Loading-Indikator für AI-Antwort
         assistantMessageId = addOptimisticMessage({
           conversation_id: conversationId!,
           role: 'assistant',
@@ -135,8 +123,6 @@ export function ChatInput() {
           isLoading: true,
         });
       }
-
-      // Sende die Nachricht an die AI
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -183,17 +169,14 @@ export function ChatInput() {
                 assistantContent += parsed.chunk;
                 updateStreamingMessage(assistantMessageId, assistantContent);
               } else if (parsed.done && assistantMessageId) {
-                // Streaming ist abgeschlossen
                 finalizeMessage(assistantMessageId, assistantContent);
                 
-                // Lade echte Nachrichten und räume auf - ohne festes Timeout
                 (async () => {
                   try {
                     if (conversationId) {
                       await refreshMessages(conversationId);
                     }
                     
-                    // Entferne die optimistischen Nachrichten nur nach erfolgreichem Server-Update
                     if (userMessageId) {
                       removeOptimisticMessage(userMessageId);
                     }
@@ -202,8 +185,6 @@ export function ChatInput() {
                     }
                   } catch (error) {
                     console.error('Error refreshing messages after streaming:', error);
-                    // Bei Fehler beim Nachladen behalten wir die optimistischen Nachrichten
-                    // Sie werden durch die finalisierte Nachricht ersetzt
                   }
                 })();
               }
@@ -215,7 +196,6 @@ export function ChatInput() {
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      // Entferne optimistische Nachrichten bei Fehler falls sie existieren
       if (userMessageId) {
         removeOptimisticMessage(userMessageId);
       }
@@ -226,7 +206,6 @@ export function ChatInput() {
       setIsLoading(false);
       setStreamingMessage('');
       
-      // Fokus zurück auf das Textfeld setzen
       setTimeout(() => {
         if (textareaRef.current) {
           textareaRef.current.focus();
@@ -269,9 +248,7 @@ export function ChatInput() {
     };
   };
 
-  // Filter and sort models
   const filteredAndSortedModels = useMemo(() => {
-    // Filter by search query
     const filtered = popularModels.filter(model => {
       const modelInfo = formatModelName(model);
       const searchTerm = searchQuery.toLowerCase();
@@ -282,7 +259,6 @@ export function ChatInput() {
       );
     });
 
-    // Group by provider and sort
     const grouped = filtered.reduce((acc, model) => {
       const modelInfo = formatModelName(model);
       const provider = modelInfo.provider || 'Other';
@@ -295,7 +271,6 @@ export function ChatInput() {
       return acc;
     }, {} as Record<string, string[]>);
 
-    // Sort providers alphabetically and models within each provider
     const sortedProviders = Object.keys(grouped).sort();
     const result: Array<{ provider: string; models: string[] }> = [];
     
@@ -313,21 +288,17 @@ export function ChatInput() {
 
   return (
     <>
-      {/* Modal Overlay */}
       {isModelModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={() => setIsModelModalOpen(false)}
         >
-          {/* Blurred Background */}
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
           
-          {/* Modal Content - Made larger */}
           <div
             className="relative w-full max-w-4xl max-h-[80vh] glass-strong backdrop-blur-xl rounded-2xl border border-white/10 p-6 flex flex-col opacity-100 scale-100"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
             <div className="flex items-center justify-between gap-3 mb-6">
               <div className="flex items-center gap-3">
                 <Brain size={24} className="text-blue-400" />
@@ -342,7 +313,6 @@ export function ChatInput() {
               </button>
             </div>
 
-            {/* Search */}
             <div className="relative mb-6">
               <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
               <input
@@ -355,11 +325,9 @@ export function ChatInput() {
               />
             </div>
 
-            {/* Models Grid - Made scrollable and organized by provider */}
             <div className="flex-1 overflow-y-auto space-y-6">
               {filteredAndSortedModels.map(({ provider, models }) => (
                 <div key={provider} className="space-y-3">
-                  {/* Provider Header */}
                   <div className="flex items-center gap-2 px-2">
                     <h3 className="text-sm font-medium text-white/70 uppercase tracking-wider">
                       {provider}
@@ -367,7 +335,6 @@ export function ChatInput() {
                     <div className="flex-1 h-px bg-white/10"></div>
                   </div>
                   
-                  {/* Models Grid for this provider */}
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {models.map((model) => {
                       const modelInfo = formatModelName(model);
@@ -386,16 +353,13 @@ export function ChatInput() {
                               : 'glass-hover border-white/10 hover:border-white/20'
                           }`}
                         >
-                          {/* Selection Indicator */}
                           {isSelected && (
                             <div className="absolute top-2 right-2 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
                               <Check size={10} className="text-white" />
                             </div>
                           )}
                           
-                          {/* Model Header */}
                           <div className="flex items-start gap-2">
-                            {/* Provider Logo */}
                             <div className="w-6 h-6 flex items-center justify-center rounded-md glass border border-white/10 flex-shrink-0">
                               {modelInfo.logo ? (
                                 <img
@@ -415,7 +379,6 @@ export function ChatInput() {
                               />
                             </div>
                             
-                            {/* Model Name */}
                             <div className="flex-1 min-w-0">
                               <div className="font-medium text-white/90 text-xs truncate">
                                 {modelInfo.name}
@@ -423,7 +386,6 @@ export function ChatInput() {
                             </div>
                           </div>
                           
-                          {/* Model Footer */}
                           <div className="space-y-1">
                             {modelInfo.createdDate && (
                               <div className="text-white/40 text-xs">
@@ -448,12 +410,9 @@ export function ChatInput() {
         </div>
       )}
 
-      {/* Chat Input */}
       <div className="p-4 flex justify-center">
         <div className="w-full max-w-4xl glass-strong backdrop-blur-xl rounded-2xl border border-white/10 p-4 shadow-xl">
 
-
-          {/* Message Input Form */}
           <form onSubmit={handleSubmit} className="w-full">
             <div className="relative group/send">
               <textarea
@@ -472,7 +431,6 @@ export function ChatInput() {
                 }}
               />
               
-              {/* Send button inside textarea */}
               <div className="absolute right-3 top-1/2 translate-y-1 flex flex-col items-center">
                 <button
                   type="submit"
@@ -485,7 +443,6 @@ export function ChatInput() {
                     <Send size={20} className="text-white/60 hover:text-white" />
                   )}
                   
-                  {/* Hover tooltip */}
                   <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
                     {isLoading ? 'Sending...' : 'Send'}
                   </div>
@@ -496,14 +453,12 @@ export function ChatInput() {
             </div>
           </form>
 
-          {/* Model Selection Button */}
           <div className="mt-3 flex justify-start">
             <button
               onClick={() => setIsModelModalOpen(true)}
               disabled={isLoading}
               className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 glass-hover border border-white/10 rounded-xl text-sm text-white/80 hover:text-white hover:scale-[1.02] transition-all disabled:opacity-50"
             >
-              {/* Provider Logo */}
               <div className="w-5 h-5 flex items-center justify-center rounded flex-shrink-0">
                 {selectedModelInfo.logo ? (
                   <img
@@ -511,7 +466,6 @@ export function ChatInput() {
                     alt={`${selectedModelInfo.provider} logo`}
                     className="w-4 h-4 object-contain"
                     onError={(e) => {
-                      // Fallback to placeholder icon if image fails to load
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
                       target.nextElementSibling?.classList.remove('hidden');

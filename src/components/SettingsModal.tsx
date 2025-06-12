@@ -78,10 +78,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             className="glass-strong rounded-3xl max-w-lg w-full p-8 relative border border-white/20"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Background gradient */}
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-3xl"></div>
             
-            {/* Header */}
             <div className="flex items-center justify-between mb-8 relative z-10">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
@@ -108,7 +106,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </motion.button>
             </div>
 
-            {/* API Key Section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -148,7 +145,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </motion.p>
               </div>
 
-              {/* API Key Info */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -179,7 +175,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </div>
               </motion.div>
 
-              {/* Current Status */}
               {profile && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -208,7 +203,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               )}
             </motion.div>
 
-            {/* Footer */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

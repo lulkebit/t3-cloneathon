@@ -9,7 +9,6 @@ import rehypeRaw from 'rehype-raw';
 import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 
-// Import highlight.js styles
 import 'highlight.js/styles/github-dark.css';
 
 interface MarkdownRendererProps {
@@ -51,7 +50,6 @@ function CodeBlock({ children, className, inline, ...props }: CodeBlockProps) {
   return (
     <div className="w-full block">
       <div className="relative group my-4 border border-gray-700/50 rounded-lg overflow-hidden w-full">
-        {/* Language label and copy button */}
         <div className="flex items-center justify-between px-4 py-2 bg-gray-800/80 border-b border-gray-700/50">
           <span className="text-xs text-gray-300 font-medium">
             {language || 'code'}
@@ -74,7 +72,6 @@ function CodeBlock({ children, className, inline, ...props }: CodeBlockProps) {
           </button>
         </div>
         
-        {/* Code content */}
         <pre className="bg-gray-900/90 overflow-x-auto m-0 p-4 w-full">
           <code className={className} {...props}>
             {children}
@@ -92,10 +89,8 @@ export function MarkdownRenderer({ content, className = '', isUserMessage = fals
         remarkPlugins={[remarkGfm, remarkBreaks]}
         rehypePlugins={[rehypeHighlight, rehypeRaw]}
         components={{
-          // Code blocks
           code: CodeBlock,
           
-          // Headings
           h1: ({ children }) => (
             <h1 className="text-2xl font-bold text-white mb-4 mt-6 border-b border-gray-700/50 pb-2">
               {children}
@@ -127,14 +122,12 @@ export function MarkdownRenderer({ content, className = '', isUserMessage = fals
             </h6>
           ),
           
-          // Paragraphs - improved spacing and break handling
           p: ({ children }) => (
             <p className="text-white/90 leading-relaxed mb-3 last:mb-0">
               {children}
             </p>
           ),
           
-          // Lists - improved formatting and spacing
           ul: ({ children, ...props }) => {
             const depth = (props as any)?.depth || 0;
             return (
@@ -167,7 +160,6 @@ export function MarkdownRenderer({ content, className = '', isUserMessage = fals
             </li>
           ),
           
-          // Links
           a: ({ href, children }) => (
             <a
               href={href}
@@ -179,7 +171,6 @@ export function MarkdownRenderer({ content, className = '', isUserMessage = fals
             </a>
           ),
           
-          // Emphasis
           strong: ({ children }) => (
             <strong className="font-bold text-white">
               {children}
@@ -191,17 +182,14 @@ export function MarkdownRenderer({ content, className = '', isUserMessage = fals
             </em>
           ),
           
-          // Blockquotes
           blockquote: ({ children }) => (
             <blockquote className="border-l-4 border-blue-400/50 bg-gray-800/30 pl-4 py-2 my-3 italic text-white/80">
               {children}
             </blockquote>
           ),
           
-          // Line breaks
           br: () => <br className="leading-relaxed" />,
           
-          // Tables
           table: ({ children }) => (
             <div className="overflow-x-auto my-4">
               <table className="w-full border-collapse border border-gray-700/50 bg-gray-800/20">
@@ -235,7 +223,6 @@ export function MarkdownRenderer({ content, className = '', isUserMessage = fals
             </td>
           ),
           
-          // Horizontal rule
           hr: () => (
             <hr className="border-gray-700/50 my-6" />
           ),

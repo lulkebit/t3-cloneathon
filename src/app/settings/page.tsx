@@ -51,7 +51,6 @@ function SettingsPageContent() {
       await refreshProfile();
       setSaveStatus('saved');
       
-      // Reset save status after 2 seconds
       setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (error) {
       console.error('Error saving API key:', error);
@@ -125,7 +124,6 @@ function SettingsPageContent() {
 
   return (
     <div className="min-h-screen animated-bg">
-      {/* Header */}
       <motion.div 
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -167,10 +165,8 @@ function SettingsPageContent() {
         </div>
       </motion.div>
 
-      {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-8">
-          {/* Profile Information */}
           {profile && (
             <motion.div 
               initial={{ y: 20, opacity: 0 }}
@@ -234,7 +230,6 @@ function SettingsPageContent() {
             </motion.div>
           )}
 
-          {/* OpenRouter API Key Section */}
           <motion.div 
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -254,7 +249,6 @@ function SettingsPageContent() {
             </div>
 
             <div className="space-y-6">
-              {/* API Key Input */}
               <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -286,7 +280,6 @@ function SettingsPageContent() {
                 </p>
               </motion.div>
 
-              {/* Current API Key Display */}
               {profile?.openrouter_api_key && (
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
@@ -302,7 +295,6 @@ function SettingsPageContent() {
                 </motion.div>
               )}
 
-              {/* Get API Key Link */}
               <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -325,7 +317,6 @@ function SettingsPageContent() {
                 </motion.a>
               </motion.div>
 
-              {/* Save Button */}
               <motion.button
                 onClick={handleSave}
                 disabled={isLoading || !apiKey.trim()}
@@ -341,7 +332,6 @@ function SettingsPageContent() {
             </div>
           </motion.div>
 
-          {/* Security Section */}
           <motion.div 
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}

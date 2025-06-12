@@ -18,10 +18,8 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
   const { profile, isLoading, conversations, setActiveConversation, activeConversation } = useChat();
   const [showSettings, setShowSettings] = useState(false);
   
-  // Update document title based on active conversation
   useDynamicTitle(activeConversation);
 
-  // Set active conversation based on chat ID
   useEffect(() => {
     if (!isLoading && conversations.length > 0) {
       if (chatId) {
@@ -29,18 +27,15 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
         if (conversation) {
           setActiveConversation(conversation);
         } else {
-          // If chat ID not found, redirect to general chat
           window.history.replaceState(null, '', '/chat');
           setActiveConversation(null);
         }
       } else {
-        // No chat ID means we're on general chat page
         setActiveConversation(null);
       }
     }
   }, [conversations, chatId, isLoading, setActiveConversation]);
 
-  // Show settings automatically if no API key is configured (first-time setup)
   useEffect(() => {
     if (!isLoading && profile && !profile.openrouter_api_key) {
       setShowSettings(true);
@@ -122,7 +117,6 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
           </motion.div>
         </motion.div>
         
-        {/* Settings modal for first-time setup only */}
         <SettingsModal
           isOpen={showSettings}
           onClose={() => setShowSettings(false)}
@@ -137,7 +131,6 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
       animate={{ opacity: 1 }}
       className="h-screen flex animated-bg overflow-hidden"
     >
-      {/* Sidebar */}
       <motion.div
         initial={{ x: -300 }}
         animate={{ x: 0 }}
@@ -146,17 +139,14 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
         <ChatSidebar />
       </motion.div>
       
-      {/* Main Chat Area */}
       <motion.div
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 30 }}
         className="flex-1 flex flex-col relative"
       >
-        {/* Messages */}
         <ChatMessages />
         
-        {/* Input */}
         <ChatInput />
       </motion.div>
     </motion.div>

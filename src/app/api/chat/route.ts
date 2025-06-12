@@ -17,7 +17,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Get user's profile to retrieve OpenRouter API key
     const { data: profile } = await supabase
       .from('profiles')
       .select('openrouter_api_key')
@@ -28,7 +27,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'OpenRouter API key not configured' }, { status: 400 });
     }
 
-    // Get conversation and messages
     let conversation = null;
     let messages = [];
 
@@ -53,7 +51,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create new conversation if none exists
     if (!conversation) {
       const { data: newConversation, error: conversationError } = await supabase
         .from('conversations')
@@ -72,7 +69,6 @@ export async function POST(request: NextRequest) {
       conversation = newConversation;
     }
 
-    // Add user message to database
     const { error: messageError } = await supabase
       .from('messages')
       .insert({
@@ -85,16 +81,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to save user message' }, { status: 500 });
     }
 
-    // Prepare messages for OpenRouter
     const chatMessages = [
       ...messages.map(msg => ({ role: msg.role as 'user' | 'assistant' | 'system', content: msg.content })),
       { role: 'user' as const, content: message }
     ];
 
-    // Create OpenRouter service and get response
     const openRouter = new OpenRouterService(profile.openrouter_api_key);
     
-    // Create a readable stream for the response
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
@@ -111,7 +104,6 @@ export async function POST(request: NextRequest) {
             request.headers.get('origin') || undefined
           );
 
-          // Save assistant response to database
           await supabase
             .from('messages')
             .insert({

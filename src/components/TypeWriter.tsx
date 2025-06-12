@@ -15,14 +15,12 @@ export function TypeWriter({ text, isComplete = false, speed = 15 }: TypeWriterP
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Für Streaming: Zeige Text sofort an
     if (!isComplete) {
       setDisplayedText(text);
       setIsTyping(text.length > 0);
       return;
     }
 
-    // Für komplette Nachrichten: Typing-Effekt (falls gewünscht)
     setDisplayedText(text);
     setIsTyping(false);
 

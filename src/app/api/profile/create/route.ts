@@ -10,7 +10,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if profile already exists
     const { data: existingProfile } = await supabase
       .from('profiles')
       .select('id')
@@ -21,7 +20,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Profile already exists' });
     }
 
-    // Create the profile
     const { data: profile, error } = await supabase
       .from('profiles')
       .insert({

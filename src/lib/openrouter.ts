@@ -60,7 +60,6 @@ export class OpenRouterService {
       }
 
       if (onChunk && response.body) {
-        // Handle streaming response
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let fullResponse = '';
@@ -86,7 +85,6 @@ export class OpenRouterService {
                     onChunk(content);
                   }
                 } catch (e) {
-                  // Ignore parsing errors for individual chunks
                 }
               }
             }
@@ -97,7 +95,6 @@ export class OpenRouterService {
 
         return fullResponse;
       } else {
-        // Handle non-streaming response
         const data = await response.json();
         return data.choices?.[0]?.message?.content || '';
       }
