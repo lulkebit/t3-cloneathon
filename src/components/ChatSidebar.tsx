@@ -148,7 +148,7 @@ export function ChatSidebar() {
                       createNewConversation();
                       window.history.replaceState(null, '', '/chat');
                     }}
-                    className="flex-1 bg-white/5 hover:bg-white/10 flex items-center justify-center gap-2 h-8 text-xs font-medium rounded-md transition-colors text-white/70 hover:text-white/90"
+                    className="cursor-pointer flex-1 bg-white/5 hover:bg-white/10 flex items-center justify-center gap-2 h-8 text-xs font-medium rounded-md transition-colors text-white/70 hover:text-white/90"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     initial={{ opacity: 0, x: -20 }}
