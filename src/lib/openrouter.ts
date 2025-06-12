@@ -129,6 +129,7 @@ export const getPopularModels = (): string[] => [
   'openai/gpt-4o-mini',
   'anthropic/claude-3-haiku',
   'deepseek/deepseek-r1-0528:free',
+  'google/gemma-3n-e4b-it:free',
   'meta-llama/llama-3.1-405b-instruct',
   'meta-llama/llama-3.1-70b-instruct',
   'google/gemini-pro',
