@@ -2,10 +2,16 @@ import React from 'react';
 import { ChatProvider } from '@/contexts/ChatContext';
 import { ChatPageContent } from '@/components/ChatPageContent';
 
-export default function ChatPage() {
+interface ChatPageProps {
+  params: {
+    id: string;
+  };
+}
+
+export default function ChatPage({ params }: ChatPageProps) {
   return (
     <ChatProvider>
-      <ChatPageContent />
+      <ChatPageContent chatId={params.id} />
     </ChatProvider>
   );
 } 

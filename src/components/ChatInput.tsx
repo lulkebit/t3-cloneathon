@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+
 import { useChat } from '@/contexts/ChatContext';
 import { Send, Bot, Loader2, Sparkles, Zap, ChevronDown, Check, Brain } from 'lucide-react';
 import { getPopularModels } from '@/lib/openrouter';
@@ -14,6 +15,7 @@ export function ChatInput() {
     refreshMessages,
     setActiveConversation,
   } = useChat();
+
 
   const [message, setMessage] = useState('');
   const [selectedModel, setSelectedModel] = useState('google/gemma-3n-e4b-it:free');
@@ -92,9 +94,10 @@ export function ChatInput() {
                   const conversationsResponse = await fetch('/api/conversations');
                   if (conversationsResponse.ok) {
                     const conversationsData = await conversationsResponse.json();
-                    const newConversation = conversationsData.find((c: any) => c.id === parsed.conversationId);
+                    const newConversation = conversationsData.conversations.find((c: any) => c.id === parsed.conversationId);
                     if (newConversation) {
                       setActiveConversation(newConversation);
+                      window.history.replaceState(null, '', `/chat/${newConversation.id}`);
                     }
                   }
                 }

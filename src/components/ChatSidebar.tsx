@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from '@/contexts/ChatContext';
 import { Plus, MessageSquare, Trash2, Settings, Sparkles, Bot } from 'lucide-react';
@@ -15,6 +16,7 @@ export function ChatSidebar() {
     deleteConversation,
     isLoading,
   } = useChat();
+
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -78,7 +80,10 @@ export function ChatSidebar() {
       {/* Header */}
       <div className="p-6 border-b border-white/10">
         <motion.button
-          onClick={createNewConversation}
+          onClick={() => {
+            createNewConversation();
+            window.history.replaceState(null, '', '/chat');
+          }}
           className="w-full btn-primary flex items-center justify-center gap-3 h-12 text-sm font-medium"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -140,7 +145,10 @@ export function ChatSidebar() {
                   stiffness: 300,
                   damping: 30
                 }}
-                onClick={() => setActiveConversation(conversation)}
+                onClick={() => {
+                  setActiveConversation(conversation);
+                  window.history.replaceState(null, '', `/chat/${conversation.id}`);
+                }}
                 className={`group cursor-pointer p-4 rounded-xl border transition-all relative overflow-hidden ${
                   activeConversation?.id === conversation.id
                     ? 'glass-strong border-blue-400/30 bg-blue-500/10'

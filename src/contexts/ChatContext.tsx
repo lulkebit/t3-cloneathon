@@ -26,6 +26,28 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Handle URL changes for browser back/forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      const pathname = window.location.pathname;
+      const chatIdMatch = pathname.match(/^\/chat\/(.+)$/);
+      
+      if (chatIdMatch && chatIdMatch[1] && conversations.length > 0) {
+        const chatId = chatIdMatch[1];
+        const conversation = conversations.find(conv => conv.id === chatId);
+        if (conversation && conversation.id !== activeConversation?.id) {
+          setActiveConversation(conversation);
+        }
+      } else if (pathname === '/chat' && activeConversation) {
+        setActiveConversation(null);
+        setMessages([]);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [conversations, activeConversation]);
+
   const refreshConversations = async () => {
     try {
       const response = await fetch('/api/conversations');
