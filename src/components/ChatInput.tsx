@@ -186,20 +186,26 @@ export function ChatInput() {
                 // Streaming ist abgeschlossen
                 finalizeMessage(assistantMessageId, assistantContent);
                 
-                // Lade echte Nachrichten und räume auf
-                setTimeout(async () => {
-                  if (conversationId) {
-                    await refreshMessages(conversationId);
+                // Lade echte Nachrichten und räume auf - ohne festes Timeout
+                (async () => {
+                  try {
+                    if (conversationId) {
+                      await refreshMessages(conversationId);
+                    }
+                    
+                    // Entferne die optimistischen Nachrichten nur nach erfolgreichem Server-Update
+                    if (userMessageId) {
+                      removeOptimisticMessage(userMessageId);
+                    }
+                    if (assistantMessageId) {
+                      removeOptimisticMessage(assistantMessageId);
+                    }
+                  } catch (error) {
+                    console.error('Error refreshing messages after streaming:', error);
+                    // Bei Fehler beim Nachladen behalten wir die optimistischen Nachrichten
+                    // Sie werden durch die finalisierte Nachricht ersetzt
                   }
-                  
-                  // Entferne die optimistischen Nachrichten nach dem Server-Update
-                  if (userMessageId) {
-                    removeOptimisticMessage(userMessageId);
-                  }
-                  if (assistantMessageId) {
-                    removeOptimisticMessage(assistantMessageId);
-                  }
-                }, 300);
+                })();
               }
             } catch (e) {
               console.error('Error parsing streaming data:', e, 'Data:', data);
