@@ -14,6 +14,10 @@ export function ChatInput() {
     refreshConversations,
     refreshMessages,
     setActiveConversation,
+    addOptimisticMessage,
+    updateStreamingMessage,
+    finalizeMessage,
+    removeOptimisticMessage,
   } = useChat();
 
   const [message, setMessage] = useState('');
@@ -55,8 +59,79 @@ export function ChatInput() {
     setMessage('');
     setIsLoading(true);
     setStreamingMessage('');
+    
+    // Reset textarea height
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
 
+    let conversationId: string | null = null;
+    let userMessageId: string | undefined;
+    let assistantMessageId: string | undefined;
+    
     try {
+      // Prüfe ob wir in einem bestehenden Chat sind oder einen neuen erstellen müssen
+      if (activeConversation) {
+        // Bestehender Chat: Verwende aktuelle Conversation
+        conversationId = activeConversation.id;
+        
+        // Zeige sofort die Benutzernachricht an
+        userMessageId = addOptimisticMessage({
+          conversation_id: conversationId!,
+          role: 'user',
+          content: userMessage,
+        });
+
+        // Zeige Loading-Indikator für AI-Antwort
+        assistantMessageId = addOptimisticMessage({
+          conversation_id: conversationId!,
+          role: 'assistant',
+          content: '',
+          isLoading: true,
+        });
+      } else {
+        // Neuer Chat: Erstelle sofort einen neuen Chat auf dem Server
+        const createConversationResponse = await fetch('/api/conversations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: userMessage.substring(0, 50) + (userMessage.length > 50 ? '...' : ''),
+            model: selectedModel,
+          }),
+        });
+
+        if (!createConversationResponse.ok) {
+          throw new Error('Failed to create conversation');
+        }
+
+        const conversationData = await createConversationResponse.json();
+        conversationId = conversationData.conversation.id;
+        
+        // Aktualisiere die Conversation-Liste
+        await refreshConversations();
+        
+        // Navigiere sofort zum neuen Chat
+        window.history.pushState(null, '', `/chat/${conversationId}`);
+        
+        // Zeige die Benutzernachricht sofort an
+        userMessageId = addOptimisticMessage({
+          conversation_id: conversationId!,
+          role: 'user',
+          content: userMessage,
+        });
+
+        // Zeige Loading-Indikator für AI-Antwort
+        assistantMessageId = addOptimisticMessage({
+          conversation_id: conversationId!,
+          role: 'assistant',
+          content: '',
+          isLoading: true,
+        });
+      }
+
+      // Sende die Nachricht an die AI
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -65,20 +140,30 @@ export function ChatInput() {
         body: JSON.stringify({
           message: userMessage,
           model: selectedModel,
-          conversationId: activeConversation?.id,
+          conversationId: conversationId,
         }),
       });
 
       if (!response.ok) {
+        if (userMessageId) removeOptimisticMessage(userMessageId);
+        if (assistantMessageId) removeOptimisticMessage(assistantMessageId);
         throw new Error('Failed to send message');
       }
 
       if (!response.body) {
+        if (userMessageId) removeOptimisticMessage(userMessageId);
+        if (assistantMessageId) removeOptimisticMessage(assistantMessageId);
         throw new Error('No response body');
       }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
+      let assistantContent = '';
+
+      // Start streaming the assistant response
+      if (assistantMessageId) {
+        updateStreamingMessage(assistantMessageId, '');
+      }
 
       while (true) {
         const { done, value } = await reader.read();
@@ -94,36 +179,43 @@ export function ChatInput() {
 
             try {
               const parsed = JSON.parse(data);
-              if (parsed.content) {
-                setStreamingMessage(prev => prev + parsed.content);
-              } else if (parsed.finished) {
-                // Refresh conversations and messages when streaming is complete
-                await Promise.all([
-                  refreshConversations(),
-                  activeConversation?.id ? refreshMessages(activeConversation.id) : Promise.resolve(),
-                ]);
-
-                // Set the active conversation if it was created
-                if (parsed.conversationId && !activeConversation) {
-                  const conversationsResponse = await fetch('/api/conversations');
-                  if (conversationsResponse.ok) {
-                    const conversationsData = await conversationsResponse.json();
-                    const newConversation = conversationsData.conversations.find((c: any) => c.id === parsed.conversationId);
-                    if (newConversation) {
-                      setActiveConversation(newConversation);
-                      window.history.replaceState(null, '', `/chat/${newConversation.id}`);
-                    }
+              if (parsed.chunk && assistantMessageId) {
+                assistantContent += parsed.chunk;
+                updateStreamingMessage(assistantMessageId, assistantContent);
+              } else if (parsed.done && assistantMessageId) {
+                // Streaming ist abgeschlossen
+                finalizeMessage(assistantMessageId, assistantContent);
+                
+                // Lade echte Nachrichten und räume auf
+                setTimeout(async () => {
+                  if (conversationId) {
+                    await refreshMessages(conversationId);
                   }
-                }
+                  
+                  // Entferne die optimistischen Nachrichten nach dem Server-Update
+                  if (userMessageId) {
+                    removeOptimisticMessage(userMessageId);
+                  }
+                  if (assistantMessageId) {
+                    removeOptimisticMessage(assistantMessageId);
+                  }
+                }, 300);
               }
             } catch (e) {
-              // Ignore parsing errors
+              console.error('Error parsing streaming data:', e);
             }
           }
         }
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      // Entferne optimistische Nachrichten bei Fehler falls sie existieren
+      if (userMessageId) {
+        removeOptimisticMessage(userMessageId);
+      }
+      if (assistantMessageId) {
+        removeOptimisticMessage(assistantMessageId);
+      }
     } finally {
       setIsLoading(false);
       setStreamingMessage('');

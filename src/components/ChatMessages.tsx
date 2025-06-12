@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from '@/contexts/ChatContext';
 import { User, Bot, Sparkles, Copy, Check, RotateCcw, Loader2 } from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
+import { LoadingIndicator } from './LoadingIndicator';
+import { TypeWriter } from './TypeWriter';
 
 export function ChatMessages() {
   const { messages, activeConversation, isLoading, refreshMessages } = useChat();
@@ -276,14 +278,24 @@ export function ChatMessages() {
                       ))}
                     </div>
                   ) : (
-                    // For assistant messages, use markdown rendering
+                    // For assistant messages, handle loading, streaming, and completed states
                     <div className="relative">
                       <motion.div
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.03 + 0.2 }}
                       >
-                        <MarkdownRenderer content={message.content} />
+                        {message.isLoading ? (
+                          <LoadingIndicator />
+                        ) : message.isStreaming ? (
+                          <TypeWriter 
+                            text={message.content} 
+                            isComplete={false}
+                            speed={20}
+                          />
+                        ) : (
+                          <MarkdownRenderer content={message.content} />
+                        )}
                       </motion.div>
                       
                       {/* Action buttons for assistant messages */}
