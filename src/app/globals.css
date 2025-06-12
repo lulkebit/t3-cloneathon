@@ -208,6 +208,8 @@ html, body {
 /* Markdown Content Styles */
 .markdown-content {
   line-height: 1.6;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .markdown-content pre {
@@ -229,6 +231,72 @@ html, body {
 .markdown-content h5:first-child,
 .markdown-content h6:first-child {
   margin-top: 0;
+}
+
+/* User message specific styles */
+.markdown-content.user-message {
+  text-align: right;
+}
+
+.markdown-content.user-message ul,
+.markdown-content.user-message ol {
+  text-align: left;
+  display: inline-block;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.markdown-content.user-message blockquote {
+  text-align: left;
+  margin-left: auto;
+  margin-right: 0;
+  display: inline-block;
+  max-width: 90%;
+}
+
+.markdown-content.user-message pre {
+  text-align: left;
+  width: 100%;
+  max-width: none;
+}
+
+.markdown-content.user-message > div {
+  width: 100%;
+  display: block;
+}
+
+.markdown-content.user-message code:not(pre code) {
+  text-align: left;
+}
+
+/* Fix list spacing and indentation */
+.markdown-content ul,
+.markdown-content ol {
+  padding-left: 0;
+}
+
+.markdown-content ul ul,
+.markdown-content ol ol,
+.markdown-content ul ol,
+.markdown-content ol ul {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.markdown-content li {
+  margin-bottom: 0.25rem;
+}
+
+.markdown-content li:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content li > p {
+  margin-bottom: 0.5rem;
+}
+
+.markdown-content li > p:last-child {
+  margin-bottom: 0;
 }
 
 /* Streaming message specific styles */

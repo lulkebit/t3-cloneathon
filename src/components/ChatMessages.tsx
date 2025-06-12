@@ -279,26 +279,25 @@ export function ChatMessages() {
             {/* Message Content */}
             <div className={`relative ${
               message.role === 'user' 
-                ? 'mr-11 max-w-2xl' 
+                ? 'mr-11' 
                 : 'ml-11'
             }`} style={{
-              maxWidth: message.role === 'assistant' ? 'calc(100% - 2.75rem - 2.75rem)' : undefined
+              maxWidth: message.role === 'assistant' ? 'calc(100% - 2.75rem - 2.75rem)' : 'calc(100% - 2.75rem - 2.75rem)'
             }}>
               {/* Message content with markdown rendering */}
               <div className={`${
                 message.role === 'user' ? 'text-right' : 'text-left'
               }`}>
                 {message.role === 'user' ? (
-                  // For user messages, keep simple text rendering
-                  <div className="prose prose-sm max-w-none">
-                    {message.content.split('\n').map((line, lineIndex) => (
-                      <p
-                        key={lineIndex}
-                        className={`${lineIndex === 0 ? '' : 'mt-2'} text-white/90 leading-relaxed text-right`}
-                      >
-                        {line || '\u00A0'}
-                      </p>
-                    ))}
+                  // For user messages, use markdown rendering with right alignment
+                  <div className={`prose prose-sm max-w-none ${
+                    message.role === 'user' ? 'text-right' : 'text-left'
+                  }`}>
+                    <MarkdownRenderer 
+                      content={message.content} 
+                      isUserMessage={true}
+                      className="text-right"
+                    />
                   </div>
                 ) : (
                   // For assistant messages, handle loading, streaming, and completed states
@@ -323,7 +322,7 @@ export function ChatMessages() {
                       <div className="relative group/copy">
                         <button
                           onClick={() => handleCopy(message.id, message.content)}
-                          className="p-2 rounded-lg hover:bg-white/10 transition-colors duration-150"
+                          className="cursor-pointer p-2 rounded-lg hover:bg-white/10 transition-colors duration-150"
                         >
                           {copiedId === message.id ? (
                             <Check size={16} className="text-green-400" />
@@ -343,7 +342,7 @@ export function ChatMessages() {
                         <button
                           onClick={() => handleRetry(message.id, index)}
                           disabled={retryingId === message.id || !activeConversation}
-                          className="p-2 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                          className="cursor-pointer p-2 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
                         >
                           {retryingId === message.id ? (
                             <Loader2 size={16} className="text-blue-400 animate-spin" />

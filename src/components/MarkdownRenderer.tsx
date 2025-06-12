@@ -3,6 +3,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import { Copy, Check } from 'lucide-react';
@@ -14,6 +15,7 @@ import 'highlight.js/styles/github-dark.css';
 interface MarkdownRendererProps {
   content: string;
   className?: string;
+  isUserMessage?: boolean;
 }
 
 interface CodeBlockProps {
@@ -47,45 +49,47 @@ function CodeBlock({ children, className, inline, ...props }: CodeBlockProps) {
   }
 
   return (
-    <div className="relative group my-4 border border-gray-700/50 rounded-lg overflow-hidden">
-      {/* Language label and copy button */}
-      <div className="flex items-center justify-between px-4 py-2 bg-gray-800/80 border-b border-gray-700/50">
-        <span className="text-xs text-gray-300 font-medium">
-          {language || 'code'}
-        </span>
-        <button
-          onClick={handleCopy}
-          className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-300 hover:text-white bg-gray-700/50 hover:bg-gray-600/50 rounded transition-colors"
-        >
-          {copied ? (
-            <>
-              <Check size={12} />
-              Copied!
-            </>
-          ) : (
-            <>
-              <Copy size={12} />
-              Copy
-            </>
-          )}
-        </button>
+    <div className="w-full block">
+      <div className="relative group my-4 border border-gray-700/50 rounded-lg overflow-hidden w-full">
+        {/* Language label and copy button */}
+        <div className="flex items-center justify-between px-4 py-2 bg-gray-800/80 border-b border-gray-700/50">
+          <span className="text-xs text-gray-300 font-medium">
+            {language || 'code'}
+          </span>
+          <button
+            onClick={handleCopy}
+            className="cursor-pointer flex items-center gap-1.5 px-2 py-1 text-xs text-gray-300 hover:text-white bg-gray-700/50 hover:bg-gray-600/50 rounded transition-colors"
+          >
+            {copied ? (
+              <>
+                <Check size={12} />
+                Copied!
+              </>
+            ) : (
+              <>
+                <Copy size={12} />
+                Copy
+              </>
+            )}
+          </button>
+        </div>
+        
+        {/* Code content */}
+        <pre className="bg-gray-900/90 overflow-x-auto m-0 p-4 w-full">
+          <code className={className} {...props}>
+            {children}
+          </code>
+        </pre>
       </div>
-      
-      {/* Code content */}
-      <pre className="bg-gray-900/90 overflow-x-auto m-0 p-4">
-        <code className={className} {...props}>
-          {children}
-        </code>
-      </pre>
     </div>
   );
 }
 
-export function MarkdownRenderer({ content, className = '' }: MarkdownRendererProps) {
+export function MarkdownRenderer({ content, className = '', isUserMessage = false }: MarkdownRendererProps) {
   return (
-    <div className={`markdown-content ${className}`}>
+    <div className={`markdown-content ${className} ${isUserMessage ? 'user-message' : 'assistant-message'}`}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, remarkBreaks]}
         rehypePlugins={[rehypeHighlight, rehypeRaw]}
         components={{
           // Code blocks
@@ -123,27 +127,43 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
             </h6>
           ),
           
-          // Paragraphs
+          // Paragraphs - improved spacing and break handling
           p: ({ children }) => (
-            <p className="text-white/90 leading-relaxed mb-4">
+            <p className="text-white/90 leading-relaxed mb-3 last:mb-0">
               {children}
             </p>
           ),
           
-          // Lists
-          ul: ({ children }) => (
-            <ul className="list-disc list-inside text-white/90 mb-4 space-y-1 ml-2">
-              {children}
-            </ul>
-          ),
-          ol: ({ children }) => (
-            <ol className="list-decimal list-inside text-white/90 mb-4 space-y-1 ml-2">
-              {children}
-            </ol>
-          ),
-          li: ({ children }) => (
-            <li className="text-white/90 leading-relaxed">
-              {children}
+          // Lists - improved formatting and spacing
+          ul: ({ children, ...props }) => {
+            const depth = (props as any)?.depth || 0;
+            return (
+              <ul className={`text-white/90 mb-3 last:mb-0 ${
+                depth === 0 
+                  ? 'list-disc list-outside ml-5 space-y-1' 
+                  : 'list-disc list-outside ml-4 space-y-0.5 mt-1'
+              }`}>
+                {children}
+              </ul>
+            );
+          },
+          ol: ({ children, ...props }) => {
+            const depth = (props as any)?.depth || 0;
+            return (
+              <ol className={`text-white/90 mb-3 last:mb-0 ${
+                depth === 0 
+                  ? 'list-decimal list-outside ml-5 space-y-1' 
+                  : 'list-decimal list-outside ml-4 space-y-0.5 mt-1'
+              }`}>
+                {children}
+              </ol>
+            );
+          },
+          li: ({ children, ...props }) => (
+            <li className="text-white/90 leading-relaxed pl-1">
+              <div className="inline-block w-full">
+                {children}
+              </div>
             </li>
           ),
           
@@ -173,10 +193,13 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
           
           // Blockquotes
           blockquote: ({ children }) => (
-            <blockquote className="border-l-4 border-blue-400/50 bg-gray-800/30 pl-4 py-2 my-4 italic text-white/80">
+            <blockquote className="border-l-4 border-blue-400/50 bg-gray-800/30 pl-4 py-2 my-3 italic text-white/80">
               {children}
             </blockquote>
           ),
+          
+          // Line breaks
+          br: () => <br className="leading-relaxed" />,
           
           // Tables
           table: ({ children }) => (
