@@ -161,7 +161,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const updateStreamingMessage = (messageId: string, content: string) => {
     setMessages(prev => prev.map(msg => 
       msg.id === messageId 
-        ? { ...msg, content, isStreaming: true }
+        ? { ...msg, content, isStreaming: true, isLoading: false }
         : msg
     ));
   };

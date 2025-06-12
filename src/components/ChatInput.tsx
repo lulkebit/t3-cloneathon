@@ -167,11 +167,6 @@ export function ChatInput() {
       const decoder = new TextDecoder();
       let assistantContent = '';
 
-      // Start streaming the assistant response
-      if (assistantMessageId) {
-        updateStreamingMessage(assistantMessageId, '');
-      }
-
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -188,8 +183,10 @@ export function ChatInput() {
               const parsed = JSON.parse(data);
               if (parsed.chunk && assistantMessageId) {
                 assistantContent += parsed.chunk;
+                console.log('Streaming chunk received:', parsed.chunk, 'Total content:', assistantContent.length, 'chars');
                 updateStreamingMessage(assistantMessageId, assistantContent);
               } else if (parsed.done && assistantMessageId) {
+                console.log('Streaming completed, final content length:', assistantContent.length);
                 // Streaming ist abgeschlossen
                 finalizeMessage(assistantMessageId, assistantContent);
                 
@@ -209,7 +206,7 @@ export function ChatInput() {
                 }, 300);
               }
             } catch (e) {
-              console.error('Error parsing streaming data:', e);
+              console.error('Error parsing streaming data:', e, 'Data:', data);
             }
           }
         }

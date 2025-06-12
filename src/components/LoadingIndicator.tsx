@@ -36,7 +36,6 @@ export function LoadingIndicator() {
           ease: "easeInOut",
         }}
       >
-        AI is thinking...
       </motion.span>
     </div>
   );
