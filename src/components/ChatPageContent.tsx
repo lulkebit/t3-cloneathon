@@ -7,6 +7,7 @@ import { ChatSidebar } from '@/components/ChatSidebar';
 import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
 import { SettingsModal } from '@/components/SettingsModal';
+import { useDynamicTitle } from '@/lib/useDynamicTitle';
 import { Key, Sparkles } from 'lucide-react';
 
 interface ChatPageContentProps {
@@ -14,8 +15,11 @@ interface ChatPageContentProps {
 }
 
 export function ChatPageContent({ chatId }: ChatPageContentProps) {
-  const { profile, isLoading, conversations, setActiveConversation } = useChat();
+  const { profile, isLoading, conversations, setActiveConversation, activeConversation } = useChat();
   const [showSettings, setShowSettings] = useState(false);
+  
+  // Update document title based on active conversation
+  useDynamicTitle(activeConversation);
 
   // Set active conversation based on chat ID
   useEffect(() => {
