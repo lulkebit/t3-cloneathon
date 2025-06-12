@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from '@/contexts/ChatContext';
-import { Plus, MessageSquare, Trash2, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, MessageSquare, Trash2, Settings, ChevronLeft, ChevronRight, X, Check } from 'lucide-react';
 
 export function ChatSidebar() {
   const {
@@ -18,16 +18,33 @@ export function ChatSidebar() {
   } = useChat();
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const handleDeleteConversation = async (e: React.MouseEvent, conversationId: string) => {
+  const handleDeleteClick = (e: React.MouseEvent, conversationId: string) => {
     e.stopPropagation();
+    if (confirmingDeleteId === conversationId) {
+      // If already confirming, proceed with deletion
+      handleDeleteConversation(conversationId);
+    } else {
+      // Show confirmation
+      setConfirmingDeleteId(conversationId);
+    }
+  };
+
+  const handleDeleteConversation = async (conversationId: string) => {
     setDeletingId(conversationId);
+    setConfirmingDeleteId(null);
     try {
       await deleteConversation(conversationId);
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleCancelDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setConfirmingDeleteId(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -220,10 +237,16 @@ export function ChatSidebar() {
                             ease: "easeOut"
                           }}
                           onClick={() => {
-                            setActiveConversation(conversation);
-                            window.history.replaceState(null, '', `/chat/${conversation.id}`);
+                            if (deletingId !== conversation.id) {
+                              setActiveConversation(conversation);
+                              window.history.replaceState(null, '', `/chat/${conversation.id}`);
+                            }
                           }}
-                          className={`group cursor-pointer p-2 rounded-md transition-colors relative ${
+                          className={`group p-2 rounded-md transition-colors relative ${
+                            deletingId === conversation.id
+                              ? 'cursor-not-allowed opacity-50'
+                              : 'cursor-pointer'
+                          } ${
                             activeConversation?.id === conversation.id
                               ? 'bg-white/10 text-white/90'
                               : 'text-white/60 hover:bg-white/5 hover:text-white/80'
@@ -244,31 +267,79 @@ export function ChatSidebar() {
 
                           <div className="flex items-center justify-between pl-2">
                             <div className="flex-1 min-w-0">
-                              <h3 className="text-xs font-medium truncate mb-1">
-                                {conversation.title}
-                              </h3>
+                              <div className="flex items-center gap-2">
+                                <h3 className="text-xs font-medium truncate mb-1">
+                                  {conversation.title}
+                                </h3>
+                                {deletingId === conversation.id && (
+                                  <motion.div
+                                    initial={{ opacity: 0, scale: 0 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className="flex items-center gap-1"
+                                  >
+                                    <motion.div
+                                      animate={{ rotate: 360 }}
+                                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                      className="w-3 h-3 border border-red-400/60 border-t-transparent rounded-full"
+                                    />
+                                    <span className="text-[10px] text-red-400/80 font-medium">
+                                      Deleting...
+                                    </span>
+                                  </motion.div>
+                                )}
+                              </div>
                               <p className="text-xs opacity-50">
                                 {formatDate(conversation.updated_at)}
                               </p>
                             </div>
                             
-                            <motion.button
-                              onClick={(e) => handleDeleteConversation(e, conversation.id)}
-                              disabled={deletingId === conversation.id}
-                              className="opacity-0 group-hover:opacity-60 hover:opacity-100 p-1 transition-opacity"
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                            >
-                              {deletingId === conversation.id ? (
-                                <motion.div
-                                  animate={{ rotate: 360 }}
-                                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                  className="w-3 h-3 border border-white/40 border-t-transparent rounded-full"
-                                />
+                            <div className="flex items-center gap-1">
+                              {confirmingDeleteId === conversation.id ? (
+                                <>
+                                  <motion.button
+                                    onClick={(e) => handleDeleteClick(e, conversation.id)}
+                                    disabled={deletingId === conversation.id}
+                                    className={`p-1.5 rounded transition-colors ${
+                                      deletingId === conversation.id
+                                        ? 'bg-red-500/10 cursor-not-allowed'
+                                        : 'cursor-pointer bg-red-500/20 hover:bg-red-500/30'
+                                    }`}
+                                    whileHover={deletingId === conversation.id ? {} : { scale: 1.05 }}
+                                    whileTap={deletingId === conversation.id ? {} : { scale: 0.95 }}
+                                  >
+                                    {deletingId === conversation.id ? (
+                                      <motion.div
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                        className="w-4 h-4 border border-white/40 border-t-transparent rounded-full"
+                                      />
+                                    ) : (
+                                      <Check size={14} className="text-red-400" />
+                                    )}
+                                  </motion.button>
+                                  {deletingId !== conversation.id && (
+                                    <motion.button
+                                      onClick={handleCancelDelete}
+                                      className="cursor-pointer p-1.5 bg-white/10 hover:bg-white/20 rounded transition-colors"
+                                      whileHover={{ scale: 1.05 }}
+                                      whileTap={{ scale: 0.95 }}
+                                    >
+                                      <X size={14} className="text-white/60" />
+                                    </motion.button>
+                                  )}
+                                </>
                               ) : (
-                                <Trash2 size={12} />
+                                <motion.button
+                                  onClick={(e) => handleDeleteClick(e, conversation.id)}
+                                  disabled={deletingId === conversation.id}
+                                  className="cursor-pointer opacity-0 group-hover:opacity-60 hover:opacity-100 p-1.5 transition-opacity rounded hover:bg-red-500/20"
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                >
+                                  <Trash2 size={14} className="text-white/60" />
+                                </motion.button>
                               )}
-                            </motion.button>
+                            </div>
                           </div>
                         </motion.div>
                       ))
