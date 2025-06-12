@@ -280,8 +280,10 @@ export function ChatMessages() {
             <div className={`relative ${
               message.role === 'user' 
                 ? 'mr-11 max-w-2xl' 
-                : 'ml-11 max-w-4xl'
-            }`}>
+                : 'ml-11'
+            }`} style={{
+              maxWidth: message.role === 'assistant' ? 'calc(100% - 2.75rem - 2.75rem)' : undefined
+            }}>
               {/* Message content with markdown rendering */}
               <div className={`${
                 message.role === 'user' ? 'text-right' : 'text-left'
