@@ -11,8 +11,8 @@
   --text-primary: #ffffff;
   --text-secondary: #a0a0a0;
   --text-tertiary: #6b7280;
-  --accent: #007aff;
-  --accent-hover: #0056cc;
+  --accent: #8b5cf6;
+  --accent-hover: #7c3aed;
   --success: #34d399;
   --warning: #fbbf24;
   --error: #ef4444;
@@ -54,7 +54,7 @@ html, body {
 /* Animated Background */
 .animated-bg {
   background: 
-    radial-gradient(circle at 20% 50%, rgba(0, 122, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(52, 211, 153, 0.08) 0%, transparent 50%),
     radial-gradient(circle at 40% 80%, rgba(251, 191, 36, 0.06) 0%, transparent 50%),
     var(--bg-primary);
@@ -95,7 +95,7 @@ html, body {
 
 /* Selection Styles */
 ::selection {
-  background: rgba(0, 122, 255, 0.3);
+  background: rgba(139, 92, 246, 0.3);
   color: white;
 }
 
@@ -120,7 +120,7 @@ html, body {
 .btn-primary:hover {
   background: var(--accent-hover);
   transform: translateY(-1px);
-  box-shadow: 0 8px 32px rgba(0, 122, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3);
 }
 
 .btn-ghost {
@@ -155,7 +155,7 @@ html, body {
 .input-glass:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
 }
 
 .input-glass::placeholder {
@@ -202,7 +202,7 @@ html, body {
 
 /* Glow Effect */
 .glow {
-  box-shadow: 0 0 20px rgba(0, 122, 255, 0.3);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
 }
 
 /* Markdown Content Styles */
@@ -255,7 +255,7 @@ html, body {
 .hljs-type,
 .hljs-name,
 .hljs-strong {
-  color: #60a5fa !important;
+  color: #a78bfa !important;
 }
 
 .hljs-string,
