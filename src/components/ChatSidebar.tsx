@@ -61,7 +61,7 @@ export function ChatSidebar() {
             <div className="relative group/expand">
               <motion.button
                 onClick={() => setIsCollapsed(false)}
-                className="cursor-pointer w-10 h-10 bg-black/40 backdrop-blur-sm hover:bg-black/60 flex items-center justify-center rounded-lg transition-colors text-white/50 hover:text-white/80 border border-white/10"
+                className="cursor-pointer w-10 h-10 bg-white/5 hover:bg-white/10 backdrop-blur-sm flex items-center justify-center rounded-lg transition-colors text-white/50 hover:text-white/80 border border-white/10"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -80,7 +80,7 @@ export function ChatSidebar() {
                   createNewConversation();
                   window.history.replaceState(null, '', '/chat');
                 }}
-                className="cursor-pointer w-10 h-10 bg-black/40 backdrop-blur-sm hover:bg-black/60 flex items-center justify-center rounded-lg transition-colors text-white/70 hover:text-white/90 border border-white/10"
+                className="cursor-pointer w-10 h-10 bg-white/5 hover:bg-white/10 backdrop-blur-sm flex items-center justify-center rounded-lg transition-colors text-white/70 hover:text-white/90 border border-white/10"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
