@@ -204,3 +204,87 @@ html, body {
 .glow {
   box-shadow: 0 0 20px rgba(0, 122, 255, 0.3);
 }
+
+/* Markdown Content Styles */
+.markdown-content {
+  line-height: 1.6;
+}
+
+.markdown-content pre {
+  font-size: 0.875rem;
+}
+
+.markdown-content code:not(pre code) {
+  font-size: 0.875rem;
+}
+
+.markdown-content p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content h1:first-child,
+.markdown-content h2:first-child,
+.markdown-content h3:first-child,
+.markdown-content h4:first-child,
+.markdown-content h5:first-child,
+.markdown-content h6:first-child {
+  margin-top: 0;
+}
+
+/* Streaming message specific styles */
+.streaming-message p:last-child {
+  display: inline;
+}
+
+.streaming-message p:empty {
+  display: none;
+}
+
+/* Override highlight.js theme for better dark mode integration */
+.hljs {
+  background: rgba(17, 24, 39, 0.8) !important;
+  color: #e5e7eb !important;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-title,
+.hljs-section,
+.hljs-doctag,
+.hljs-type,
+.hljs-name,
+.hljs-strong {
+  color: #60a5fa !important;
+}
+
+.hljs-string,
+.hljs-number,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-attribute,
+.hljs-template-tag,
+.hljs-addition {
+  color: #34d399 !important;
+}
+
+.hljs-comment,
+.hljs-quote,
+.hljs-deletion,
+.hljs-meta {
+  color: #6b7280 !important;
+}
+
+.hljs-variable,
+.hljs-template-variable,
+.hljs-link {
+  color: #f59e0b !important;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}

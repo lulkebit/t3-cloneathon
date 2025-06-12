@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from '@/contexts/ChatContext';
 import { User, Bot, Sparkles } from 'lucide-react';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 export function ChatMessages() {
   const { messages, activeConversation, isLoading } = useChat();
@@ -159,25 +160,39 @@ export function ChatMessages() {
                 transition={{ delay: index * 0.03 + 0.15 }}
                 className={`relative ${
                   message.role === 'user' 
-                    ? 'mr-11 max-w-2xl text-right' 
-                    : 'ml-11'
+                    ? 'mr-11 max-w-2xl' 
+                    : 'ml-11 max-w-4xl'
                 }`}
               >
-                {/* Message text directly on background */}
-                <div className="prose prose-sm max-w-none">
-                  {message.content.split('\n').map((line, lineIndex) => (
-                    <motion.p
-                      key={lineIndex}
-                      initial={{ opacity: 0, x: message.role === 'user' ? 10 : -10 }}
+                {/* Message content with markdown rendering */}
+                <div className={`group-hover:opacity-100 transition-opacity duration-200 ${
+                  message.role === 'user' ? 'text-right' : 'text-left'
+                }`}>
+                  {message.role === 'user' ? (
+                    // For user messages, keep simple text rendering
+                    <div className="prose prose-sm max-w-none">
+                      {message.content.split('\n').map((line, lineIndex) => (
+                        <motion.p
+                          key={lineIndex}
+                          initial={{ opacity: 0, x: 10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.03 + lineIndex * 0.01 + 0.2 }}
+                          className={`${lineIndex === 0 ? '' : 'mt-2'} text-white/90 leading-relaxed group-hover:text-white transition-colors duration-200 text-right`}
+                        >
+                          {line || '\u00A0'}
+                        </motion.p>
+                      ))}
+                    </div>
+                  ) : (
+                    // For assistant messages, use markdown rendering
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.03 + lineIndex * 0.01 + 0.2 }}
-                      className={`${lineIndex === 0 ? '' : 'mt-2'} text-white/90 leading-relaxed group-hover:text-white transition-colors duration-200 ${
-                        message.role === 'user' ? 'text-right' : 'text-left'
-                      }`}
+                      transition={{ delay: index * 0.03 + 0.2 }}
                     >
-                      {line || '\u00A0'}
-                    </motion.p>
-                  ))}
+                      <MarkdownRenderer content={message.content} />
+                    </motion.div>
+                  )}
                 </div>
 
                 {/* Subtle hover indicator */}

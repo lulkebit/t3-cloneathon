@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from '@/contexts/ChatContext';
 import { Send, Bot, Loader2, Sparkles, Zap, ChevronDown, Check, Brain } from 'lucide-react';
 import { getPopularModels } from '@/lib/openrouter';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 export function ChatInput() {
   const {
@@ -294,18 +295,21 @@ export function ChatInput() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
-                className="ml-11 relative"
+                className="ml-11 relative max-w-4xl"
               >
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-white/90 whitespace-pre-wrap text-sm leading-relaxed"
+                  className="relative"
                 >
-                  {streamingMessage}
+                  <MarkdownRenderer 
+                    content={streamingMessage} 
+                    className="streaming-message"
+                  />
                   <motion.span
                     animate={{ opacity: [0, 1, 0] }}
                     transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-                    className="inline-block w-0.5 h-4 ml-1 bg-blue-400"
+                    className="inline-block w-0.5 h-4 ml-1 bg-blue-400 absolute"
                   />
                 </motion.div>
               </motion.div>
