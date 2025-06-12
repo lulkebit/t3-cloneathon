@@ -472,12 +472,12 @@ export function ChatInput() {
       </AnimatePresence>
 
       {/* Chat Input */}
-      <div className="p-6 flex justify-center">
+      <div className="p-4 flex justify-center">
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="w-full max-w-4xl glass-strong backdrop-blur-xl rounded-2xl border border-white/10 p-6 shadow-xl"
+          className="w-full max-w-4xl glass-strong backdrop-blur-xl rounded-2xl border border-white/10 p-4 shadow-xl"
         >
 
           {/* Streaming Message Display */}
@@ -551,7 +551,7 @@ export function ChatInput() {
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Type your message..."
                 disabled={isLoading}
-                className="w-full min-h-[50px] max-h-32 resize-none bg-transparent border-none outline-none focus:outline-none disabled:opacity-50 pr-14 text-white placeholder-white/60 p-4"
+                className="w-full min-h-[40px] max-h-32 resize-none bg-transparent border-none outline-none focus:outline-none disabled:opacity-50 pr-14 text-white placeholder-white/60 p-3"
                 rows={1}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
@@ -604,7 +604,7 @@ export function ChatInput() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="mt-4 flex justify-start"
+            className="mt-3 flex justify-start"
           >
             <motion.button
               onClick={() => setIsModelModalOpen(true)}
