@@ -8,8 +8,50 @@ import { MarkdownRenderer } from './MarkdownRenderer';
 import { LoadingIndicator } from './LoadingIndicator';
 import { TypeWriter } from './TypeWriter';
 
+// Helper function to get provider logo from model string
+const getProviderLogo = (model: string) => {
+  const providerLogos: Record<string, string> = {
+    'anthropic': '/logos/anthropic.svg',
+    'openai': '/logos/openai.svg',
+    'google': '/logos/google.svg',
+    'meta-llama': '/logos/meta.svg',
+    'mistralai': '/logos/mistral.svg',
+    'deepseek': '/logos/deepseek.svg'
+  };
+  
+  // Extract provider from model string (e.g., "anthropic/claude-3-haiku" -> "anthropic")
+  const provider = model.split('/')[0];
+  return providerLogos[provider.toLowerCase()] || null;
+};
+
+// Helper function to format model name for display
+const formatModelName = (model: string) => {
+  const parts = model.split('/');
+  if (parts.length === 2) {
+    const [provider, modelName] = parts;
+    return modelName.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
+  return model;
+};
+
+// Helper function to get user display name from user metadata
+const getUserDisplayName = (user: any) => {
+  if (!user?.user_metadata) return 'You';
+  
+  // Try different possible name fields in order of preference
+  const metadata = user.user_metadata;
+  return metadata.full_name || 
+         metadata.name || 
+         metadata.display_name || 
+         metadata.first_name ||
+         (metadata.given_name && metadata.family_name ? `${metadata.given_name} ${metadata.family_name}` : null) ||
+         metadata.given_name ||
+         metadata.nickname ||
+         'You';
+};
+
 export function ChatMessages() {
-  const { messages, activeConversation, isLoading, refreshMessages } = useChat();
+  const { messages, activeConversation, isLoading, refreshMessages, user } = useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [retryingId, setRetryingId] = useState<string | null>(null);
@@ -171,16 +213,44 @@ export function ChatMessages() {
               message.role === 'user' ? 'flex-row-reverse' : ''
             }`}>
               {/* Avatar */}
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center overflow-hidden ${
                 message.role === 'user' 
                   ? 'bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-400/30' 
                   : 'bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-400/30'
               }`}>
                 {message.role === 'user' ? (
-                  <User size={16} className="text-white/90" />
+                  user?.user_metadata?.avatar_url ? (
+                    <img 
+                      src={user.user_metadata.avatar_url} 
+                      alt="User Avatar" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User size={16} className="text-white/90" />
+                  )
                 ) : (
-                  <Bot size={16} className="text-blue-400" />
+                  (() => {
+                    const logoUrl = activeConversation?.model ? getProviderLogo(activeConversation.model) : null;
+                    return logoUrl ? (
+                      <img 
+                        src={logoUrl} 
+                        alt="Provider Logo" 
+                        className="w-4 h-4 object-contain"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const botIcon = target.nextElementSibling as HTMLElement;
+                          if (botIcon) {
+                            botIcon.classList.remove('hidden');
+                          }
+                        }}
+                      />
+                    ) : null;
+                  })()
                 )}
+                <Bot size={16} className={`text-blue-400 ${
+                  activeConversation?.model && getProviderLogo(activeConversation.model) ? 'hidden' : ''
+                }`} />
               </div>
 
               {/* Name and timestamp */}
@@ -190,7 +260,12 @@ export function ChatMessages() {
                 <span className={`text-sm font-medium ${
                   message.role === 'user' ? 'text-white/90' : 'text-blue-400'
                 }`}>
-                  {message.role === 'user' ? 'You' : 'Assistant'}
+                  {message.role === 'user' 
+                    ? getUserDisplayName(user)
+                    : activeConversation?.model 
+                      ? formatModelName(activeConversation.model)
+                      : 'Assistant'
+                  }
                 </span>
                 <span className="text-xs text-white/40">
                   {new Date(message.created_at).toLocaleTimeString([], {

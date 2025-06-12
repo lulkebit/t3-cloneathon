@@ -2,17 +2,20 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Conversation, Message, Profile } from '@/types/chat';
+import { createClient } from '@/lib/supabase-client';
 
 interface ChatContextType {
   conversations: Conversation[];
   activeConversation: Conversation | null;
   messages: Message[];
   profile: Profile | null;
+  user: any | null;
   isLoading: boolean;
   setActiveConversation: (conversation: Conversation | null) => void;
   refreshConversations: () => Promise<void>;
   refreshMessages: (conversationId: string) => Promise<void>;
   refreshProfile: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   createNewConversation: () => void;
   deleteConversation: (conversationId: string) => Promise<void>;
   addOptimisticMessage: (message: Omit<Message, 'id' | 'created_at'>) => string;
@@ -28,6 +31,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [user, setUser] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Handle URL changes for browser back/forward navigation
@@ -121,6 +125,18 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      const supabase = createClient();
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (!error && user) {
+        setUser(user);
+      }
+    } catch (error) {
+      console.error('Error fetching user:', error);
+    }
+  };
+
   const createNewConversation = () => {
     setActiveConversation(null);
     setMessages([]);
@@ -183,6 +199,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       await Promise.all([
         refreshConversations(),
         refreshProfile(),
+        refreshUser(),
       ]);
       setIsLoading(false);
     };
@@ -210,11 +227,13 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         activeConversation,
         messages,
         profile,
+        user,
         isLoading,
         setActiveConversation,
         refreshConversations,
         refreshMessages,
         refreshProfile,
+        refreshUser,
         createNewConversation,
         deleteConversation,
         addOptimisticMessage,
