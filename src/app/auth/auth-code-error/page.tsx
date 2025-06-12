@@ -33,7 +33,7 @@ export default function AuthCodeError() {
             transition={{ delay: 0.3 }}
             className="text-2xl font-bold text-white mb-2"
           >
-            Anmeldefehler
+            Authentication Error
           </motion.h1>
           
           <motion.p
@@ -42,7 +42,7 @@ export default function AuthCodeError() {
             transition={{ delay: 0.4 }}
             className="text-white/60 mb-8"
           >
-            Es ist ein Fehler bei der Anmeldung aufgetreten. Bitte versuche es erneut.
+            An error occurred during authentication. Please try again.
           </motion.p>
           
           <motion.div
@@ -55,7 +55,7 @@ export default function AuthCodeError() {
               className="btn-primary w-full flex items-center justify-center gap-2"
             >
               <ArrowLeft size={16} />
-              Zurück zur Anmeldung
+              Back to Login
             </Link>
           </motion.div>
         </motion.div>

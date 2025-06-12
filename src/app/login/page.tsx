@@ -40,7 +40,7 @@ export default function LoginPage() {
         }
       } else {
         if (password !== confirmPassword) {
-          setError('Passwörter stimmen nicht überein')
+          setError('Passwords do not match')
           return
         }
 
@@ -55,11 +55,11 @@ export default function LoginPage() {
         if (error) {
           setError(error.message)
         } else {
-          setMessage('Prüfe deine E-Mails für den Bestätigungslink')
+          setMessage('Check your email for the confirmation link')
         }
       }
     } catch (err) {
-      setError('Ein unerwarteter Fehler ist aufgetreten')
+      setError('An unexpected error occurred')
     } finally {
       setLoading(false)
     }
@@ -81,7 +81,7 @@ export default function LoginPage() {
         setError(error.message)
       }
     } catch (err) {
-      setError('Ein unerwarteter Fehler ist aufgetreten')
+      setError('An unexpected error occurred')
     } finally {
       setLoading(false)
     }
@@ -117,7 +117,7 @@ export default function LoginPage() {
               transition={{ delay: 0.3 }}
               className="text-2xl font-bold text-white mb-2"
             >
-              {isLogin ? 'Willkommen zurück' : 'Konto erstellen'}
+              {isLogin ? 'Welcome back' : 'Create account'}
             </motion.h1>
             
             <motion.p
@@ -126,7 +126,7 @@ export default function LoginPage() {
               transition={{ delay: 0.4 }}
               className="text-white/60"
             >
-              {isLogin ? 'Melde dich in deinem Konto an' : 'Erstelle ein neues Konto um zu beginnen'}
+              {isLogin ? 'Sign in to your account' : 'Create a new account to get started'}
             </motion.p>
           </div>
 
@@ -163,7 +163,7 @@ export default function LoginPage() {
             whileTap={{ scale: 0.99 }}
           >
             <Github size={18} />
-            Mit GitHub {isLogin ? 'anmelden' : 'registrieren'}
+            {isLogin ? 'Sign in with GitHub' : 'Sign up with GitHub'}
           </motion.button>
 
           {/* Divider */}
@@ -172,7 +172,7 @@ export default function LoginPage() {
               <div className="w-full border-t border-white/10"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-transparent text-white/60">oder</span>
+              <span className="px-2 bg-transparent text-white/60">or</span>
             </div>
           </div>
 
@@ -184,7 +184,7 @@ export default function LoginPage() {
               transition={{ delay: 0.6 }}
             >
               <label className="block text-sm font-medium text-white/80 mb-2">
-                E-Mail-Adresse
+                Email Address
               </label>
                              <div className="relative">
                  <Mail size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
@@ -194,7 +194,7 @@ export default function LoginPage() {
                    onChange={(e) => setEmail(e.target.value)}
                    required
                    className="w-full !pl-11 pr-4 py-3 input-glass text-white placeholder:text-white/40"
-                   placeholder="deine@email.de"
+                   placeholder="your@email.com"
                  />
                </div>
             </motion.div>
@@ -205,7 +205,7 @@ export default function LoginPage() {
               transition={{ delay: 0.7 }}
             >
               <label className="block text-sm font-medium text-white/80 mb-2">
-                Passwort
+                Password
               </label>
                              <div className="relative">
                  <Lock size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
@@ -230,7 +230,7 @@ export default function LoginPage() {
             {!isLogin && (
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-2">
-                  Passwort bestätigen
+                  Confirm Password
                 </label>
                                  <div className="relative">
                    <Lock size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
@@ -266,10 +266,10 @@ export default function LoginPage() {
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  {isLogin ? 'Wird angemeldet...' : 'Wird registriert...'}
+                  {isLogin ? 'Signing in...' : 'Signing up...'}
                 </div>
               ) : (
-                isLogin ? 'Anmelden' : 'Registrieren'
+                isLogin ? 'Sign In' : 'Sign Up'
               )}
             </motion.button>
           </form>
@@ -282,7 +282,7 @@ export default function LoginPage() {
             className="mt-6 text-center"
           >
             <span className="text-white/60">
-              {isLogin ? 'Noch kein Konto?' : 'Bereits registriert?'}
+              {isLogin ? "Don't have an account?" : 'Already registered?'}
             </span>
             {' '}
             <button
@@ -296,7 +296,7 @@ export default function LoginPage() {
               }}
               className="cursor-pointer text-purple-400 hover:text-purple-300 font-medium transition-colors"
             >
-              {isLogin ? 'Registrieren' : 'Anmelden'}
+              {isLogin ? 'Sign up' : 'Sign in'}
             </button>
           </motion.div>
         </motion.div>
