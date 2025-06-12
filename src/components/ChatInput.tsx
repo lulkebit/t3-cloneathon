@@ -225,6 +225,13 @@ export function ChatInput() {
     } finally {
       setIsLoading(false);
       setStreamingMessage('');
+      
+      // Fokus zurück auf das Textfeld setzen
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+        }
+      }, 100);
     }
   };
 
@@ -485,12 +492,7 @@ export function ChatInput() {
                 </button>
               </div>
               
-              {/* Character indicator for long messages */}
-              {message.length > 100 && (
-                <div className="absolute bottom-2 left-3 text-xs text-white/40 bg-black/20 rounded px-2 py-1">
-                  {message.length}
-                </div>
-              )}
+
             </div>
           </form>
 
