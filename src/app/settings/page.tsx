@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChatProvider, useChat } from '@/contexts/ChatContext';
 import { createClient } from '@/lib/supabase-client';
-import { Key, Eye, EyeOff, ExternalLink, ArrowLeft, LogOut, Save } from 'lucide-react';
+import { Key, Eye, EyeOff, ExternalLink, ArrowLeft, LogOut, Save, User, Shield, CheckCircle, XCircle } from 'lucide-react';
 
 function SettingsPageContent() {
   const { profile, refreshProfile } = useChat();
@@ -74,106 +75,192 @@ function SettingsPageContent() {
     }
   };
 
-  const maskApiKey = (key: string) => {
-    if (!key || key.length < 8) return key;
-    return key.slice(0, 4) + '•'.repeat(key.length - 8) + key.slice(-4);
-  };
-
-  const getSaveButtonText = () => {
+  const getSaveButtonContent = () => {
     switch (saveStatus) {
-      case 'saving': return 'Saving...';
-      case 'saved': return 'Saved!';
-      case 'error': return 'Error - Retry';
-      default: return 'Save Changes';
+      case 'saving':
+        return (
+          <>
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+              className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+            />
+            Saving...
+          </>
+        );
+      case 'saved':
+        return (
+          <>
+            <CheckCircle size={16} />
+            Saved!
+          </>
+        );
+      case 'error':
+        return (
+          <>
+            <XCircle size={16} />
+            Error - Retry
+          </>
+        );
+      default:
+        return (
+          <>
+            <Save size={16} />
+            Save Changes
+          </>
+        );
     }
   };
 
   const getSaveButtonClass = () => {
-    const baseClass = "flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
-    
     switch (saveStatus) {
       case 'saved': 
-        return `${baseClass} bg-green-600 text-white`;
+        return 'bg-green-500 hover:bg-green-600';
       case 'error': 
-        return `${baseClass} bg-red-600 text-white hover:bg-red-700`;
+        return 'bg-red-500 hover:bg-red-600';
       default: 
-        return `${baseClass} bg-blue-600 text-white hover:bg-blue-700`;
+        return 'bg-blue-500 hover:bg-blue-600';
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen animated-bg">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <motion.div 
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="glass-strong border-b border-white/10"
+      >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
-              <button
+              <motion.button
                 onClick={() => router.back()}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 <ArrowLeft size={20} />
-              </button>
-              <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+              </motion.button>
+              <h1 className="text-2xl font-bold text-white">Settings</h1>
             </div>
             
-            <button
+            <motion.button
               onClick={handleLogout}
               disabled={isLogoutLoading}
-              className="flex items-center gap-2 px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
               {isLogoutLoading ? (
-                <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full"
+                />
               ) : (
                 <LogOut size={16} />
               )}
               {isLogoutLoading ? 'Logging out...' : 'Logout'}
-            </button>
+            </motion.button>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-8">
           {/* Profile Information */}
           {profile && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Profile Information</h2>
+            <motion.div 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="glass-strong rounded-2xl p-6"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
+                  className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center"
+                >
+                  <User size={20} className="text-blue-400" />
+                </motion.div>
+                <h2 className="text-lg font-semibold text-white">Profile Information</h2>
+              </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                <motion.div
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <label className="block text-sm font-medium text-white/60 mb-2">
                     Email
                   </label>
-                  <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 font-mono">
+                  <div className="px-4 py-3 glass rounded-xl text-white font-mono text-sm">
                     {profile.email}
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                </motion.div>
+                
+                <motion.div
+                  initial={{ x: 20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <label className="block text-sm font-medium text-white/60 mb-2">
                     API Key Status
                   </label>
-                  <div className={`px-3 py-2 border border-gray-200 rounded-lg font-medium ${
-                    profile.openrouter_api_key ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                  <div className={`px-4 py-3 rounded-xl font-medium text-sm flex items-center gap-2 ${
+                    profile.openrouter_api_key 
+                      ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                      : 'bg-red-500/20 text-red-400 border border-red-500/30'
                   }`}>
-                    {profile.openrouter_api_key ? 'Configured' : 'Not configured'}
+                    {profile.openrouter_api_key ? (
+                      <>
+                        <CheckCircle size={16} />
+                        Configured
+                      </>
+                    ) : (
+                      <>
+                        <XCircle size={16} />
+                        Not configured
+                      </>
+                    )}
                   </div>
-                </div>
+                </motion.div>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* OpenRouter API Key Section */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="glass-strong rounded-2xl p-6"
+          >
             <div className="flex items-center gap-3 mb-6">
-              <Key size={24} className="text-blue-600" />
-              <h2 className="text-lg font-semibold text-gray-900">OpenRouter API Key</h2>
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.3, type: "spring", stiffness: 300 }}
+                className="w-10 h-10 bg-yellow-500/20 rounded-xl flex items-center justify-center"
+              >
+                <Key size={20} className="text-yellow-400" />
+              </motion.div>
+              <h2 className="text-lg font-semibold text-white">OpenRouter API Key</h2>
             </div>
 
             <div className="space-y-6">
               {/* API Key Input */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+              >
+                <label className="block text-sm font-medium text-white/60 mb-3">
                   API Key
                 </label>
                 <div className="relative">
@@ -182,69 +269,123 @@ function SettingsPageContent() {
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
                     placeholder="Enter your OpenRouter API key"
-                    className="w-full px-3 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    className="input-glass w-full pr-12 text-white placeholder-white/40"
                   />
-                  <button
+                  <motion.button
                     type="button"
                     onClick={() => setShowApiKey(!showApiKey)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white/80 transition-colors"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                   >
                     {showApiKey ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </button>
+                  </motion.button>
                 </div>
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-sm text-white/40 mt-2">
                   Your API key is stored securely and only used to make requests to OpenRouter.
                 </p>
-              </div>
+              </motion.div>
 
               {/* Current API Key Display */}
               {profile?.openrouter_api_key && (
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-2">Current API Key</h4>
-                  <div className="font-mono text-sm text-gray-600">
-                    {showApiKey ? profile.openrouter_api_key : maskApiKey(profile.openrouter_api_key)}
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <label className="block text-sm font-medium text-white/60 mb-3">
+                    Current API Key
+                  </label>
+                  <div className="px-4 py-3 glass rounded-xl text-white/60 font-mono text-sm">
+                    {profile.openrouter_api_key.slice(0, 4) + '•'.repeat(profile.openrouter_api_key.length - 8) + profile.openrouter_api_key.slice(-4)}
                   </div>
-                </div>
+                </motion.div>
               )}
 
-              {/* Info Section */}
-              <div className="bg-blue-50 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <Key size={20} className="text-blue-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <h3 className="font-medium text-blue-900 mb-2">Get your OpenRouter API Key</h3>
-                    <p className="text-sm text-blue-700 mb-3">
-                      You need an OpenRouter API key to use this chat application. OpenRouter provides access to various AI models through a unified API.
-                    </p>
-                    <a
-                      href="https://openrouter.ai/keys"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 underline transition-colors"
-                    >
-                      Get API Key <ExternalLink size={12} />
-                    </a>
-                  </div>
-                </div>
-              </div>
+              {/* Get API Key Link */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="glass rounded-xl p-4"
+              >
+                <h3 className="text-sm font-medium text-white mb-2">Need an API key?</h3>
+                <p className="text-xs text-white/60 mb-3">
+                  Get your free OpenRouter API key to access various AI models including GPT-4, Claude, and more.
+                </p>
+                <motion.a
+                  href="https://openrouter.ai/keys"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+                  whileHover={{ x: 4 }}
+                >
+                  Get OpenRouter API Key
+                  <ExternalLink size={14} />
+                </motion.a>
+              </motion.div>
 
               {/* Save Button */}
-              <div className="flex justify-end">
-                <button
-                  onClick={handleSave}
-                  disabled={isLoading || !apiKey.trim()}
-                  className={getSaveButtonClass()}
-                >
-                  {saveStatus === 'saving' ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <Save size={16} />
-                  )}
-                  {getSaveButtonText()}
-                </button>
+              <motion.button
+                onClick={handleSave}
+                disabled={isLoading || !apiKey.trim()}
+                className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto ${getSaveButtonClass()}`}
+                whileHover={!isLoading ? { scale: 1.02, y: -1 } : {}}
+                whileTap={!isLoading ? { scale: 0.98 } : {}}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.7 }}
+              >
+                {getSaveButtonContent()}
+              </motion.button>
+            </div>
+          </motion.div>
+
+          {/* Security Section */}
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="glass-strong rounded-2xl p-6"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.4, type: "spring", stiffness: 300 }}
+                className="w-10 h-10 bg-green-500/20 rounded-xl flex items-center justify-center"
+              >
+                <Shield size={20} className="text-green-400" />
+              </motion.div>
+              <h2 className="text-lg font-semibold text-white">Security & Privacy</h2>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <CheckCircle size={16} className="text-green-400 mt-1 flex-shrink-0" />
+                <div>
+                  <p className="text-white text-sm font-medium">End-to-End Encryption</p>
+                  <p className="text-white/60 text-xs">Your API keys are encrypted and stored securely</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <CheckCircle size={16} className="text-green-400 mt-1 flex-shrink-0" />
+                <div>
+                  <p className="text-white text-sm font-medium">No Data Collection</p>
+                  <p className="text-white/60 text-xs">We don't store or analyze your conversations</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <CheckCircle size={16} className="text-green-400 mt-1 flex-shrink-0" />
+                <div>
+                  <p className="text-white text-sm font-medium">Open Source</p>
+                  <p className="text-white/60 text-xs">Full transparency with open source codebase</p>
+                </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>
