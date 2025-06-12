@@ -268,31 +268,47 @@ export function ChatInput() {
               animate={{ opacity: 1, y: 0, height: 'auto' }}
               exit={{ opacity: 0, y: -20, height: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="mb-6 glass-strong rounded-2xl p-4 border border-white/10 overflow-hidden"
+              className="mb-6 overflow-hidden"
             >
-              <div className="flex items-start gap-3">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="flex-shrink-0 w-8 h-8 glass rounded-xl flex items-center justify-center"
-                >
+              {/* Message Header */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="flex items-center gap-3 mb-3"
+              >
+                {/* Avatar */}
+                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-400/30">
                   <Bot size={16} className="text-blue-400" />
-                </motion.div>
-                <div className="flex-1 min-w-0">
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-white/90 whitespace-pre-wrap text-sm leading-relaxed"
-                  >
-                    {streamingMessage}
-                    <motion.span
-                      animate={{ opacity: [0, 1, 0] }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-                      className="inline-block w-2 h-4 ml-1 bg-blue-400 rounded-sm"
-                    />
-                  </motion.div>
                 </div>
-              </div>
+
+                {/* Name */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-blue-400">Assistant</span>
+                  <span className="text-xs text-white/40">typing...</span>
+                </div>
+              </motion.div>
+
+              {/* Message Content */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="ml-11 relative"
+              >
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-white/90 whitespace-pre-wrap text-sm leading-relaxed"
+                >
+                  {streamingMessage}
+                  <motion.span
+                    animate={{ opacity: [0, 1, 0] }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+                    className="inline-block w-0.5 h-4 ml-1 bg-blue-400"
+                  />
+                </motion.div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>

@@ -94,106 +94,109 @@ export function ChatMessages() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 space-y-6 relative">
-      <AnimatePresence initial={false}>
-        {messages.map((message, index) => (
-          <motion.div
-            key={message.id}
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            transition={{
-              type: "spring",
-              stiffness: 300,
-              damping: 30,
-              delay: index * 0.05
-            }}
-            className={`flex gap-4 ${
-              message.role === 'user' ? 'justify-end' : 'justify-start'
-            }`}
-          >
-            {message.role === 'assistant' && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: index * 0.05 + 0.1 }}
-                className="flex-shrink-0 w-10 h-10 glass-strong rounded-2xl flex items-center justify-center relative overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-cyan-500/20"></div>
-                <Bot size={18} className="text-blue-400 relative z-10" />
-              </motion.div>
-            )}
-            
+    <div className="flex-1 overflow-y-auto relative">
+      {/* Message Container - aligned with input width */}
+      <div className="w-full max-w-4xl mx-auto px-6 py-8 space-y-8">
+        <AnimatePresence initial={false}>
+          {messages.map((message, index) => (
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.05 + 0.15 }}
-              className={`max-w-2xl rounded-2xl px-6 py-4 relative overflow-hidden ${
-                message.role === 'user'
-                  ? 'glass-strong border border-blue-400/30 ml-12'
-                  : 'glass border border-white/10 mr-12'
-              }`}
+              key={message.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{
+                type: "spring",
+                stiffness: 400,
+                damping: 30,
+                delay: index * 0.03
+              }}
+              className={`group ${message.role === 'user' ? 'flex flex-col items-end' : ''}`}
             >
-              {/* Background gradient for user messages */}
-              {message.role === 'user' && (
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10"></div>
-              )}
-              
-              <div className="relative z-10">
-                <div className="prose prose-sm max-w-none">
-                  {message.content.split('\n').map((line, lineIndex) => (
-                    <motion.p
-                      key={lineIndex}
-                      initial={{ opacity: 0, x: message.role === 'user' ? 20 : -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 + lineIndex * 0.02 + 0.2 }}
-                      className={`${lineIndex === 0 ? '' : 'mt-3'} ${
-                        message.role === 'user' ? 'text-white/90' : 'text-white/90'
-                      } leading-relaxed`}
-                    >
-                      {line || '\u00A0'}
-                    </motion.p>
-                  ))}
+              {/* Message Header */}
+              <motion.div
+                initial={{ opacity: 0, x: message.role === 'user' ? 20 : -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.03 + 0.1 }}
+                className={`flex items-center gap-3 mb-3 ${
+                  message.role === 'user' ? 'flex-row-reverse' : ''
+                }`}
+              >
+                {/* Avatar */}
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  message.role === 'user' 
+                    ? 'bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-400/30' 
+                    : 'bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-400/30'
+                }`}>
+                  {message.role === 'user' ? (
+                    <User size={16} className="text-white/90" />
+                  ) : (
+                    <Bot size={16} className="text-blue-400" />
+                  )}
                 </div>
-                
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: index * 0.05 + 0.3 }}
-                  className={`text-xs mt-3 flex items-center gap-2 ${
-                    message.role === 'user' ? 'text-white/50' : 'text-white/50'
-                  }`}
-                >
-                  <span>
+
+                {/* Name and timestamp */}
+                <div className={`flex items-center gap-2 ${
+                  message.role === 'user' ? 'flex-row-reverse' : ''
+                }`}>
+                  <span className={`text-sm font-medium ${
+                    message.role === 'user' ? 'text-white/90' : 'text-blue-400'
+                  }`}>
+                    {message.role === 'user' ? 'You' : 'Assistant'}
+                  </span>
+                  <span className="text-xs text-white/40">
                     {new Date(message.created_at).toLocaleTimeString([], {
                       hour: '2-digit',
                       minute: '2-digit',
                     })}
                   </span>
-                  {message.role === 'assistant' && (
-                    <>
-                      <span>•</span>
-                      <span className="text-blue-400">AI</span>
-                    </>
-                  )}
-                </motion.div>
-              </div>
-            </motion.div>
-
-            {message.role === 'user' && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: index * 0.05 + 0.1 }}
-                className="flex-shrink-0 w-10 h-10 glass-strong rounded-2xl flex items-center justify-center relative overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20"></div>
-                <User size={18} className="text-white/80 relative z-10" />
+                </div>
               </motion.div>
-            )}
-          </motion.div>
-        ))}
-      </AnimatePresence>
+
+              {/* Message Content */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.03 + 0.15 }}
+                className={`relative ${
+                  message.role === 'user' 
+                    ? 'mr-11 max-w-2xl text-right' 
+                    : 'ml-11'
+                }`}
+              >
+                {/* Message text directly on background */}
+                <div className="prose prose-sm max-w-none">
+                  {message.content.split('\n').map((line, lineIndex) => (
+                    <motion.p
+                      key={lineIndex}
+                      initial={{ opacity: 0, x: message.role === 'user' ? 10 : -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.03 + lineIndex * 0.01 + 0.2 }}
+                      className={`${lineIndex === 0 ? '' : 'mt-2'} text-white/90 leading-relaxed group-hover:text-white transition-colors duration-200 ${
+                        message.role === 'user' ? 'text-right' : 'text-left'
+                      }`}
+                    >
+                      {line || '\u00A0'}
+                    </motion.p>
+                  ))}
+                </div>
+
+                {/* Subtle hover indicator */}
+                <motion.div
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 0 }}
+                  whileHover={{ scaleX: 1 }}
+                  transition={{ duration: 0.2 }}
+                  className={`absolute top-0 bottom-0 w-0.5 ${
+                    message.role === 'user' 
+                      ? 'right-0 origin-right bg-purple-400/50' 
+                      : 'left-0 origin-left bg-blue-400/50'
+                  }`}
+                />
+              </motion.div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
       
       <div ref={messagesEndRef} />
     </div>
