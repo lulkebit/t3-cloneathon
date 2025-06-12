@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChatProvider, useChat } from '@/contexts/ChatContext';
 import { ChatSidebar } from '@/components/ChatSidebar';
 import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
 import { SettingsModal } from '@/components/SettingsModal';
-import { Key } from 'lucide-react';
+import { Key, Sparkles } from 'lucide-react';
 
 function ChatPageContent() {
   const { profile, isLoading } = useChat();
@@ -21,8 +22,19 @@ function ChatPageContent() {
 
   if (isLoading) {
     return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-pulse text-gray-500">Loading chat...</div>
+      <div className="h-screen flex items-center justify-center animated-bg">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <div className="loading-dots mb-4">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <p className="text-white/60">Initializing chat...</p>
+        </motion.div>
       </div>
     );
   }
@@ -30,22 +42,56 @@ function ChatPageContent() {
   // Show setup prompt if no API key (first-time user experience)
   if (!profile?.openrouter_api_key) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full mx-4">
-          <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-            <Key size={48} className="mx-auto mb-4 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome to AI Chat</h1>
-            <p className="text-gray-600 mb-6">
-              To get started, you'll need to configure your OpenRouter API key. This allows you to chat with various AI models.
-            </p>
-            <button
-              onClick={() => setShowSettings(true)}
-              className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+      <div className="h-screen flex items-center justify-center animated-bg">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="max-w-md w-full mx-4"
+        >
+          <div className="glass-strong rounded-2xl p-8 text-center">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
+              className="w-16 h-16 mx-auto mb-6 glass rounded-2xl flex items-center justify-center"
             >
+              <Key size={24} className="text-blue-400" />
+            </motion.div>
+            
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-2xl font-bold text-white mb-3"
+            >
+              Welcome to AI Chat
+            </motion.h1>
+            
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="text-white/60 mb-8 leading-relaxed"
+            >
+              To get started, you'll need to configure your OpenRouter API key. This allows you to chat with various AI models.
+            </motion.p>
+            
+            <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              onClick={() => setShowSettings(true)}
+              className="btn-primary w-full flex items-center justify-center gap-2"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Sparkles size={18} />
               Configure API Key
-            </button>
+            </motion.button>
           </div>
-        </div>
+        </motion.div>
+        
         {/* Settings modal for first-time setup only */}
         <SettingsModal
           isOpen={showSettings}
@@ -56,19 +102,34 @@ function ChatPageContent() {
   }
 
   return (
-    <div className="h-screen flex bg-white">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="h-screen flex animated-bg overflow-hidden"
+    >
       {/* Sidebar */}
-      <ChatSidebar />
+      <motion.div
+        initial={{ x: -300 }}
+        animate={{ x: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      >
+        <ChatSidebar />
+      </motion.div>
       
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <motion.div
+        initial={{ opacity: 0, x: 50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 30 }}
+        className="flex-1 flex flex-col relative"
+      >
         {/* Messages */}
         <ChatMessages />
         
         {/* Input */}
         <ChatInput />
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
