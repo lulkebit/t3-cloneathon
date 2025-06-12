@@ -15,6 +15,10 @@ interface ChatContextType {
   refreshProfile: () => Promise<void>;
   createNewConversation: () => void;
   deleteConversation: (conversationId: string) => Promise<void>;
+  addOptimisticMessage: (message: Omit<Message, 'id' | 'created_at'>) => string;
+  updateStreamingMessage: (messageId: string, content: string) => void;
+  finalizeMessage: (messageId: string, finalContent: string) => void;
+  removeOptimisticMessage: (messageId: string) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -25,6 +29,42 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Handle URL changes for browser back/forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      const pathname = window.location.pathname;
+      const chatIdMatch = pathname.match(/^\/chat\/(.+)$/);
+      
+      if (chatIdMatch && chatIdMatch[1] && conversations.length > 0) {
+        const chatId = chatIdMatch[1];
+        const conversation = conversations.find(conv => conv.id === chatId);
+        if (conversation && conversation.id !== activeConversation?.id) {
+          setActiveConversation(conversation);
+        }
+      } else if (pathname === '/chat' && activeConversation) {
+        setActiveConversation(null);
+        setMessages([]);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [conversations, activeConversation]);
+
+  // Überwache URL-Änderungen auch bei Conversation-Updates
+  useEffect(() => {
+    const pathname = window.location.pathname;
+    const chatIdMatch = pathname.match(/^\/chat\/(.+)$/);
+    
+    if (chatIdMatch && chatIdMatch[1] && conversations.length > 0) {
+      const chatId = chatIdMatch[1];
+      const conversation = conversations.find(conv => conv.id === chatId);
+      if (conversation && conversation.id !== activeConversation?.id) {
+        setActiveConversation(conversation);
+      }
+    }
+  }, [conversations]);
 
   const refreshConversations = async () => {
     try {
@@ -43,7 +83,13 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       const response = await fetch(`/api/conversations/${conversationId}/messages`);
       if (response.ok) {
         const data = await response.json();
-        setMessages(data.messages || []);
+        const serverMessages = data.messages || [];
+        
+        // Behalte nur optimistische Nachrichten, die noch nicht durch Server-Nachrichten ersetzt wurden
+        setMessages(prev => {
+          const optimisticMessages = prev.filter(msg => msg.isOptimistic);
+          return [...serverMessages, ...optimisticMessages];
+        });
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -58,7 +104,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         setProfile(data.profile);
       } else if (response.status === 404 || response.status === 500) {
         // Profile might not exist, try to create it
-        console.log('Profile not found, attempting to create...');
         const createResponse = await fetch('/api/profile/create', {
           method: 'POST',
         });
@@ -98,6 +143,40 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Neue Funktionen für optimistic updates
+  const addOptimisticMessage = (message: Omit<Message, 'id' | 'created_at'>): string => {
+    const optimisticId = `optimistic-${Date.now()}-${Math.random()}`;
+    const optimisticMessage: Message = {
+      ...message,
+      id: optimisticId,
+      created_at: new Date().toISOString(),
+      isOptimistic: true,
+    };
+    
+    setMessages(prev => [...prev, optimisticMessage]);
+    return optimisticId;
+  };
+
+  const updateStreamingMessage = (messageId: string, content: string) => {
+    setMessages(prev => prev.map(msg => 
+      msg.id === messageId 
+        ? { ...msg, content, isStreaming: true, isLoading: false }
+        : msg
+    ));
+  };
+
+  const finalizeMessage = (messageId: string, finalContent: string) => {
+    setMessages(prev => prev.map(msg => 
+      msg.id === messageId 
+        ? { ...msg, content: finalContent, isOptimistic: false, isStreaming: false, isLoading: false }
+        : msg
+    ));
+  };
+
+  const removeOptimisticMessage = (messageId: string) => {
+    setMessages(prev => prev.filter(msg => msg.id !== messageId));
+  };
+
   useEffect(() => {
     const initializeData = async () => {
       setIsLoading(true);
@@ -113,7 +192,14 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (activeConversation) {
+      // Behalte optimistische Nachrichten für die aktuelle Conversation, lösche alle anderen
+      setMessages(prev => prev.filter(msg => 
+        msg.isOptimistic && msg.conversation_id === activeConversation.id
+      ));
       refreshMessages(activeConversation.id);
+    } else {
+      // Leere Messages wenn kein Chat aktiv ist
+      setMessages([]);
     }
   }, [activeConversation]);
 
@@ -131,6 +217,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         refreshProfile,
         createNewConversation,
         deleteConversation,
+        addOptimisticMessage,
+        updateStreamingMessage,
+        finalizeMessage,
+        removeOptimisticMessage,
       }}
     >
       {children}

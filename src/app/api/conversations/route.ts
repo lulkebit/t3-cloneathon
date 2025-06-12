@@ -58,4 +58,40 @@ export async function DELETE(request: NextRequest) {
     console.error('Error deleting conversation:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { title, model } = await request.json();
+
+    if (!title || !model) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    const { data: conversation, error } = await supabase
+      .from('conversations')
+      .insert({
+        user_id: user.id,
+        title,
+        model,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: 'Failed to create conversation' }, { status: 500 });
+    }
+
+    return NextResponse.json({ conversation });
+  } catch (error) {
+    console.error('Error creating conversation:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 } 
