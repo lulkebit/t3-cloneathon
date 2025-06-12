@@ -542,16 +542,16 @@ export function ChatInput() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="flex gap-4 items-end"
+            className="w-full"
           >
-            <div className="flex-1 relative">
+            <div className="relative group/send">
               <motion.textarea
                 ref={textareaRef}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Type your message..."
                 disabled={isLoading}
-                className="w-full min-h-[50px] max-h-32 resize-none input-glass focus-ring disabled:opacity-50 pr-12"
+                className="w-full min-h-[50px] max-h-32 resize-none bg-transparent border-none outline-none focus:outline-none disabled:opacity-50 pr-14 text-white placeholder-white/60 p-4"
                 rows={1}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
@@ -562,6 +562,27 @@ export function ChatInput() {
                 whileFocus={{ scale: 1.01 }}
               />
               
+              {/* Send button inside textarea */}
+              <div className="absolute right-3 top-1/2 translate-y-1 flex flex-col items-center group/sendbutton">
+                <motion.button
+                  type="submit"
+                  disabled={!message.trim() || isLoading}
+                  className="p-2 rounded-lg border border-transparent hover:bg-white/10 hover:border-white/20 hover:backdrop-blur-sm hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  title="Send message"
+                >
+                  {isLoading ? (
+                    <Loader2 size={18} className="text-blue-400 animate-spin" />
+                  ) : (
+                    <Send size={20} className="text-white/60 hover:text-white" />
+                  )}
+                </motion.button>
+                <span className="text-xs text-white/50 mt-1 opacity-0 group-hover/sendbutton:opacity-100 transition-opacity duration-200">
+                  {isLoading ? 'Sending...' : 'Send'}
+                </span>
+              </div>
+              
               {/* Character indicator for long messages */}
               <AnimatePresence>
                 {message.length > 100 && (
@@ -569,29 +590,13 @@ export function ChatInput() {
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
-                    className="absolute bottom-2 right-2 text-xs text-white/40 bg-black/20 rounded px-2 py-1"
+                    className="absolute bottom-2 left-3 text-xs text-white/40 bg-black/20 rounded px-2 py-1"
                   >
                     {message.length}
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
-            
-            <motion.button
-              type="submit"
-              disabled={!message.trim() || isLoading}
-              className="w-12 h-12 btn-primary flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              animate={isLoading ? { rotate: 360 } : { rotate: 0 }}
-              transition={isLoading ? { duration: 1, repeat: Infinity, ease: "linear" } : { duration: 0.2 }}
-            >
-              {isLoading ? (
-                <Loader2 size={18} />
-              ) : (
-                <Send size={18} />
-              )}
-            </motion.button>
           </motion.form>
 
           {/* Model Selection Button */}
