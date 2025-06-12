@@ -323,7 +323,7 @@ export function ChatInput() {
               
               <button
                 onClick={() => setIsModelModalOpen(false)}
-                className="p-2 rounded-lg hover:bg-white/10 transition-colors duration-150"
+                className="cursor-pointer p-2 rounded-lg hover:bg-white/10 transition-colors duration-150"
               >
                 <X size={20} className="text-white/60 hover:text-white" />
               </button>
@@ -367,7 +367,7 @@ export function ChatInput() {
                             setSelectedModel(model);
                             setIsModelModalOpen(false);
                           }}
-                          className={`p-4 rounded-xl border text-left transition-all group relative h-24 flex flex-col justify-between hover:scale-[0.98] ${
+                          className={`cursor-pointer p-4 rounded-xl border text-left transition-all group relative h-24 flex flex-col justify-between hover:scale-[0.98] ${
                             isSelected
                               ? 'glass-strong border-blue-400/30 bg-blue-500/10'
                               : 'glass-hover border-white/10 hover:border-white/20'
@@ -461,18 +461,24 @@ export function ChatInput() {
               
               {/* Send button inside textarea */}
               <div className="absolute right-3 top-1/2 translate-y-1 flex flex-col items-center">
-                <button
-                  type="submit"
-                  disabled={!message.trim() || isLoading}
-                  className="p-2 rounded-lg hover:bg-white/10 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150"
-                  title="Send message"
-                >
-                  {isLoading ? (
-                    <Loader2 size={18} className="text-blue-400 animate-spin" />
-                  ) : (
-                    <Send size={20} className="text-white/60 hover:text-white" />
-                  )}
-                </button>
+                <div className="relative group/send">
+                  <button
+                    type="submit"
+                    disabled={!message.trim() || isLoading}
+                    className="cursor-pointer p-2 rounded-lg hover:bg-white/10 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150"
+                  >
+                    {isLoading ? (
+                      <Loader2 size={18} className="text-blue-400 animate-spin" />
+                    ) : (
+                      <Send size={20} className="text-white/60 hover:text-white" />
+                    )}
+                  </button>
+                  
+                  {/* Hover tooltip */}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/send:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                    {isLoading ? 'Sending...' : 'Send'}
+                  </div>
+                </div>
               </div>
               
               {/* Character indicator for long messages */}
@@ -489,7 +495,7 @@ export function ChatInput() {
             <button
               onClick={() => setIsModelModalOpen(true)}
               disabled={isLoading}
-              className="inline-flex items-center gap-2 px-3 py-2 glass-hover border border-white/10 rounded-xl text-sm text-white/80 hover:text-white hover:scale-[1.02] transition-all disabled:opacity-50"
+              className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 glass-hover border border-white/10 rounded-xl text-sm text-white/80 hover:text-white hover:scale-[1.02] transition-all disabled:opacity-50"
             >
               {/* Provider Logo */}
               <div className="w-5 h-5 flex items-center justify-center rounded flex-shrink-0">

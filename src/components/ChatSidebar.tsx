@@ -58,28 +58,40 @@ export function ChatSidebar() {
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="fixed left-4 top-4 z-50 flex flex-col gap-2"
           >
-            <motion.button
-              onClick={() => {
-                createNewConversation();
-                window.history.replaceState(null, '', '/chat');
-              }}
-              className="w-10 h-10 bg-black/40 backdrop-blur-sm hover:bg-black/60 flex items-center justify-center rounded-lg transition-colors text-white/70 hover:text-white/90 border border-white/10"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              title="New Chat"
-            >
-              <Plus size={16} />
-            </motion.button>
+            <div className="relative group/expand">
+              <motion.button
+                onClick={() => setIsCollapsed(false)}
+                className="cursor-pointer w-10 h-10 bg-black/40 backdrop-blur-sm hover:bg-black/60 flex items-center justify-center rounded-lg transition-colors text-white/50 hover:text-white/80 border border-white/10"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <ChevronRight size={16} />
+              </motion.button>
+              
+                             {/* Hover tooltip */}
+               <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/expand:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                 Expand Sidebar
+               </div>
+            </div>
 
-            <motion.button
-              onClick={() => setIsCollapsed(false)}
-              className="w-10 h-10 bg-black/40 backdrop-blur-sm hover:bg-black/60 flex items-center justify-center rounded-lg transition-colors text-white/50 hover:text-white/80 border border-white/10"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              title="Expand Sidebar"
-            >
-              <ChevronRight size={16} />
-            </motion.button>
+            <div className="relative group/newchat">
+              <motion.button
+                onClick={() => {
+                  createNewConversation();
+                  window.history.replaceState(null, '', '/chat');
+                }}
+                className="cursor-pointer w-10 h-10 bg-black/40 backdrop-blur-sm hover:bg-black/60 flex items-center justify-center rounded-lg transition-colors text-white/70 hover:text-white/90 border border-white/10"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Plus size={16} />
+              </motion.button>
+              
+                              {/* Hover tooltip */}
+                <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/newchat:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                  New Chat
+                </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -147,18 +159,19 @@ export function ChatSidebar() {
                     New Chat
                   </motion.button>
 
-                  <motion.button
-                    onClick={() => setIsCollapsed(true)}
-                    className="w-8 h-8 bg-white/5 hover:bg-white/10 flex items-center justify-center rounded-md transition-colors text-white/50 hover:text-white/80"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    title="Collapse Sidebar"
-                    initial={{ opacity: 0, rotate: -90 }}
-                    animate={{ opacity: 1, rotate: 0 }}
-                    transition={{ delay: 0.3 }}
-                  >
-                    <ChevronLeft size={14} />
-                  </motion.button>
+                  <div className="relative group/collapse">
+                    <motion.button
+                      onClick={() => setIsCollapsed(true)}
+                      className="cursor-pointer w-8 h-8 bg-white/5 hover:bg-white/10 flex items-center justify-center rounded-md transition-colors text-white/50 hover:text-white/80"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      initial={{ opacity: 0, rotate: -90 }}
+                      animate={{ opacity: 1, rotate: 0 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      <ChevronLeft size={14} />
+                    </motion.button>
+                  </div>
                 </motion.div>
 
                 {/* Conversations List */}

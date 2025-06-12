@@ -243,31 +243,43 @@ export function ChatMessages() {
                     {/* Action buttons for assistant messages */}
                     <div className="flex justify-start gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       {/* Copy button */}
-                      <button
-                        onClick={() => handleCopy(message.id, message.content)}
-                        className="p-2 rounded-lg hover:bg-white/10 transition-colors duration-150"
-                        title="Copy message"
-                      >
-                        {copiedId === message.id ? (
-                          <Check size={16} className="text-green-400" />
-                        ) : (
-                          <Copy size={16} className="text-white/60 hover:text-white" />
-                        )}
-                      </button>
+                      <div className="relative group/copy">
+                        <button
+                          onClick={() => handleCopy(message.id, message.content)}
+                          className="p-2 rounded-lg hover:bg-white/10 transition-colors duration-150"
+                        >
+                          {copiedId === message.id ? (
+                            <Check size={16} className="text-green-400" />
+                          ) : (
+                            <Copy size={16} className="text-white/60 hover:text-white" />
+                          )}
+                        </button>
+                        
+                        {/* Hover tooltip */}
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/copy:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                          {copiedId === message.id ? 'Copied!' : 'Copy'}
+                        </div>
+                      </div>
 
                       {/* Retry button */}
-                      <button
-                        onClick={() => handleRetry(message.id, index)}
-                        disabled={retryingId === message.id || !activeConversation}
-                        className="p-2 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
-                        title="Retry message"
-                      >
-                        {retryingId === message.id ? (
-                          <Loader2 size={16} className="text-blue-400 animate-spin" />
-                        ) : (
-                          <RotateCcw size={16} className="text-white/60 hover:text-white" />
-                        )}
-                      </button>
+                      <div className="relative group/retry">
+                        <button
+                          onClick={() => handleRetry(message.id, index)}
+                          disabled={retryingId === message.id || !activeConversation}
+                          className="p-2 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                        >
+                          {retryingId === message.id ? (
+                            <Loader2 size={16} className="text-blue-400 animate-spin" />
+                          ) : (
+                            <RotateCcw size={16} className="text-white/60 hover:text-white" />
+                          )}
+                        </button>
+                        
+                        {/* Hover tooltip */}
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/retry:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                          {retryingId === message.id ? 'Retrying...' : 'Retry'}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
