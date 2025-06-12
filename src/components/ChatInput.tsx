@@ -210,32 +210,14 @@ export function ChatInput() {
         )}
       </AnimatePresence>
 
-      {/* Chat Input */}
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="border-t border-white/10 glass-strong backdrop-blur-xl p-6"
-      >
-        {/* Model Selection Button */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-4 flex justify-start"
-        >
-          <motion.button
-            onClick={() => setIsModelModalOpen(true)}
-            disabled={isLoading}
-            className="inline-flex items-center gap-2 px-3 py-2 glass-hover border border-white/10 rounded-xl text-sm text-white/80 hover:text-white transition-all disabled:opacity-50"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Bot size={14} className="text-blue-400" />
-            <span>{selectedModelInfo.name}</span>
-            <ChevronDown size={14} className="text-white/40" />
-          </motion.button>
-        </motion.div>
+             {/* Chat Input */}
+       <div className="p-6 flex justify-center">
+         <motion.div
+           initial={{ opacity: 0, y: 50 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ type: "spring", stiffness: 300, damping: 30 }}
+           className="w-full max-w-4xl glass-strong backdrop-blur-xl rounded-2xl border border-white/10 p-6 shadow-xl"
+         >
 
         {/* Streaming Message Display */}
         <AnimatePresence>
@@ -329,20 +311,30 @@ export function ChatInput() {
             ) : (
               <Send size={18} />
             )}
-          </motion.button>
-        </motion.form>
+                     </motion.button>
+         </motion.form>
 
-        {/* Tips */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="mt-4 flex items-center gap-2 text-xs text-white/40"
-        >
-          <Sparkles size={12} />
-          <span>Press Enter to send, Shift+Enter for new line</span>
-        </motion.div>
-      </motion.div>
-    </>
-  );
-} 
+         {/* Model Selection Button */}
+         <motion.div
+           initial={{ opacity: 0, y: 20 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ delay: 0.4 }}
+           className="mt-4 flex justify-start"
+         >
+           <motion.button
+             onClick={() => setIsModelModalOpen(true)}
+             disabled={isLoading}
+             className="inline-flex items-center gap-2 px-3 py-2 glass-hover border border-white/10 rounded-xl text-sm text-white/80 hover:text-white transition-all disabled:opacity-50"
+             whileHover={{ scale: 1.02 }}
+             whileTap={{ scale: 0.98 }}
+           >
+             <Bot size={14} className="text-blue-400" />
+             <span>{selectedModelInfo.name}</span>
+             <ChevronDown size={14} className="text-white/40" />
+           </motion.button>
+         </motion.div>
+         </motion.div>
+       </div>
+     </>
+   );
+ } 

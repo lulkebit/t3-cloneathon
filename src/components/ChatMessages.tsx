@@ -86,7 +86,7 @@ export function ChatMessages() {
             className="flex items-center justify-center gap-2 mt-6 text-sm text-white/40"
           >
             <Sparkles size={16} />
-            <span>Powered by AI</span>
+            <span>Press Enter to send, Shift+Enter for new line</span>
           </motion.div>
         </motion.div>
       </div>
