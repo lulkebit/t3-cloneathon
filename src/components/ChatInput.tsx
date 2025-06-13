@@ -28,7 +28,14 @@ export function ChatInput() {
   } = useChat();
 
   const [message, setMessage] = useState('');
-  const [selectedModel, setSelectedModel] = useState('openai/o3');
+  const [selectedModel, setSelectedModel] = useState(() => {
+    // Initialize with last used model from localStorage, fallback to 'openai/o3'
+    if (typeof window !== 'undefined') {
+      const lastUsedModel = localStorage.getItem('lastUsedModel');
+      return lastUsedModel || 'openai/o3';
+    }
+    return 'openai/o3';
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState('');
   const [isModelModalOpen, setIsModelModalOpen] = useState(false);
@@ -57,7 +64,9 @@ export function ChatInput() {
     } else {
       // Reset to defaults for new conversations
       setIsConsensusMode(false);
-      setSelectedModel('openai/o3');
+      // Load last used model from localStorage for new conversations
+      const lastUsedModel = localStorage.getItem('lastUsedModel');
+      setSelectedModel(lastUsedModel || 'openai/o3');
       
       // Load last used consensus models from localStorage
       const lastUsedConsensusModels = localStorage.getItem('lastUsedConsensusModels');
@@ -102,6 +111,13 @@ export function ChatInput() {
       localStorage.setItem('lastUsedConsensusModels', JSON.stringify(selectedModels));
     }
   }, [selectedModels, activeConversation]);
+
+  // Save selected model to localStorage when it changes
+  useEffect(() => {
+    if (selectedModel && !activeConversation) {
+      localStorage.setItem('lastUsedModel', selectedModel);
+    }
+  }, [selectedModel, activeConversation]);
 
   const popularModels = getPopularModels();
 
