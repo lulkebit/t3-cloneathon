@@ -997,7 +997,7 @@ export function ChatInput() {
                 )}
               </div>
 
-              {isConsensusMode && (
+              {isConsensusMode ? (
                 <div className="relative group/model-selector">
                   <button
                     type="button"
@@ -1022,51 +1022,49 @@ export function ChatInput() {
                     </div>
                   )}
                 </div>
+              ) : (
+                <div className="relative group/single-model-selector">
+                  <button
+                    onClick={() => setIsModelModalOpen(true)}
+                    disabled={isLoading || activeConversation !== null}
+                    className={`inline-flex items-center gap-2 px-3 py-2 border border-white/10 rounded-xl text-sm transition-all ${
+                      activeConversation !== null
+                        ? 'cursor-not-allowed opacity-50 text-white/40'
+                        : 'cursor-pointer glass-hover text-white/80 hover:text-white hover:scale-[1.02]'
+                    } ${
+                      isLoading || activeConversation !== null ? 'opacity-50' : ''
+                    }`}
+                  >
+                    <div className="w-5 h-5 flex items-center justify-center rounded flex-shrink-0">
+                      {selectedModelInfo.logo ? (
+                        <img
+                          src={selectedModelInfo.logo}
+                          alt={`${selectedModelInfo.provider} logo`}
+                          className="w-4 h-4 object-contain"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <Bot 
+                        size={14} 
+                        className={`text-blue-400 ${selectedModelInfo.logo ? 'hidden' : ''}`}
+                      />
+                    </div>
+                    <span>{selectedModelInfo.name}</span>
+                    <ChevronDown size={14} className="text-white/40" />
+                  </button>
+                  
+                  {activeConversation !== null && (
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/single-model-selector:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                      Model locked for existing conversation
+                    </div>
+                  )}
+                </div>
               )}
             </div>
-
-            {!isConsensusMode && (
-              <div className="relative group/single-model-selector">
-                <button
-                  onClick={() => setIsModelModalOpen(true)}
-                  disabled={isLoading || activeConversation !== null}
-                  className={`inline-flex items-center gap-2 px-3 py-2 border border-white/10 rounded-xl text-sm transition-all ${
-                    activeConversation !== null
-                      ? 'cursor-not-allowed opacity-50 text-white/40'
-                      : 'cursor-pointer glass-hover text-white/80 hover:text-white hover:scale-[1.02]'
-                  } ${
-                    isLoading || activeConversation !== null ? 'opacity-50' : ''
-                  }`}
-                >
-                  <div className="w-5 h-5 flex items-center justify-center rounded flex-shrink-0">
-                    {selectedModelInfo.logo ? (
-                      <img
-                        src={selectedModelInfo.logo}
-                        alt={`${selectedModelInfo.provider} logo`}
-                        className="w-4 h-4 object-contain"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          target.nextElementSibling?.classList.remove('hidden');
-                        }}
-                      />
-                    ) : null}
-                    <Bot 
-                      size={14} 
-                      className={`text-blue-400 ${selectedModelInfo.logo ? 'hidden' : ''}`}
-                    />
-                  </div>
-                  <span>{selectedModelInfo.name}</span>
-                  <ChevronDown size={14} className="text-white/40" />
-                </button>
-                
-                {activeConversation !== null && (
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/single-model-selector:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                    Model locked for existing conversation
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
 
