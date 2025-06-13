@@ -891,14 +891,17 @@ export function ChatInput() {
                             }}
                             className={`cursor-pointer p-5 rounded-2xl border text-left transition-all group relative min-h-[120px] flex flex-col justify-between hover:scale-[0.98] hover:shadow-lg ${
                               isSelected
-                                ? 'glass-strong border-blue-400/40 bg-blue-500/15 shadow-blue-500/20'
+                                ? 'glass-strong border-blue-400/60 bg-blue-500/20 shadow-blue-500/30 ring-2 ring-blue-400/30'
                                 : 'glass border-white/10 hover:border-white/25 hover:bg-white/5'
                             }`}
                           >
                             {isSelected && (
-                              <div className="absolute top-3 right-3 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
-                                <Check size={12} className="text-white" />
-                              </div>
+                              <>
+                                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-blue-600/5 rounded-2xl"></div>
+                                <div className="absolute top-3 right-3 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shadow-lg ring-2 ring-blue-400/30 z-10">
+                                  <Check size={14} className="text-white font-bold" />
+                                </div>
+                              </>
                             )}
                             
                             <div className="flex items-start gap-3">
