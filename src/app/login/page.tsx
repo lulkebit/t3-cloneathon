@@ -293,6 +293,36 @@ export default function LoginPage() {
               {isLogin ? 'Sign up' : 'Sign in'}
             </button>
           </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.1 }}
+            className="mt-6 pt-4 border-t border-white/10 text-center"
+          >
+            <div className="flex justify-center gap-4 text-xs text-white/40">
+              <a 
+                href="/nutzungsbedingungen" 
+                className="hover:text-white/60 transition-colors"
+              >
+                Terms
+              </a>
+              <span>•</span>
+              <a 
+                href="/datenschutz-chat" 
+                className="hover:text-white/60 transition-colors"
+              >
+                Privacy
+              </a>
+              <span>•</span>
+              <a 
+                href="/haftungsausschluss" 
+                className="hover:text-white/60 transition-colors"
+              >
+                Disclaimer
+              </a>
+            </div>
+          </motion.div>
         </motion.div>
       </motion.div>
     </div>

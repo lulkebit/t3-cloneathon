@@ -148,7 +148,7 @@ function SettingsSidebar({ activeSection, onSectionChange, isCollapsed, onToggle
               </div>
             </div>
 
-            <div className="p-4 border-t border-white/5">
+            <div className="p-4 border-t border-white/5 space-y-3">
               <motion.button
                 onClick={onLogout}
                 disabled={isLogoutLoading}
@@ -169,6 +169,31 @@ function SettingsSidebar({ activeSection, onSectionChange, isCollapsed, onToggle
                   {isLogoutLoading ? 'Logging out...' : 'Logout'}
                 </span>
               </motion.button>
+              
+              <div className="pt-2 border-t border-white/5">
+                <div className="flex justify-center gap-3 text-xs text-white/30">
+                  <a 
+                    href="/nutzungsbedingungen" 
+                    className="hover:text-white/50 transition-colors"
+                  >
+                    Terms
+                  </a>
+                  <span>•</span>
+                  <a 
+                    href="/datenschutz-chat" 
+                    className="hover:text-white/50 transition-colors"
+                  >
+                    Privacy
+                  </a>
+                  <span>•</span>
+                  <a 
+                    href="/haftungsausschluss" 
+                    className="hover:text-white/50 transition-colors"
+                  >
+                    Disclaimer
+                  </a>
+                </div>
+              </div>
             </div>
           </motion.div>
         )}
