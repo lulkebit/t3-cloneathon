@@ -99,7 +99,7 @@ export function ChatMessages() {
         throw new Error('Failed to delete message');
       }
 
-      const model = activeConversation.model || 'google/gemma-3n-e4b-it:free';
+      const model = activeConversation.model || 'openai/o3';
 
       const response = await fetch('/api/chat', {
         method: 'POST',

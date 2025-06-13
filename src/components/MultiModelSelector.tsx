@@ -22,16 +22,29 @@ export function MultiModelSelector({
   const popularModels = getPopularModels();
 
   const modelCreationDates: Record<string, string> = {
-    'anthropic/claude-3.5-sonnet': '2024-10-22',
-    'openai/gpt-4o': '2024-05-13',
+    'google/gemini-2.0-flash-001': '2024-12-11',
+    'google/gemini-2.0-flash-lite-001': '2024-12-11',
+    'google/gemini-2.5-flash-preview-05-20': '2024-05-20',
+    'google/gemini-2.5-pro-preview': '2024-12-11',
     'openai/gpt-4o-mini': '2024-07-18',
-    'anthropic/claude-3-haiku': '2024-03-07',
+    'openai/gpt-4o-2024-11-20': '2024-11-20',
+    'openai/gpt-4.1': '2024-12-20',
+    'openai/gpt-4.1-mini': '2024-12-20',
+    'openai/gpt-4.1-nano': '2024-12-20',
+    'openai/o3-mini': '2024-12-20',
+    'openai/o4-mini': '2024-12-20',
+    'openai/o3': '2024-12-20',
+    'anthropic/claude-opus-4': '2024-12-20',
+    'anthropic/claude-sonnet-4': '2024-12-20',
+    'anthropic/claude-3.7-sonnet': '2024-10-22',
+    'anthropic/claude-3.5-sonnet': '2024-10-22',
+    'meta-llama/llama-3.3-70b-instruct': '2024-12-06',
+    'meta-llama/llama-4-scout': '2024-12-20',
+    'meta-llama/llama-4-maverick': '2024-12-20',
+    'deepseek/deepseek-chat-v3-0324:free': '2024-03-24',
     'deepseek/deepseek-r1-0528:free': '2024-05-28',
-    'google/gemma-3n-e4b-it:free': '2024-12-11',
-    'meta-llama/llama-3.1-405b-instruct': '2024-07-23',
-    'meta-llama/llama-3.1-70b-instruct': '2024-07-23',
-    'google/gemini-pro': '2023-12-13',
-    'mistralai/mistral-7b-instruct': '2023-09-27',
+    'x-ai/grok-3-beta': '2024-12-20',
+    'x-ai/grok-3-mini-beta': '2024-12-20',
   };
 
   const getProviderLogo = (provider: string) => {
@@ -42,6 +55,7 @@ export function MultiModelSelector({
       'meta-llama': '/logos/meta.svg',
       'mistralai': '/logos/mistral.svg',
       'deepseek': '/logos/deepseek.svg',
+      'x-ai': '/logos/x-ai.svg',
     };
     return providerLogos[provider.toLowerCase()] || null;
   };
