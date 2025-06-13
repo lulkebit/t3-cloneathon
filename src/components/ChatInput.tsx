@@ -3,9 +3,10 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 
 import { useChat } from '@/contexts/ChatContext';
-import { Send, Bot, Loader2, ChevronDown, Check, Brain, Search, X, Paperclip, FileImage, FileText, Trash2, AlertCircle } from 'lucide-react';
+import { Send, Bot, Loader2, ChevronDown, Check, Brain, Search, X, Paperclip, FileImage, FileText, Trash2, AlertCircle, Users } from 'lucide-react';
 import { getPopularModels } from '@/lib/openrouter';
-import { Attachment } from '@/types/chat';
+import { Attachment, ConsensusResponse } from '@/types/chat';
+import { MultiModelSelector } from './MultiModelSelector';
 import { 
   getModelCapabilities, 
   canModelProcessFileType, 
@@ -34,6 +35,9 @@ export function ChatInput() {
   const [searchQuery, setSearchQuery] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isConsensusMode, setIsConsensusMode] = useState(false);
+  const [selectedModels, setSelectedModels] = useState<string[]>([]);
+  const [isMultiModelSelectorOpen, setIsMultiModelSelectorOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -294,6 +298,242 @@ export function ChatInput() {
     } finally {
       setIsLoading(false);
       setStreamingMessage('');
+      setAttachments([]);
+      
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+        }
+      }, 100);
+    }
+  };
+
+  const handleConsensusSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if ((!message.trim() && attachments.length === 0) || isLoading || selectedModels.length === 0) return;
+
+    const userMessage = message;
+    const messageAttachments = [...attachments];
+    setMessage('');
+    setIsLoading(true);
+    
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
+
+    let conversationId: string | null = null;
+    let userMessageId: string | undefined;
+    let assistantMessageId: string | undefined;
+    
+    try {
+      if (activeConversation) {
+        conversationId = activeConversation.id;
+        
+        userMessageId = addOptimisticMessage({
+          conversation_id: conversationId!,
+          role: 'user',
+          content: userMessage,
+          attachments: messageAttachments,
+        });
+
+        assistantMessageId = addOptimisticMessage({
+          conversation_id: conversationId!,
+          role: 'assistant',
+          content: '',
+          isLoading: true,
+          isConsensus: true,
+          consensusResponses: selectedModels.map(model => ({
+            model,
+            content: '',
+            isLoading: true,
+            responseTime: 0,
+          })),
+        });
+      } else {
+        const createConversationResponse = await fetch('/api/conversations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: userMessage.substring(0, 50) + (userMessage.length > 50 ? '...' : ''),
+            model: `consensus:${selectedModels.join(',')}`,
+          }),
+        });
+
+        if (!createConversationResponse.ok) {
+          throw new Error('Failed to create conversation');
+        }
+
+        const conversationData = await createConversationResponse.json();
+        conversationId = conversationData.conversation.id;
+        
+        await refreshConversations();
+        
+        window.history.pushState(null, '', `/chat/${conversationId}`);
+        
+        userMessageId = addOptimisticMessage({
+          conversation_id: conversationId!,
+          role: 'user',
+          content: userMessage,
+          attachments: messageAttachments,
+        });
+
+        assistantMessageId = addOptimisticMessage({
+          conversation_id: conversationId!,
+          role: 'assistant',
+          content: '',
+          isLoading: true,
+          isConsensus: true,
+          consensusResponses: selectedModels.map(model => ({
+            model,
+            content: '',
+            isLoading: true,
+            responseTime: 0,
+          })),
+        });
+      }
+
+      const response = await fetch('/api/chat/consensus', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          models: selectedModels,
+          conversationId: conversationId,
+          attachments: messageAttachments,
+        }),
+      });
+
+      if (!response.ok) {
+        if (userMessageId) removeOptimisticMessage(userMessageId);
+        if (assistantMessageId) removeOptimisticMessage(assistantMessageId);
+        throw new Error('Failed to send consensus message');
+      }
+
+      if (!response.body) {
+        if (userMessageId) removeOptimisticMessage(userMessageId);
+        if (assistantMessageId) removeOptimisticMessage(assistantMessageId);
+        throw new Error('No response body');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let consensusResponses: ConsensusResponse[] = selectedModels.map(model => ({
+        model,
+        content: '',
+        isLoading: true,
+        responseTime: 0,
+      }));
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+
+            try {
+              const parsed = JSON.parse(data);
+              
+              if (parsed.type === 'consensus_update' && assistantMessageId) {
+                const { modelIndex, content } = parsed;
+                if (modelIndex < consensusResponses.length) {
+                  consensusResponses[modelIndex] = {
+                    ...consensusResponses[modelIndex],
+                    content,
+                    isStreaming: true,
+                    isLoading: false,
+                  };
+                  
+                  updateStreamingMessage(assistantMessageId, JSON.stringify(consensusResponses));
+                }
+              } else if (parsed.type === 'consensus_complete' && assistantMessageId) {
+                const { modelIndex, content, responseTime } = parsed;
+                if (modelIndex < consensusResponses.length) {
+                  consensusResponses[modelIndex] = {
+                    ...consensusResponses[modelIndex],
+                    content,
+                    isStreaming: false,
+                    isLoading: false,
+                    responseTime,
+                  };
+                  
+                  updateStreamingMessage(assistantMessageId, JSON.stringify(consensusResponses));
+                }
+              } else if (parsed.type === 'consensus_error' && assistantMessageId) {
+                const { modelIndex, error, responseTime } = parsed;
+                if (modelIndex < consensusResponses.length) {
+                  consensusResponses[modelIndex] = {
+                    ...consensusResponses[modelIndex],
+                    error,
+                    isLoading: false,
+                    isStreaming: false,
+                    responseTime,
+                  };
+                  
+                  updateStreamingMessage(assistantMessageId, JSON.stringify(consensusResponses));
+                }
+              } else if (parsed.type === 'consensus_final' && assistantMessageId) {
+                finalizeMessage(assistantMessageId, JSON.stringify(parsed.responses));
+                
+                (async () => {
+                  try {
+                    if (conversationId) {
+                      await refreshMessages(conversationId);
+                    }
+                    
+                    if (userMessageId) {
+                      removeOptimisticMessage(userMessageId);
+                    }
+                    if (assistantMessageId) {
+                      removeOptimisticMessage(assistantMessageId);
+                    }
+                  } catch (error) {
+                    console.error('Error refreshing messages after consensus:', error);
+                  }
+                })();
+              }
+            } catch (e) {
+              console.error('Error parsing consensus streaming data:', e, 'Data:', data);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error sending consensus message:', error);
+      
+      if (assistantMessageId) {
+        let errorMessage = 'An unexpected error occurred';
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+        
+        finalizeMessage(assistantMessageId, `❌ **Error**: ${errorMessage}`);
+      } else {
+        if (userMessageId) {
+          removeOptimisticMessage(userMessageId);
+        }
+        
+        let errorMessage = 'Failed to send consensus message';
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+        alert(`Error: ${errorMessage}`);
+      }
+      
+      if (assistantMessageId && !conversationId) {
+        removeOptimisticMessage(assistantMessageId);
+      }
+    } finally {
+      setIsLoading(false);
       setAttachments([]);
       
       setTimeout(() => {
@@ -589,7 +829,7 @@ export function ChatInput() {
       <div className="p-4 flex justify-center">
         <div className="w-full max-w-4xl glass-strong backdrop-blur-xl rounded-2xl border border-white/10 p-4 shadow-xl">
 
-          <form onSubmit={handleSubmit} className="w-full">
+          <form onSubmit={isConsensusMode ? handleConsensusSubmit : handleSubmit} className="w-full">
             {/* Attachments Display */}
             {attachments.length > 0 && (
               <div className="mb-3 flex flex-wrap gap-2">
@@ -635,7 +875,11 @@ export function ChatInput() {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
-                    handleSubmit(e);
+                    if (isConsensusMode) {
+                      handleConsensusSubmit(e);
+                    } else {
+                      handleSubmit(e);
+                    }
                   }
                 }}
               />
@@ -685,7 +929,7 @@ export function ChatInput() {
 
                 <button
                   type="submit"
-                  disabled={(!message.trim() && attachments.length === 0) || isLoading}
+                  disabled={(!message.trim() && attachments.length === 0) || isLoading || (isConsensusMode && selectedModels.length === 0)}
                   className="relative group cursor-pointer p-2 rounded-lg hover:bg-white/10 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150"
                 >
                   {isLoading ? (
@@ -702,36 +946,82 @@ export function ChatInput() {
             </div>
           </form>
 
-          <div className="mt-3 flex justify-start">
-            <button
-              onClick={() => setIsModelModalOpen(true)}
-              disabled={isLoading}
-              className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 glass-hover border border-white/10 rounded-xl text-sm text-white/80 hover:text-white hover:scale-[1.02] transition-all disabled:opacity-50"
-            >
-              <div className="w-5 h-5 flex items-center justify-center rounded flex-shrink-0">
-                {selectedModelInfo.logo ? (
-                  <img
-                    src={selectedModelInfo.logo}
-                    alt={`${selectedModelInfo.provider} logo`}
-                    className="w-4 h-4 object-contain"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      target.nextElementSibling?.classList.remove('hidden');
-                    }}
+          {/* Consensus Mode Toggle */}
+          <div className="mt-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsConsensusMode(!isConsensusMode);
+                  if (!isConsensusMode && selectedModels.length === 0) {
+                    setSelectedModels(['anthropic/claude-3.5-sonnet', 'openai/gpt-4o', 'google/gemma-3n-e4b-it:free']);
+                  }
+                }}
+                disabled={isLoading}
+                className={`cursor-pointer inline-flex items-center gap-2 px-3 py-2 border rounded-xl text-sm transition-all disabled:opacity-50 ${
+                  isConsensusMode
+                    ? 'glass-strong border-purple-400/30 bg-purple-500/10 text-purple-300'
+                    : 'glass-hover border-white/10 text-white/80 hover:text-white hover:scale-[1.02]'
+                }`}
+              >
+                <Users size={16} className={isConsensusMode ? 'text-purple-400' : 'text-white/60'} />
+                <span>Consensus Mode</span>
+              </button>
+
+              {isConsensusMode && (
+                <button
+                  type="button"
+                  onClick={() => setIsMultiModelSelectorOpen(true)}
+                  disabled={isLoading}
+                  className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 glass-hover border border-white/10 rounded-xl text-sm text-white/80 hover:text-white hover:scale-[1.02] transition-all disabled:opacity-50"
+                >
+                  <Brain size={16} className="text-purple-400" />
+                  <span>{selectedModels.length} Model{selectedModels.length !== 1 ? 's' : ''}</span>
+                  <ChevronDown size={14} className="text-white/40" />
+                </button>
+              )}
+            </div>
+
+            {!isConsensusMode && (
+              <button
+                onClick={() => setIsModelModalOpen(true)}
+                disabled={isLoading}
+                className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 glass-hover border border-white/10 rounded-xl text-sm text-white/80 hover:text-white hover:scale-[1.02] transition-all disabled:opacity-50"
+              >
+                <div className="w-5 h-5 flex items-center justify-center rounded flex-shrink-0">
+                  {selectedModelInfo.logo ? (
+                    <img
+                      src={selectedModelInfo.logo}
+                      alt={`${selectedModelInfo.provider} logo`}
+                      className="w-4 h-4 object-contain"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        target.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <Bot 
+                    size={14} 
+                    className={`text-blue-400 ${selectedModelInfo.logo ? 'hidden' : ''}`}
                   />
-                ) : null}
-                <Bot 
-                  size={14} 
-                  className={`text-blue-400 ${selectedModelInfo.logo ? 'hidden' : ''}`}
-                />
-              </div>
-              <span>{selectedModelInfo.name}</span>
-              <ChevronDown size={14} className="text-white/40" />
-            </button>
+                </div>
+                <span>{selectedModelInfo.name}</span>
+                <ChevronDown size={14} className="text-white/40" />
+              </button>
+            )}
           </div>
+
+
         </div>
       </div>
+
+      <MultiModelSelector
+        selectedModels={selectedModels}
+        onModelsChange={setSelectedModels}
+        isOpen={isMultiModelSelectorOpen}
+        onClose={() => setIsMultiModelSelectorOpen(false)}
+      />
     </>
   );
 } 

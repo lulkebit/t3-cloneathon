@@ -3,10 +3,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from '@/contexts/ChatContext';
-import { User, Bot, Sparkles, Copy, Check, RotateCcw, Loader2, FileImage, FileText, Download } from 'lucide-react';
+import { User, Bot, Sparkles, Copy, Check, RotateCcw, Loader2, FileImage, FileText, Download, Users } from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { LoadingIndicator } from './LoadingIndicator';
 import { TypeWriter } from './TypeWriter';
+import { ConsensusMessage } from './ConsensusMessage';
+import { ConsensusResponse } from '@/types/chat';
 
 const getProviderLogo = (model: string) => {
   const providerLogos: Record<string, string> = {
@@ -209,7 +211,9 @@ export function ChatMessages() {
               <div className={`w-8 h-8 rounded-full flex items-center justify-center overflow-hidden ${
                 message.role === 'user' 
                   ? 'bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-400/30' 
-                  : 'bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-400/30'
+                  : (message.isConsensus || (message.content && message.content.startsWith('[{') && message.content.includes('"model"')))
+                    ? 'bg-gradient-to-br from-purple-500/20 to-indigo-500/20 border border-purple-400/30'
+                    : 'bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-400/30'
               }`}>
                 {message.role === 'user' ? (
                   user?.user_metadata?.avatar_url ? (
@@ -223,6 +227,13 @@ export function ChatMessages() {
                   )
                 ) : (
                   (() => {
+                    // Check if this is a consensus message
+                    const isConsensusMessage = message.isConsensus || (message.content && message.content.startsWith('[{') && message.content.includes('"model"'));
+                    
+                    if (isConsensusMessage) {
+                      return <Users size={16} className="text-purple-400" />;
+                    }
+                    
                     const logoUrl = activeConversation?.model ? getProviderLogo(activeConversation.model) : null;
                     return logoUrl ? (
                       <img 
@@ -242,7 +253,8 @@ export function ChatMessages() {
                   })()
                 )}
                 <Bot size={16} className={`text-blue-400 ${
-                  activeConversation?.model && getProviderLogo(activeConversation.model) ? 'hidden' : ''
+                  (message.isConsensus || (message.content && message.content.startsWith('[{') && message.content.includes('"model"'))) || 
+                  (activeConversation?.model && getProviderLogo(activeConversation.model)) ? 'hidden' : ''
                 }`} />
               </div>
 
@@ -254,9 +266,11 @@ export function ChatMessages() {
                 }`}>
                   {message.role === 'user' 
                     ? getUserDisplayName(user)
-                    : activeConversation?.model 
-                      ? formatModelName(activeConversation.model)
-                      : 'Assistant'
+                    : (message.isConsensus || (message.content && message.content.startsWith('[{') && message.content.includes('"model"')))
+                      ? 'Multi-Model Consensus'
+                      : activeConversation?.model 
+                        ? formatModelName(activeConversation.model)
+                        : 'Assistant'
                   }
                 </span>
                 <span className="text-xs text-white/40">
@@ -343,7 +357,36 @@ export function ChatMessages() {
                 ) : (
                   <div className="relative">
                     <div>
-                      {message.isLoading ? (
+                      {message.isConsensus || (message.content && message.content.startsWith('[{') && message.content.includes('"model"')) ? (
+                        (() => {
+                          let consensusResponses: ConsensusResponse[] = [];
+                          try {
+                            if (message.consensusResponses) {
+                              consensusResponses = message.consensusResponses;
+                            } else if (message.content) {
+                              // Try to parse the content as consensus responses
+                              const parsed = JSON.parse(message.content);
+                              if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].model) {
+                                consensusResponses = parsed;
+                              } else {
+                                // If it's not consensus data, fall back to regular rendering
+                                return <MarkdownRenderer content={message.content} />;
+                              }
+                            }
+                          } catch (e) {
+                            console.error('Error parsing consensus responses:', e);
+                            // If parsing fails, render as regular markdown
+                            return <MarkdownRenderer content={message.content} />;
+                          }
+                          
+                          return (
+                            <ConsensusMessage 
+                              responses={consensusResponses}
+                              isStreaming={message.isStreaming}
+                            />
+                          );
+                        })()
+                      ) : message.isLoading ? (
                         <LoadingIndicator />
                       ) : message.isStreaming ? (
                         <TypeWriter 
@@ -356,23 +399,25 @@ export function ChatMessages() {
                       )}
                     </div>
                     
-                    <div className="flex justify-start gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      <div className="relative group/copy">
-                        <button
-                          onClick={() => handleCopy(message.id, message.content)}
-                          className="cursor-pointer p-2 rounded-lg hover:bg-white/10 transition-colors duration-150"
-                        >
-                          {copiedId === message.id ? (
-                            <Check size={16} className="text-green-400" />
-                          ) : (
-                            <Copy size={16} className="text-white/60 hover:text-white" />
-                          )}
-                        </button>
-                        
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/copy:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-                          {copiedId === message.id ? 'Copied!' : 'Copy'}
+                    {/* Only show copy/retry for non-consensus messages */}
+                    {!(message.isConsensus || (message.content && message.content.startsWith('[{') && message.content.includes('"model"'))) && (
+                      <div className="flex justify-start gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <div className="relative group/copy">
+                          <button
+                            onClick={() => handleCopy(message.id, message.content)}
+                            className="cursor-pointer p-2 rounded-lg hover:bg-white/10 transition-colors duration-150"
+                          >
+                            {copiedId === message.id ? (
+                              <Check size={16} className="text-green-400" />
+                            ) : (
+                              <Copy size={16} className="text-white/60 hover:text-white" />
+                            )}
+                          </button>
+                          
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/copy:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                            {copiedId === message.id ? 'Copied!' : 'Copy'}
+                          </div>
                         </div>
-                      </div>
 
                       <div className="relative group/retry">
                         <button
@@ -392,6 +437,7 @@ export function ChatMessages() {
                         </div>
                       </div>
                     </div>
+                    )}
                   </div>
                 )}
               </div>

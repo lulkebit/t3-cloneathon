@@ -17,6 +17,17 @@ export interface Message {
   isStreaming?: boolean;
   isLoading?: boolean;
   attachments?: Attachment[];
+  isConsensus?: boolean;
+  consensusResponses?: ConsensusResponse[];
+}
+
+export interface ConsensusResponse {
+  model: string;
+  content: string;
+  isStreaming?: boolean;
+  isLoading?: boolean;
+  error?: string;
+  responseTime?: number;
 }
 
 export interface Conversation {
@@ -59,4 +70,11 @@ export interface OpenRouterModel {
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
+}
+
+export interface MultiModelRequest {
+  message: string;
+  models: string[];
+  conversationId?: string;
+  attachments?: Attachment[];
 } 
