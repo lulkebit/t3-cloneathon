@@ -115,14 +115,7 @@ export function MultiModelSelector({
     onModelsChange([]);
   };
 
-  const selectRecommended = () => {
-    const recommended = [
-      'anthropic/claude-3.5-sonnet',
-      'openai/gpt-4o',
-      'google/gemma-3n-e4b-it:free'
-    ];
-    onModelsChange(recommended);
-  };
+
 
   if (!isOpen) return null;
 
@@ -167,12 +160,7 @@ export function MultiModelSelector({
             />
           </div>
           
-          <button
-            onClick={selectRecommended}
-            className="px-4 py-3 bg-purple-500/20 border border-purple-400/30 rounded-xl text-purple-300 hover:bg-purple-500/30 transition-colors duration-150 whitespace-nowrap"
-          >
-            Select Recommended
-          </button>
+
           
           <button
             onClick={clearAll}

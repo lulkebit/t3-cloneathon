@@ -58,7 +58,23 @@ export function ChatInput() {
       // Reset to defaults for new conversations
       setIsConsensusMode(false);
       setSelectedModel('google/gemma-3n-e4b-it:free');
-      setSelectedModels([]);
+      
+      // Load last used consensus models from localStorage
+      const lastUsedConsensusModels = localStorage.getItem('lastUsedConsensusModels');
+      if (lastUsedConsensusModels) {
+        try {
+          const models = JSON.parse(lastUsedConsensusModels);
+          if (Array.isArray(models) && models.length > 0) {
+            setSelectedModels(models);
+          } else {
+            setSelectedModels([]);
+          }
+        } catch {
+          setSelectedModels([]);
+        }
+      } else {
+        setSelectedModels([]);
+      }
     }
   }, [activeConversation]);
 
@@ -79,6 +95,13 @@ export function ChatInput() {
       }
     }
   }, [selectedModel, attachments]);
+
+  // Save selected consensus models to localStorage when they change
+  useEffect(() => {
+    if (selectedModels.length > 0 && !activeConversation) {
+      localStorage.setItem('lastUsedConsensusModels', JSON.stringify(selectedModels));
+    }
+  }, [selectedModels, activeConversation]);
 
   const popularModels = getPopularModels();
 
@@ -970,7 +993,18 @@ export function ChatInput() {
                   onClick={() => {
                     setIsConsensusMode(!isConsensusMode);
                     if (!isConsensusMode && selectedModels.length === 0) {
-                      setSelectedModels(['anthropic/claude-3.5-sonnet', 'openai/gpt-4o', 'google/gemma-3n-e4b-it:free']);
+                      // Load last used consensus models from localStorage
+                      const lastUsedConsensusModels = localStorage.getItem('lastUsedConsensusModels');
+                      if (lastUsedConsensusModels) {
+                        try {
+                          const models = JSON.parse(lastUsedConsensusModels);
+                          if (Array.isArray(models) && models.length > 0) {
+                            setSelectedModels(models);
+                          }
+                        } catch {
+                          // If parsing fails, don't set any models
+                        }
+                      }
                     }
                   }}
                   disabled={isLoading || activeConversation !== null}
