@@ -782,7 +782,6 @@ export function ChatInput() {
             className="relative w-full max-w-5xl max-h-[85vh] glass-strong backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl flex flex-col opacity-100 scale-100 overflow-hidden modal-enter"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
             <div className="flex items-center justify-between p-8 pb-6 border-b border-white/10">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 glass-strong rounded-2xl flex items-center justify-center border border-white/20">
@@ -803,7 +802,6 @@ export function ChatInput() {
               </button>
             </div>
 
-            {/* Search */}
             <div className="px-8 pt-6 pb-4">
               <div className="relative">
                 <Search size={18} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/40" />
@@ -818,7 +816,6 @@ export function ChatInput() {
               </div>
             </div>
 
-            {/* Models Grid */}
             <div className="flex-1 overflow-y-auto px-8 pb-8">
               <div className="space-y-8">
                 {filteredAndSortedModels.map(({ provider, models }) => (
@@ -935,7 +932,6 @@ export function ChatInput() {
         <div className="w-full max-w-4xl glass-strong backdrop-blur-xl rounded-2xl border border-white/10 p-4 shadow-xl">
 
           <form onSubmit={isConsensusMode ? handleConsensusSubmit : handleSubmit} className="w-full">
-            {/* Attachments Display */}
             {attachments.length > 0 && (
               <div className="mb-3 flex flex-wrap gap-2">
                 {attachments.map((attachment, index) => (
@@ -1051,7 +1047,6 @@ export function ChatInput() {
             </div>
           </form>
 
-          {/* Consensus Mode Toggle */}
           <div className="mt-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative group/consensus-toggle">

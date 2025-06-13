@@ -45,7 +45,6 @@ function SettingsSidebar({ activeSection, onSectionChange, isCollapsed, onToggle
 
   return (
     <>
-      {/* Mobile Toggle Button */}
       <AnimatePresence>
         {isCollapsed && (
           <motion.div
@@ -67,7 +66,6 @@ function SettingsSidebar({ activeSection, onSectionChange, isCollapsed, onToggle
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
       <AnimatePresence>
         {!isCollapsed && (
           <motion.div
@@ -77,7 +75,6 @@ function SettingsSidebar({ activeSection, onSectionChange, isCollapsed, onToggle
             transition={{ duration: 0.4, ease: "easeInOut" }}
             className="bg-black/20 backdrop-blur-sm border-r border-white/5 flex flex-col h-screen overflow-hidden fixed lg:relative z-40"
           >
-            {/* Header */}
             <div className="p-4 border-b border-white/5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -97,7 +94,6 @@ function SettingsSidebar({ activeSection, onSectionChange, isCollapsed, onToggle
               </div>
             </div>
 
-            {/* Navigation */}
             <div className="flex-1 overflow-y-auto p-2">
               <div className="space-y-1">
                 {settingsSections.map((section, index) => {
@@ -152,7 +148,6 @@ function SettingsSidebar({ activeSection, onSectionChange, isCollapsed, onToggle
               </div>
             </div>
 
-            {/* Logout Button */}
             <div className="p-4 border-t border-white/5">
               <motion.button
                 onClick={onLogout}
@@ -179,7 +174,6 @@ function SettingsSidebar({ activeSection, onSectionChange, isCollapsed, onToggle
         )}
       </AnimatePresence>
 
-      {/* Mobile Overlay */}
       {!isCollapsed && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -338,7 +332,6 @@ function ApiKeysSection() {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      {/* API Key Status */}
       <div className="glass-strong rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h4 className="text-lg font-medium text-white">OpenRouter API Key</h4>
@@ -514,7 +507,6 @@ function SettingsPageContent() {
 
   return (
     <div className="min-h-screen animated-bg flex">
-      {/* Sidebar */}
       <SettingsSidebar
         activeSection={activeSection}
         onSectionChange={setActiveSection}
@@ -524,13 +516,10 @@ function SettingsPageContent() {
         isLogoutLoading={isLogoutLoading}
       />
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Content Area */}
         <div className="flex-1 overflow-y-auto">
           <div className="h-full">
             <div className="px-4 sm:px-6 lg:px-8 py-8 h-full">
-              {/* Header with Back Button */}
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="text-xl font-semibold text-white mb-1">{getSectionTitle().title}</h3>

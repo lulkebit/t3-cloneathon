@@ -297,7 +297,6 @@ export function ChatMessages() {
                   <div className={`prose prose-sm max-w-none ${
                     message.role === 'user' ? 'text-right' : 'text-left'
                   }`}>
-                    {/* Display attachments for user messages */}
                     {message.attachments && message.attachments.length > 0 && (
                       <div className={`mb-3 flex flex-wrap gap-2 ${
                         message.role === 'user' ? 'justify-end' : 'justify-start'
@@ -400,7 +399,6 @@ export function ChatMessages() {
                       )}
                     </div>
                     
-                    {/* Only show copy/retry for non-consensus messages */}
                     {!(message.isConsensus || (message.content && message.content.startsWith('[{') && message.content.includes('"model"'))) && (
                       <div className="flex justify-start gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                         <div className="relative group/copy">

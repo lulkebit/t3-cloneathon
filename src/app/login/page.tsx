@@ -100,7 +100,6 @@ export default function LoginPage() {
           transition={{ delay: 0.1 }}
           className="glass rounded-2xl p-8 border border-white/10"
         >
-          {/* Header */}
           <div className="text-center mb-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -130,7 +129,6 @@ export default function LoginPage() {
             </motion.p>
           </div>
 
-          {/* Error/Success Messages */}
           {error && (
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -151,7 +149,6 @@ export default function LoginPage() {
             </motion.div>
           )}
 
-          {/* GitHub Button */}
           <motion.button
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -166,7 +163,6 @@ export default function LoginPage() {
             {isLogin ? 'Sign in with GitHub' : 'Sign up with GitHub'}
           </motion.button>
 
-          {/* Divider */}
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-white/10"></div>
@@ -176,7 +172,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Email/Password Form */}
           <form onSubmit={handleEmailAuth} className="space-y-4">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -274,7 +269,6 @@ export default function LoginPage() {
             </motion.button>
           </form>
 
-          {/* Toggle Login/Register */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

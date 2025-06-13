@@ -149,7 +149,6 @@ export function MultiModelSelector({
         className="relative w-full max-w-5xl max-h-[85vh] glass-strong backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl flex flex-col opacity-100 scale-100 overflow-hidden modal-enter"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-8 pb-6 border-b border-white/10">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 glass-strong rounded-2xl flex items-center justify-center border border-white/20">
@@ -173,7 +172,6 @@ export function MultiModelSelector({
           </button>
         </div>
 
-        {/* Search and Controls */}
         <div className="px-8 pt-6 pb-4">
           <div className="flex items-center gap-4">
             <div className="relative flex-1">
@@ -197,7 +195,6 @@ export function MultiModelSelector({
           </div>
         </div>
 
-        {/* Models Grid */}
         <div className="flex-1 overflow-y-auto px-8 pb-8">
           <div className="space-y-8">
             {filteredAndSortedModels.map(({ provider, models }) => (
@@ -304,7 +301,6 @@ export function MultiModelSelector({
           </div>
         </div>
 
-        {/* Footer */}
         <div className="px-8 py-6 border-t border-white/10 bg-white/2">
           <div className="flex items-center justify-between">
             <div className="text-sm text-white/60">

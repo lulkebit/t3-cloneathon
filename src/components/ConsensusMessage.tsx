@@ -74,7 +74,6 @@ export function ConsensusMessage({ responses, isStreaming }: ConsensusMessagePro
 
   return (
     <div className="space-y-4">
-      {/* Summary Header */}
       <div className="flex items-center gap-3 p-4 glass-strong rounded-xl border border-purple-400/20">
         <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
           <Brain size={16} className="text-purple-400" />
@@ -95,7 +94,6 @@ export function ConsensusMessage({ responses, isStreaming }: ConsensusMessagePro
         )}
       </div>
 
-      {/* Model Responses */}
       <div className="space-y-3">
         {responses.map((response, index) => {
           const modelInfo = formatModelName(response.model);
@@ -113,7 +111,6 @@ export function ConsensusMessage({ responses, isStreaming }: ConsensusMessagePro
                     : 'border-white/10'
               }`}
             >
-              {/* Model Header */}
               <div 
                 className="flex items-center gap-3 p-4 cursor-pointer"
                 onClick={() => hasContent && toggleExpanded(response.model)}
@@ -196,7 +193,6 @@ export function ConsensusMessage({ responses, isStreaming }: ConsensusMessagePro
                 </div>
               </div>
 
-              {/* Model Response Content */}
               {hasContent && isExpanded && (
                 <div className="px-4 pb-4 border-t border-white/10">
                   <div className="mt-4">
@@ -205,7 +201,6 @@ export function ConsensusMessage({ responses, isStreaming }: ConsensusMessagePro
                 </div>
               )}
 
-              {/* Error Message */}
               {response.error && (
                 <div className="px-4 pb-4 border-t border-red-400/20">
                   <div className="mt-4 p-3 bg-red-500/10 border border-red-400/20 rounded-lg">
@@ -215,7 +210,6 @@ export function ConsensusMessage({ responses, isStreaming }: ConsensusMessagePro
                 </div>
               )}
 
-              {/* Loading State */}
               {response.isLoading && (
                 <div className="px-4 pb-4 border-t border-yellow-400/20">
                   <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-400/20 rounded-lg">
@@ -227,7 +221,6 @@ export function ConsensusMessage({ responses, isStreaming }: ConsensusMessagePro
                 </div>
               )}
 
-              {/* Streaming Content Preview */}
               {response.isStreaming && hasContent && !isExpanded && (
                 <div className="px-4 pb-4 border-t border-white/10">
                   <div className="mt-4 text-white/70 text-sm line-clamp-2">
@@ -241,7 +234,6 @@ export function ConsensusMessage({ responses, isStreaming }: ConsensusMessagePro
         })}
       </div>
 
-      {/* Quick Actions */}
       {completedResponses.length > 1 && (
         <div className="flex items-center gap-2 p-3 glass-hover rounded-xl border border-white/10">
           <div className="text-sm text-white/60 flex-1">
