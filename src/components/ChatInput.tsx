@@ -701,7 +701,8 @@ export function ChatInput() {
       'google': '/logos/google.svg',
       'meta-llama': '/logos/meta.svg',
       'mistralai': '/logos/mistral.svg',
-      'deepseek': '/logos/deepseek.svg'
+      'deepseek': '/logos/deepseek.svg',
+      'x-ai': '/logos/x-ai.svg'
     };
     
     return providerLogos[provider.toLowerCase()] || null;
