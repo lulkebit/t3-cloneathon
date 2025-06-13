@@ -208,9 +208,42 @@ html, body {
   overflow: hidden;
 }
 
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* Glow Effect */
 .glow {
   box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+/* Modal Animation */
+.modal-enter {
+  animation: modalEnter 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes modalEnter {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Card Hover Effects */
+.card-hover {
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 /* Markdown Content Styles */
