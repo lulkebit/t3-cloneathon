@@ -22,31 +22,7 @@ export function MultiModelSelector({
   
   const popularModels = getPopularModels();
 
-  const modelCreationDates: Record<string, string> = {
-    'google/gemini-2.0-flash-001': '2024-12-11',
-    'google/gemini-2.0-flash-lite-001': '2024-12-11',
-    'google/gemini-2.5-flash-preview-05-20': '2024-05-20',
-    'google/gemini-2.5-pro-preview': '2024-12-11',
-    'openai/gpt-4o-mini': '2024-07-18',
-    'openai/gpt-4o-2024-11-20': '2024-11-20',
-    'openai/gpt-4.1': '2024-12-20',
-    'openai/gpt-4.1-mini': '2024-12-20',
-    'openai/gpt-4.1-nano': '2024-12-20',
-    'openai/o3-mini': '2024-12-20',
-    'openai/o4-mini': '2024-12-20',
-    'openai/o3': '2024-12-20',
-    'anthropic/claude-opus-4': '2024-12-20',
-    'anthropic/claude-sonnet-4': '2024-12-20',
-    'anthropic/claude-3.7-sonnet': '2024-10-22',
-    'anthropic/claude-3.5-sonnet': '2024-10-22',
-    'meta-llama/llama-3.3-70b-instruct': '2024-12-06',
-    'meta-llama/llama-4-scout': '2024-12-20',
-    'meta-llama/llama-4-maverick': '2024-12-20',
-    'deepseek/deepseek-chat-v3-0324:free': '2024-03-24',
-    'deepseek/deepseek-r1-0528:free': '2024-05-28',
-    'x-ai/grok-3-beta': '2024-12-20',
-    'x-ai/grok-3-mini-beta': '2024-12-20',
-  };
+
 
   const getProviderLogo = (provider: string) => {
     const providerLogos: Record<string, string> = {
@@ -69,16 +45,14 @@ export function MultiModelSelector({
         name: modelName.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
         provider: provider.charAt(0).toUpperCase() + provider.slice(1),
         providerKey: provider,
-        logo: getProviderLogo(provider),
-        createdDate: modelCreationDates[model] || null
+        logo: getProviderLogo(provider)
       };
     }
     return { 
       name: model, 
       provider: '', 
       providerKey: '', 
-      logo: null,
-      createdDate: modelCreationDates[model] || null
+      logo: null
     };
   };
 
@@ -254,7 +228,7 @@ export function MultiModelSelector({
                   </span>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   {models.map((model) => {
                     const modelInfo = formatModelName(model);
                     const isSelected = selectedModels.includes(model);
@@ -263,7 +237,7 @@ export function MultiModelSelector({
                       <button
                         key={model}
                         onClick={() => toggleModel(model)}
-                                                  className={`cursor-pointer p-5 rounded-2xl border text-left transition-all group relative min-h-[120px] flex flex-col justify-between hover:scale-[0.98] hover:shadow-lg ${
+                                                  className={`cursor-pointer p-3 rounded-2xl border text-center transition-all group relative min-h-[100px] flex flex-col justify-center items-center hover:scale-[0.98] hover:shadow-lg ${
                             isSelected
                               ? 'glass-strong border-purple-400/60 bg-purple-500/20 shadow-purple-500/30 ring-2 ring-purple-400/30'
                               : 'glass border-white/10 hover:border-white/25 hover:bg-white/5'
@@ -278,43 +252,37 @@ export function MultiModelSelector({
                             </>
                           )}
                         
-                        <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 flex items-center justify-center rounded-xl glass border border-white/15 flex-shrink-0">
-                            {modelInfo.logo ? (
-                              <img
-                                src={modelInfo.logo}
-                                alt={`${modelInfo.provider} logo`}
-                                className="w-5 h-5 object-contain"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.style.display = 'none';
-                                  target.nextElementSibling?.classList.remove('hidden');
-                                }}
+                                                  <div className="flex flex-col items-center gap-3">
+                            <div className="w-8 h-8 flex items-center justify-center rounded-xl glass border border-white/15">
+                              {modelInfo.logo ? (
+                                <img
+                                  src={modelInfo.logo}
+                                  alt={`${modelInfo.provider} logo`}
+                                  className="w-5 h-5 object-contain"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    target.nextElementSibling?.classList.remove('hidden');
+                                  }}
+                                />
+                              ) : null}
+                              <Brain 
+                                size={14} 
+                                className={`text-white/60 ${modelInfo.logo ? 'hidden' : ''}`}
                               />
-                            ) : null}
-                            <Brain 
-                              size={14} 
-                              className={`text-white/60 ${modelInfo.logo ? 'hidden' : ''}`}
-                            />
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-white text-sm truncate mb-2">
-                              {modelInfo.name}
                             </div>
-                            <div className="flex items-center gap-1.5">
-                              {renderCapabilityIcons(model)}
+                            
+                            <div className="flex flex-col items-center gap-2">
+                              <div className="font-semibold text-white text-sm text-center">
+                                {modelInfo.name}
+                              </div>
+                              <div className="flex items-center justify-center gap-1.5">
+                                {renderCapabilityIcons(model)}
+                              </div>
                             </div>
                           </div>
-                        </div>
                         
-                        <div className="mt-3 pt-3 border-t border-white/10">
-                          {modelInfo.createdDate && (
-                            <div className="text-white/40 text-xs font-medium">
-                              Released {modelInfo.createdDate}
-                            </div>
-                          )}
-                        </div>
+                        
                       </button>
                     );
                   })}
