@@ -83,8 +83,13 @@ function CodeBlock({ children, className, inline, ...props }: CodeBlockProps) {
 }
 
 export function MarkdownRenderer({ content, className = '', isUserMessage = false }: MarkdownRendererProps) {
+  // Check if this is an error message
+  const isErrorMessage = content.includes('❌ **Error**:');
+  
   return (
-    <div className={`markdown-content ${className} ${isUserMessage ? 'user-message' : 'assistant-message'}`}>
+    <div className={`markdown-content ${className} ${isUserMessage ? 'user-message' : 'assistant-message'} ${
+      isErrorMessage ? 'error-message border border-red-500/30 bg-red-500/5 rounded-lg p-3' : ''
+    }`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkBreaks]}
         rehypePlugins={[rehypeHighlight, rehypeRaw]}

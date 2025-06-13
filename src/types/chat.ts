@@ -1,3 +1,12 @@
+export interface Attachment {
+  id: string;
+  filename: string;
+  file_type: string;
+  file_size: number;
+  file_url: string;
+  created_at: string;
+}
+
 export interface Message {
   id: string;
   conversation_id: string;
@@ -7,6 +16,7 @@ export interface Message {
   isOptimistic?: boolean;
   isStreaming?: boolean;
   isLoading?: boolean;
+  attachments?: Attachment[];
 }
 
 export interface Conversation {

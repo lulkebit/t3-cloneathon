@@ -11,10 +11,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { conversationId, message, model } = await request.json();
+    const { conversationId, message, model, attachments = [] } = await request.json();
 
-    if (!message || !model) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if ((!message || message.trim() === '') && attachments.length === 0) {
+      return NextResponse.json({ error: 'Message or attachments required' }, { status: 400 });
+    }
+
+    if (!model) {
+      return NextResponse.json({ error: 'Model is required' }, { status: 400 });
     }
 
     const { data: profile } = await supabase
@@ -69,21 +73,60 @@ export async function POST(request: NextRequest) {
       conversation = newConversation;
     }
 
-    const { error: messageError } = await supabase
+    const { data: userMessage, error: messageError } = await supabase
       .from('messages')
       .insert({
         conversation_id: conversation.id,
         role: 'user',
-        content: message,
-      });
+        content: message || '',
+      })
+      .select()
+      .single();
 
-    if (messageError) {
+    if (messageError || !userMessage) {
       return NextResponse.json({ error: 'Failed to save user message' }, { status: 500 });
+    }
+
+    // Save attachments if any
+    if (attachments.length > 0) {
+      const attachmentInserts = attachments.map((attachment: any) => ({
+        message_id: userMessage.id,
+        filename: attachment.filename,
+        file_type: attachment.file_type,
+        file_size: attachment.file_size,
+        file_url: attachment.file_url,
+      }));
+
+      const { error: attachmentError } = await supabase
+        .from('attachments')
+        .insert(attachmentInserts);
+
+      if (attachmentError) {
+        console.error('Failed to save attachments:', attachmentError);
+        // Continue anyway, don't fail the entire request
+      }
+    }
+
+    // Build the current message content including attachments
+    let currentMessageContent = message || '';
+    if (attachments.length > 0) {
+      const attachmentDescriptions = attachments.map((att: any) => {
+        if (att.file_type.startsWith('image/')) {
+          return `[Image: ${att.filename}]`;
+        } else if (att.file_type === 'application/pdf') {
+          return `[PDF Document: ${att.filename}]`;
+        }
+        return `[File: ${att.filename}]`;
+      }).join(' ');
+      
+      currentMessageContent = currentMessageContent 
+        ? `${currentMessageContent}\n\nAttachments: ${attachmentDescriptions}`
+        : `Attachments: ${attachmentDescriptions}`;
     }
 
     const chatMessages = [
       ...messages.map(msg => ({ role: msg.role as 'user' | 'assistant' | 'system', content: msg.content })),
-      { role: 'user' as const, content: message }
+      { role: 'user' as const, content: currentMessageContent }
     ];
 
     const openRouter = new OpenRouterService(profile.openrouter_api_key);
@@ -116,7 +159,30 @@ export async function POST(request: NextRequest) {
           controller.close();
         } catch (error) {
           console.error('Error in chat completion:', error);
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: 'Failed to generate response' })}\n\n`));
+          
+          // Extract meaningful error message
+          let errorMessage = 'Failed to generate response';
+          if (error instanceof Error) {
+            errorMessage = error.message;
+          }
+          
+          // Save error message as assistant response for user to see
+          try {
+            await supabase
+              .from('messages')
+              .insert({
+                conversation_id: conversation.id,
+                role: 'assistant',
+                content: `❌ **Error**: ${errorMessage}`,
+              });
+          } catch (dbError) {
+            console.error('Failed to save error message:', dbError);
+          }
+          
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+            error: errorMessage,
+            errorContent: `❌ **Error**: ${errorMessage}`
+          })}\n\n`));
           controller.close();
         }
       },

@@ -3,8 +3,16 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 
 import { useChat } from '@/contexts/ChatContext';
-import { Send, Bot, Loader2, ChevronDown, Check, Brain, Search, X } from 'lucide-react';
+import { Send, Bot, Loader2, ChevronDown, Check, Brain, Search, X, Paperclip, FileImage, FileText, Trash2, AlertCircle } from 'lucide-react';
 import { getPopularModels } from '@/lib/openrouter';
+import { Attachment } from '@/types/chat';
+import { 
+  getModelCapabilities, 
+  canModelProcessFileType, 
+  getFileUploadAcceptString, 
+  getMaxFileSizeForModel,
+  getModelCapabilityDescription 
+} from '@/lib/model-capabilities';
 
 export function ChatInput() {
   const {
@@ -24,13 +32,34 @@ export function ChatInput() {
   const [streamingMessage, setStreamingMessage] = useState('');
   const [isModelModalOpen, setIsModelModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (activeConversation && activeConversation.model) {
       setSelectedModel(activeConversation.model);
     }
   }, [activeConversation]);
+
+  // Clear incompatible attachments when model changes
+  useEffect(() => {
+    if (attachments.length > 0) {
+      const compatibleAttachments = attachments.filter(attachment => 
+        canModelProcessFileType(selectedModel, attachment.file_type)
+      );
+      
+      if (compatibleAttachments.length !== attachments.length) {
+        setAttachments(compatibleAttachments);
+        if (compatibleAttachments.length === 0) {
+          alert(`Attachments removed: ${selectedModel} doesn't support the uploaded file types.`);
+        } else {
+          alert(`Some attachments removed: ${selectedModel} doesn't support all uploaded file types.`);
+        }
+      }
+    }
+  }, [selectedModel, attachments]);
 
   const popularModels = getPopularModels();
 
@@ -56,9 +85,10 @@ export function ChatInput() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim() || isLoading) return;
+    if ((!message.trim() && attachments.length === 0) || isLoading) return;
 
     const userMessage = message;
+    const messageAttachments = [...attachments];
     setMessage('');
     setIsLoading(true);
     setStreamingMessage('');
@@ -79,6 +109,7 @@ export function ChatInput() {
           conversation_id: conversationId!,
           role: 'user',
           content: userMessage,
+          attachments: messageAttachments,
         });
 
         assistantMessageId = addOptimisticMessage({
@@ -114,6 +145,7 @@ export function ChatInput() {
           conversation_id: conversationId!,
           role: 'user',
           content: userMessage,
+          attachments: messageAttachments,
         });
 
         assistantMessageId = addOptimisticMessage({
@@ -132,6 +164,7 @@ export function ChatInput() {
           message: userMessage,
           model: selectedModel,
           conversationId: conversationId,
+          attachments: messageAttachments,
         }),
       });
 
@@ -168,6 +201,27 @@ export function ChatInput() {
               if (parsed.chunk && assistantMessageId) {
                 assistantContent += parsed.chunk;
                 updateStreamingMessage(assistantMessageId, assistantContent);
+              } else if (parsed.error && assistantMessageId) {
+                // Handle error from API - show error message in chat
+                const errorContent = parsed.errorContent || `❌ **Error**: ${parsed.error}`;
+                finalizeMessage(assistantMessageId, errorContent);
+                
+                (async () => {
+                  try {
+                    if (conversationId) {
+                      await refreshMessages(conversationId);
+                    }
+                    
+                    if (userMessageId) {
+                      removeOptimisticMessage(userMessageId);
+                    }
+                    if (assistantMessageId) {
+                      removeOptimisticMessage(assistantMessageId);
+                    }
+                  } catch (error) {
+                    console.error('Error refreshing messages after error:', error);
+                  }
+                })();
               } else if (parsed.done && assistantMessageId) {
                 finalizeMessage(assistantMessageId, assistantContent);
                 
@@ -196,15 +250,51 @@ export function ChatInput() {
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      if (userMessageId) {
-        removeOptimisticMessage(userMessageId);
-      }
+      
+      // Show error message in chat if we have an assistant message to update
       if (assistantMessageId) {
+        let errorMessage = 'An unexpected error occurred';
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+        
+        finalizeMessage(assistantMessageId, `❌ **Error**: ${errorMessage}`);
+        
+        // Try to save error to database
+        if (conversationId) {
+          try {
+            await fetch(`/api/conversations/${conversationId}/messages`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                role: 'assistant',
+                content: `❌ **Error**: ${errorMessage}`,
+              }),
+            });
+          } catch (dbError) {
+            console.error('Failed to save error message to database:', dbError);
+          }
+        }
+      } else {
+        // If no assistant message, remove user message and show alert
+        if (userMessageId) {
+          removeOptimisticMessage(userMessageId);
+        }
+        
+        let errorMessage = 'Failed to send message';
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+        alert(`Error: ${errorMessage}`);
+      }
+      
+      if (assistantMessageId && !conversationId) {
         removeOptimisticMessage(assistantMessageId);
       }
     } finally {
       setIsLoading(false);
       setStreamingMessage('');
+      setAttachments([]);
       
       setTimeout(() => {
         if (textareaRef.current) {
@@ -212,6 +302,89 @@ export function ChatInput() {
         }
       }, 100);
     }
+  };
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const modelCapabilities = getModelCapabilities(selectedModel);
+    const maxFileSize = getMaxFileSizeForModel(selectedModel) * 1024 * 1024; // Convert MB to bytes
+
+    // Validate files before uploading
+    const validFiles: File[] = [];
+    const errors: string[] = [];
+
+    Array.from(files).forEach(file => {
+      // Check if model supports this file type
+      if (!canModelProcessFileType(selectedModel, file.type)) {
+        errors.push(`${file.name}: File type not supported by ${selectedModel}`);
+        return;
+      }
+
+      // Check file size
+      if (file.size > maxFileSize) {
+        errors.push(`${file.name}: File too large (max ${getMaxFileSizeForModel(selectedModel)}MB)`);
+        return;
+      }
+
+      validFiles.push(file);
+    });
+
+    if (errors.length > 0) {
+      alert(`Upload errors:\n${errors.join('\n')}`);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
+    if (validFiles.length === 0) return;
+
+    setIsUploading(true);
+    
+    try {
+      const uploadPromises = validFiles.map(async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('model', selectedModel);
+
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to upload file');
+        }
+
+        return await response.json();
+      });
+
+      const uploadedFiles = await Promise.all(uploadPromises);
+      setAttachments(prev => [...prev, ...uploadedFiles]);
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      alert('Error uploading files. Please try again.');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const getProviderLogo = (provider: string) => {
@@ -392,6 +565,9 @@ export function ChatInput() {
                                 {modelInfo.createdDate}
                               </div>
                             )}
+                            <div className="text-white/40 text-xs">
+                              {getModelCapabilityDescription(model)}
+                            </div>
                           </div>
                         </button>
                       );
@@ -414,6 +590,39 @@ export function ChatInput() {
         <div className="w-full max-w-4xl glass-strong backdrop-blur-xl rounded-2xl border border-white/10 p-4 shadow-xl">
 
           <form onSubmit={handleSubmit} className="w-full">
+            {/* Attachments Display */}
+            {attachments.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-2">
+                {attachments.map((attachment, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm"
+                  >
+                    <div className="flex items-center gap-2">
+                      {attachment.file_type.startsWith('image/') ? (
+                        <FileImage size={16} className="text-blue-400" />
+                      ) : (
+                        <FileText size={16} className="text-red-400" />
+                      )}
+                      <span className="text-white/80 truncate max-w-32">
+                        {attachment.filename}
+                      </span>
+                      <span className="text-white/40 text-xs">
+                        {formatFileSize(attachment.file_size)}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeAttachment(index)}
+                      className="cursor-pointer p-1 rounded hover:bg-white/10 transition-colors"
+                    >
+                      <Trash2 size={14} className="text-white/60 hover:text-red-400" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="relative group/send">
               <textarea
                 ref={textareaRef}
@@ -421,7 +630,7 @@ export function ChatInput() {
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Type your message..."
                 disabled={isLoading}
-                className="w-full min-h-[40px] max-h-32 resize-none bg-transparent border-none outline-none focus:outline-none disabled:opacity-50 pr-14 text-white placeholder-white/60 p-3"
+                className="w-full min-h-[40px] max-h-32 resize-none bg-transparent border-none outline-none focus:outline-none disabled:opacity-50 pr-24 text-white placeholder-white/60 p-3"
                 rows={1}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
@@ -431,10 +640,52 @@ export function ChatInput() {
                 }}
               />
               
-              <div className="absolute right-3 top-1/2 translate-y-1 flex flex-col items-center">
+              <div className="absolute right-3 top-1/2 translate-y-1 flex items-center gap-1">
+                {(() => {
+                  const modelCapabilities = getModelCapabilities(selectedModel);
+                  const acceptString = getFileUploadAcceptString(selectedModel);
+                  const supportsFiles = modelCapabilities.supportsImages || modelCapabilities.supportsPDF;
+                  
+                  return (
+                    <>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept={acceptString}
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isLoading || isUploading || !supportsFiles}
+                        className="relative group cursor-pointer p-2 rounded-lg hover:bg-white/10 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150"
+                      >
+                        {isUploading ? (
+                          <Loader2 size={18} className="text-blue-400 animate-spin" />
+                        ) : !supportsFiles ? (
+                          <AlertCircle size={18} className="text-red-400" />
+                        ) : (
+                          <Paperclip size={18} className="text-white/60 hover:text-white" />
+                        )}
+                        
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                          {isUploading 
+                            ? 'Uploading...' 
+                            : !supportsFiles 
+                              ? 'Model doesn\'t support files'
+                              : `Attach ${getModelCapabilityDescription(selectedModel).toLowerCase()}`
+                          }
+                        </div>
+                      </button>
+                    </>
+                  );
+                })()}
+
                 <button
                   type="submit"
-                  disabled={!message.trim() || isLoading}
+                  disabled={(!message.trim() && attachments.length === 0) || isLoading}
                   className="relative group cursor-pointer p-2 rounded-lg hover:bg-white/10 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150"
                 >
                   {isLoading ? (
@@ -448,8 +699,6 @@ export function ChatInput() {
                   </div>
                 </button>
               </div>
-              
-
             </div>
           </form>
 
