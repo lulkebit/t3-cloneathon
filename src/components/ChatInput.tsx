@@ -931,7 +931,7 @@ export function ChatInput() {
         </div>
       )}
 
-      <div className="p-4 flex justify-center">
+      <div className="px-4 pb-4 flex justify-center">
         <div className="w-full max-w-4xl glass-strong backdrop-blur-xl rounded-2xl border border-white/10 p-4 shadow-xl">
 
           <form onSubmit={isConsensusMode ? handleConsensusSubmit : handleSubmit} className="w-full">
