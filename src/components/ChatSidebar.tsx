@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from '@/contexts/ChatContext';
-import { Plus, MessageSquare, Trash2, Settings, ChevronLeft, ChevronRight, X, Check } from 'lucide-react';
+import { Plus, MessageSquare, Trash2, Settings, ChevronLeft, ChevronRight, X, Check, Users } from 'lucide-react';
 
 export function ChatSidebar() {
   const {
@@ -59,6 +59,10 @@ export function ChatSidebar() {
     } else {
       return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
     }
+  };
+
+  const isConsensusConversation = (model: string) => {
+    return model.startsWith('consensus:');
   };
 
   return (
@@ -257,9 +261,27 @@ export function ChatSidebar() {
                           <div className="flex items-center justify-between pl-2">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <h3 className="text-xs font-medium truncate mb-1">
-                                  {conversation.title}
-                                </h3>
+                                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                                  {isConsensusConversation(conversation.model) && (
+                                    <motion.div
+                                      initial={{ opacity: 0, scale: 0 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      transition={{ delay: 0.1 }}
+                                      className="flex-shrink-0 relative group/consensus"
+                                    >
+                                      <div className="w-4 h-4 bg-purple-500/20 border border-purple-400/30 rounded-full flex items-center justify-center">
+                                        <Users size={8} className="text-purple-400" />
+                                      </div>
+                                      
+                                      <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/consensus:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                                        Multi-Model Consensus Chat
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                  <h3 className="text-xs font-medium truncate mb-1">
+                                    {conversation.title}
+                                  </h3>
+                                </div>
                                 {deletingId === conversation.id && (
                                   <motion.div
                                     initial={{ opacity: 0, scale: 0 }}
@@ -277,9 +299,21 @@ export function ChatSidebar() {
                                   </motion.div>
                                 )}
                               </div>
-                              <p className="text-xs opacity-50">
-                                {formatDate(conversation.updated_at)}
-                              </p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-xs opacity-50">
+                                  {formatDate(conversation.updated_at)}
+                                </p>
+                                {isConsensusConversation(conversation.model) && (
+                                  <span className="text-[10px] text-purple-400/60 font-medium">
+                                    {(() => {
+                                      // Extract the models part after 'consensus:'
+                                      const modelsString = conversation.model.replace('consensus:', '');
+                                      const modelCount = modelsString ? modelsString.split(',').length : 0;
+                                      return modelCount > 0 ? `${modelCount} Models` : 'Consensus';
+                                    })()}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                             
                             <div className="flex items-center gap-1">
