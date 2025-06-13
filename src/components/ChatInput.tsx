@@ -21,6 +21,8 @@ export function ChatInput() {
     refreshConversations,
     refreshMessages,
     setActiveConversation,
+    updateConversationTitle,
+    addNewConversation,
     addOptimisticMessage,
     updateStreamingMessage,
     finalizeMessage,
@@ -170,7 +172,7 @@ export function ChatInput() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            title: userMessage.substring(0, 50) + (userMessage.length > 50 ? '...' : ''),
+            title: 'New Chat',
             model: selectedModel,
           }),
         });
@@ -182,7 +184,8 @@ export function ChatInput() {
         const conversationData = await createConversationResponse.json();
         conversationId = conversationData.conversation.id;
         
-        await refreshConversations();
+        // Add the new conversation to the list without triggering a full refresh
+        addNewConversation(conversationData.conversation);
         
         window.history.pushState(null, '', `/chat/${conversationId}`);
         
@@ -267,6 +270,9 @@ export function ChatInput() {
                     console.error('Error refreshing messages after error:', error);
                   }
                 })();
+              } else if (parsed.titleUpdate && parsed.conversationId && parsed.title) {
+                // Handle title update - update conversation title without switching chats
+                updateConversationTitle(parsed.conversationId, parsed.title);
               } else if (parsed.done && assistantMessageId) {
                 finalizeMessage(assistantMessageId, assistantContent);
                 
@@ -397,7 +403,7 @@ export function ChatInput() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            title: userMessage.substring(0, 50) + (userMessage.length > 50 ? '...' : ''),
+            title: 'New Chat',
             model: `consensus:${selectedModels.join(',')}`,
           }),
         });
@@ -409,7 +415,8 @@ export function ChatInput() {
         const conversationData = await createConversationResponse.json();
         conversationId = conversationData.conversation.id;
         
-        await refreshConversations();
+        // Add the new conversation to the list without triggering a full refresh
+        addNewConversation(conversationData.conversation);
         
         window.history.pushState(null, '', `/chat/${conversationId}`);
         
@@ -522,6 +529,9 @@ export function ChatInput() {
                   
                   updateStreamingMessage(assistantMessageId, JSON.stringify(consensusResponses));
                 }
+              } else if (parsed.type === 'title_update' && parsed.conversationId && parsed.title) {
+                // Handle title update for consensus - update conversation title without switching chats
+                updateConversationTitle(parsed.conversationId, parsed.title);
               } else if (parsed.type === 'consensus_final' && assistantMessageId) {
                 finalizeMessage(assistantMessageId, JSON.stringify(parsed.responses));
                 

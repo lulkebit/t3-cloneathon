@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         .from('conversations')
         .insert({
           user_id: user.id,
-          title: message.substring(0, 50) + (message.length > 50 ? '...' : ''),
+          title: 'New Chat',
           model,
         })
         .select()
@@ -154,6 +154,37 @@ export async function POST(request: NextRequest) {
               role: 'assistant',
               content: assistantResponse,
             });
+
+          // Generate title for new conversations after first response
+          if (messages.length === 0) {
+            try {
+              const titleResponse = await fetch(`${request.headers.get('origin') || 'http://localhost:3000'}/api/generate-title`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': request.headers.get('Authorization') || '',
+                  'Cookie': request.headers.get('Cookie') || '',
+                },
+                body: JSON.stringify({
+                  userMessage: message,
+                  assistantResponse,
+                  conversationId: conversation.id,
+                }),
+              });
+              
+              if (titleResponse.ok) {
+                const titleData = await titleResponse.json();
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+                  titleUpdate: true, 
+                  title: titleData.title,
+                  conversationId: conversation.id 
+                })}\n\n`));
+              }
+            } catch (titleError) {
+              console.error('Failed to generate title:', titleError);
+              // Don't fail the main request if title generation fails
+            }
+          }
 
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, conversationId: conversation.id })}\n\n`));
           controller.close();

@@ -18,6 +18,8 @@ interface ChatContextType {
   refreshUser: () => Promise<void>;
   createNewConversation: () => void;
   deleteConversation: (conversationId: string) => Promise<void>;
+  updateConversationTitle: (conversationId: string, newTitle: string) => void;
+  addNewConversation: (conversation: Conversation) => void;
   addOptimisticMessage: (message: Omit<Message, 'id' | 'created_at'>) => string;
   updateStreamingMessage: (messageId: string, content: string) => void;
   finalizeMessage: (messageId: string, finalContent: string) => void;
@@ -62,11 +64,16 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     if (chatIdMatch && chatIdMatch[1] && conversations.length > 0) {
       const chatId = chatIdMatch[1];
       const conversation = conversations.find(conv => conv.id === chatId);
-      if (conversation && conversation.id !== activeConversation?.id) {
+      
+      // Only set active conversation if:
+      // 1. We found a conversation with the URL ID
+      // 2. It's different from the current active conversation
+      // 3. We don't already have an active conversation with the same ID (to prevent switching during title updates)
+      if (conversation && (!activeConversation || activeConversation.id !== conversation.id)) {
         setActiveConversation(conversation);
       }
     }
-  }, [conversations]);
+  }, [conversations, activeConversation]);
 
   const refreshConversations = async () => {
     try {
@@ -187,6 +194,23 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setMessages(prev => prev.filter(msg => msg.id !== messageId));
   };
 
+  const updateConversationTitle = (conversationId: string, newTitle: string) => {
+    setConversations(prev => prev.map(conv => 
+      conv.id === conversationId 
+        ? { ...conv, title: newTitle }
+        : conv
+    ));
+    
+    // Also update active conversation if it's the one being updated
+    if (activeConversation?.id === conversationId) {
+      setActiveConversation(prev => prev ? { ...prev, title: newTitle } : null);
+    }
+  };
+
+  const addNewConversation = (conversation: Conversation) => {
+    setConversations(prev => [conversation, ...prev]);
+  };
+
   useEffect(() => {
     const initializeData = async () => {
       setIsLoading(true);
@@ -228,6 +252,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         refreshUser,
         createNewConversation,
         deleteConversation,
+        updateConversationTitle,
+        addNewConversation,
         addOptimisticMessage,
         updateStreamingMessage,
         finalizeMessage,
