@@ -235,27 +235,28 @@ export function ChatMessages() {
                     }
                     
                     const logoUrl = activeConversation?.model ? getProviderLogo(activeConversation.model) : null;
-                    return logoUrl ? (
-                      <img 
-                        src={logoUrl} 
-                        alt="Provider Logo" 
-                        className="w-4 h-4 object-contain"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const botIcon = target.nextElementSibling as HTMLElement;
-                          if (botIcon) {
-                            botIcon.classList.remove('hidden');
-                          }
-                        }}
-                      />
-                    ) : null;
+                    if (logoUrl) {
+                      return (
+                        <img 
+                          src={logoUrl} 
+                          alt="Provider Logo" 
+                          className="w-4 h-4 object-contain"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const botIcon = target.nextElementSibling as HTMLElement;
+                            if (botIcon) {
+                              botIcon.classList.remove('hidden');
+                            }
+                          }}
+                        />
+                      );
+                    }
+                    
+                    // Fallback to Bot icon for assistant messages
+                    return <Bot size={16} className="text-blue-400" />;
                   })()
                 )}
-                <Bot size={16} className={`text-blue-400 ${
-                  (message.isConsensus || (message.content && message.content.startsWith('[{') && message.content.includes('"model"'))) || 
-                  (activeConversation?.model && getProviderLogo(activeConversation.model)) ? 'hidden' : ''
-                }`} />
               </div>
 
               <div className={`flex items-center gap-2 ${
