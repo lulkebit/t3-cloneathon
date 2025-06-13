@@ -43,7 +43,22 @@ export function ChatInput() {
 
   useEffect(() => {
     if (activeConversation && activeConversation.model) {
-      setSelectedModel(activeConversation.model);
+      // Check if this is a consensus conversation
+      if (activeConversation.model.startsWith('consensus:')) {
+        setIsConsensusMode(true);
+        // Extract the models from the consensus string
+        const modelsString = activeConversation.model.replace('consensus:', '');
+        const models = modelsString ? modelsString.split(',') : [];
+        setSelectedModels(models);
+      } else {
+        setIsConsensusMode(false);
+        setSelectedModel(activeConversation.model);
+      }
+    } else {
+      // Reset to defaults for new conversations
+      setIsConsensusMode(false);
+      setSelectedModel('google/gemma-3n-e4b-it:free');
+      setSelectedModels([]);
     }
   }, [activeConversation]);
 
@@ -949,66 +964,108 @@ export function ChatInput() {
           {/* Consensus Mode Toggle */}
           <div className="mt-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsConsensusMode(!isConsensusMode);
-                  if (!isConsensusMode && selectedModels.length === 0) {
-                    setSelectedModels(['anthropic/claude-3.5-sonnet', 'openai/gpt-4o', 'google/gemma-3n-e4b-it:free']);
-                  }
-                }}
-                disabled={isLoading}
-                className={`cursor-pointer inline-flex items-center gap-2 px-3 py-2 border rounded-xl text-sm transition-all disabled:opacity-50 ${
-                  isConsensusMode
-                    ? 'glass-strong border-purple-400/30 bg-purple-500/10 text-purple-300'
-                    : 'glass-hover border-white/10 text-white/80 hover:text-white hover:scale-[1.02]'
-                }`}
-              >
-                <Users size={16} className={isConsensusMode ? 'text-purple-400' : 'text-white/60'} />
-                <span>Consensus Mode</span>
-              </button>
-
-              {isConsensusMode && (
+              <div className="relative group/consensus-toggle">
                 <button
                   type="button"
-                  onClick={() => setIsMultiModelSelectorOpen(true)}
-                  disabled={isLoading}
-                  className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 glass-hover border border-white/10 rounded-xl text-sm text-white/80 hover:text-white hover:scale-[1.02] transition-all disabled:opacity-50"
+                  onClick={() => {
+                    setIsConsensusMode(!isConsensusMode);
+                    if (!isConsensusMode && selectedModels.length === 0) {
+                      setSelectedModels(['anthropic/claude-3.5-sonnet', 'openai/gpt-4o', 'google/gemma-3n-e4b-it:free']);
+                    }
+                  }}
+                  disabled={isLoading || activeConversation !== null}
+                  className={`inline-flex items-center gap-2 px-3 py-2 border rounded-xl text-sm transition-all ${
+                    activeConversation !== null
+                      ? 'cursor-not-allowed opacity-50'
+                      : 'cursor-pointer'
+                  } ${
+                    isLoading || activeConversation !== null ? 'opacity-50' : ''
+                  } ${
+                    isConsensusMode
+                      ? 'glass-strong border-purple-400/30 bg-purple-500/10 text-purple-300'
+                      : 'glass-hover border-white/10 text-white/80 hover:text-white hover:scale-[1.02]'
+                  }`}
                 >
-                  <Brain size={16} className="text-purple-400" />
-                  <span>{selectedModels.length} Model{selectedModels.length !== 1 ? 's' : ''}</span>
-                  <ChevronDown size={14} className="text-white/40" />
+                  <Users size={16} className={isConsensusMode ? 'text-purple-400' : 'text-white/60'} />
+                  <span>Consensus Mode</span>
                 </button>
+                
+                {activeConversation !== null && (
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/consensus-toggle:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                    Mode locked for existing conversation
+                  </div>
+                )}
+              </div>
+
+              {isConsensusMode && (
+                <div className="relative group/model-selector">
+                  <button
+                    type="button"
+                    onClick={() => setIsMultiModelSelectorOpen(true)}
+                    disabled={isLoading || activeConversation !== null}
+                    className={`inline-flex items-center gap-2 px-3 py-2 border border-white/10 rounded-xl text-sm transition-all ${
+                      activeConversation !== null
+                        ? 'cursor-not-allowed opacity-50 text-white/40'
+                        : 'cursor-pointer glass-hover text-white/80 hover:text-white hover:scale-[1.02]'
+                    } ${
+                      isLoading || activeConversation !== null ? 'opacity-50' : ''
+                    }`}
+                  >
+                    <Brain size={16} className="text-purple-400" />
+                    <span>{selectedModels.length} Model{selectedModels.length !== 1 ? 's' : ''}</span>
+                    <ChevronDown size={14} className="text-white/40" />
+                  </button>
+                  
+                  {activeConversation !== null && (
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/model-selector:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                      Models locked for existing conversation
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
             {!isConsensusMode && (
-              <button
-                onClick={() => setIsModelModalOpen(true)}
-                disabled={isLoading}
-                className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 glass-hover border border-white/10 rounded-xl text-sm text-white/80 hover:text-white hover:scale-[1.02] transition-all disabled:opacity-50"
-              >
-                <div className="w-5 h-5 flex items-center justify-center rounded flex-shrink-0">
-                  {selectedModelInfo.logo ? (
-                    <img
-                      src={selectedModelInfo.logo}
-                      alt={`${selectedModelInfo.provider} logo`}
-                      className="w-4 h-4 object-contain"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        target.nextElementSibling?.classList.remove('hidden');
-                      }}
+              <div className="relative group/single-model-selector">
+                <button
+                  onClick={() => setIsModelModalOpen(true)}
+                  disabled={isLoading || activeConversation !== null}
+                  className={`inline-flex items-center gap-2 px-3 py-2 border border-white/10 rounded-xl text-sm transition-all ${
+                    activeConversation !== null
+                      ? 'cursor-not-allowed opacity-50 text-white/40'
+                      : 'cursor-pointer glass-hover text-white/80 hover:text-white hover:scale-[1.02]'
+                  } ${
+                    isLoading || activeConversation !== null ? 'opacity-50' : ''
+                  }`}
+                >
+                  <div className="w-5 h-5 flex items-center justify-center rounded flex-shrink-0">
+                    {selectedModelInfo.logo ? (
+                      <img
+                        src={selectedModelInfo.logo}
+                        alt={`${selectedModelInfo.provider} logo`}
+                        className="w-4 h-4 object-contain"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <Bot 
+                      size={14} 
+                      className={`text-blue-400 ${selectedModelInfo.logo ? 'hidden' : ''}`}
                     />
-                  ) : null}
-                  <Bot 
-                    size={14} 
-                    className={`text-blue-400 ${selectedModelInfo.logo ? 'hidden' : ''}`}
-                  />
-                </div>
-                <span>{selectedModelInfo.name}</span>
-                <ChevronDown size={14} className="text-white/40" />
-              </button>
+                  </div>
+                  <span>{selectedModelInfo.name}</span>
+                  <ChevronDown size={14} className="text-white/40" />
+                </button>
+                
+                {activeConversation !== null && (
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/single-model-selector:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                    Model locked for existing conversation
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
