@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Conversation } from '@/types/chat';
 
-const DEFAULT_TITLE = 'AI Chat - Modern Interface';
+const DEFAULT_TITLE = 'AI Chat - t3-cloneathon';
 
 export function useDynamicTitle(activeConversation: Conversation | null) {
   useEffect(() => {
