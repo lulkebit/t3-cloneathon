@@ -73,16 +73,17 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${window.location.origin}/chat`,
+          redirectTo: `${window.location.origin}/auth/callback?next=/chat`,
         },
       })
       
       if (error) {
         setError(error.message)
+        setLoading(false)
       }
+      // Don't set loading to false here as we're redirecting
     } catch (err) {
       setError('An unexpected error occurred')
-    } finally {
       setLoading(false)
     }
   }
