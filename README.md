@@ -75,7 +75,8 @@ The application supports **20+ cutting-edge AI models** from major providers:
 ## 📸 Screenshots
 
 ### Main Chat Interface
-![Main Chat Interface](./screenshots/main-chat.png)
+![Main Chat Interface](./screenshots/main-chat-01.png)
+![Main Chat Interface](./screenshots/main-chat-02.png)
 *Clean, modern chat interface with model selection and real-time streaming*
 
 ### Multi-Model Consensus Chat
