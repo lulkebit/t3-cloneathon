@@ -1,92 +1,330 @@
 'use client'
 
-import { Auth } from '@supabase/auth-ui-react'
-import { ThemeSupa } from '@supabase/auth-ui-shared'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase-client'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { motion } from 'framer-motion'
+import { Github, Mail, Lock, Eye, EyeOff, Sparkles } from 'lucide-react'
 
 export default function LoginPage() {
+  const [isLogin, setIsLogin] = useState(true)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
+
   const supabase = createClient()
   const router = useRouter()
 
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        router.push('/dashboard')
-      }
-    })
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    setMessage('')
 
-    return () => subscription.unsubscribe()
-  }, [supabase.auth, router])
+    try {
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+        
+        if (error) {
+          setError(error.message)
+        } else {
+          router.push('/chat')
+        }
+      } else {
+        if (password !== confirmPassword) {
+          setError('Passwords do not match')
+          return
+        }
+
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/chat`,
+          },
+        })
+        
+        if (error) {
+          setError(error.message)
+        } else {
+          setMessage('Check your email for the confirmation link')
+        }
+      }
+    } catch (err) {
+      setError('An unexpected error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGithubAuth = async () => {
+    setLoading(true)
+    setError('')
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: `${window.location.origin}/chat`,
+        },
+      })
+      
+      if (error) {
+        setError(error.message)
+      }
+    } catch (err) {
+      setError('An unexpected error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Melde dich in deinem Konto an
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Oder erstelle ein neues Konto
-        </p>
-      </div>
+    <div className="min-h-screen animated-bg flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md"
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.1 }}
+          className="glass rounded-2xl p-8 border border-white/10"
+        >
+          <div className="text-center mb-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="w-16 h-16 mx-auto mb-4 glass rounded-2xl flex items-center justify-center"
+            >
+              <Sparkles size={24} className="text-purple-400" />
+            </motion.div>
+            
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-2xl font-bold text-white mb-2"
+            >
+              {isLogin ? 'Welcome back' : 'Create account'}
+            </motion.h1>
+            
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="text-white/60"
+            >
+              {isLogin ? 'Sign in to your account' : 'Create a new account to get started'}
+            </motion.p>
+          </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <Auth
-            supabaseClient={supabase}
-            appearance={{
-              theme: ThemeSupa,
-              variables: {
-                default: {
-                  colors: {
-                    brand: '#2563eb',
-                    brandAccent: '#1d4ed8',
-                  },
-                },
-              },
-            }}
-            localization={{
-              variables: {
-                sign_in: {
-                  email_label: 'E-Mail-Adresse',
-                  password_label: 'Passwort',
-                  email_input_placeholder: 'Deine E-Mail-Adresse',
-                  password_input_placeholder: 'Dein Passwort',
-                  button_label: 'Anmelden',
-                  loading_button_label: 'Wird angemeldet...',
-                  social_provider_text: 'Mit {{provider}} anmelden',
-                  link_text: 'Hast du bereits ein Konto? Anmelden',
-                },
-                sign_up: {
-                  email_label: 'E-Mail-Adresse',
-                  password_label: 'Passwort',
-                  email_input_placeholder: 'Deine E-Mail-Adresse',
-                  password_input_placeholder: 'Dein Passwort',
-                  button_label: 'Registrieren',
-                  loading_button_label: 'Wird registriert...',
-                  social_provider_text: 'Mit {{provider}} registrieren',
-                  link_text: 'Hast du noch kein Konto? Registrieren',
-                  confirmation_text: 'Prüfe deine E-Mails für den Bestätigungslink',
-                },
-                forgotten_password: {
-                  email_label: 'E-Mail-Adresse',
-                  password_label: 'Passwort',
-                  email_input_placeholder: 'Deine E-Mail-Adresse',
-                  button_label: 'Passwort zurücksetzen',
-                  loading_button_label: 'Sende E-Mail...',
-                  link_text: 'Passwort vergessen?',
-                  confirmation_text: 'Prüfe deine E-Mails für den Link zum Zurücksetzen',
-                },
-              },
-            }}
-            providers={['google', 'github']}
-            redirectTo={`${window.location.origin}/dashboard`}
-          />
-        </div>
-      </div>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm"
+            >
+              {error}
+            </motion.div>
+          )}
+
+          {message && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="mb-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-sm"
+            >
+              {message}
+            </motion.div>
+          )}
+
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            onClick={handleGithubAuth}
+            disabled={loading}
+            className="cursor-pointer w-full mb-6 p-3 glass-hover rounded-xl border border-white/10 text-white flex items-center justify-center gap-3 transition-all hover:border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+          >
+            <Github size={18} />
+            {isLogin ? 'Sign in with GitHub' : 'Sign up with GitHub'}
+          </motion.button>
+
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-transparent text-white/60">or</span>
+            </div>
+          </div>
+
+          <form onSubmit={handleEmailAuth} className="space-y-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+            >
+              <label className="block text-sm font-medium text-white/80 mb-2">
+                Email Address
+              </label>
+                             <div className="relative">
+                 <Mail size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
+                 <input
+                   type="email"
+                   value={email}
+                   onChange={(e) => setEmail(e.target.value)}
+                   required
+                   className="w-full !pl-11 pr-4 py-3 input-glass text-white placeholder:text-white/40"
+                   placeholder="your@email.com"
+                 />
+               </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+            >
+              <label className="block text-sm font-medium text-white/80 mb-2">
+                Password
+              </label>
+                             <div className="relative">
+                 <Lock size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
+                 <input
+                   type={showPassword ? 'text' : 'password'}
+                   value={password}
+                   onChange={(e) => setPassword(e.target.value)}
+                   required
+                   className="w-full !pl-11 !pr-12 py-3 input-glass text-white placeholder:text-white/40"
+                   placeholder="••••••••"
+                 />
+                 <button
+                   type="button"
+                   onClick={() => setShowPassword(!showPassword)}
+                   className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white/60"
+                 >
+                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                 </button>
+               </div>
+            </motion.div>
+
+            {!isLogin && (
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  Confirm Password
+                </label>
+                                 <div className="relative">
+                   <Lock size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" />
+                   <input
+                     type={showConfirmPassword ? 'text' : 'password'}
+                     value={confirmPassword}
+                     onChange={(e) => setConfirmPassword(e.target.value)}
+                     required
+                     className="w-full !pl-11 !pr-12 py-3 input-glass text-white placeholder:text-white/40"
+                     placeholder="••••••••"
+                   />
+                   <button
+                     type="button"
+                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                     className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white/60"
+                   >
+                     {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                   </button>
+                 </div>
+              </div>
+            )}
+
+            <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.9 }}
+              type="submit"
+              disabled={loading}
+              className="w-full btn-primary mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+            >
+              {loading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  {isLogin ? 'Signing in...' : 'Signing up...'}
+                </div>
+              ) : (
+                isLogin ? 'Sign In' : 'Sign Up'
+              )}
+            </motion.button>
+          </form>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+            className="mt-6 text-center"
+          >
+            <span className="text-white/60">
+              {isLogin ? "Don't have an account?" : 'Already registered?'}
+            </span>
+            {' '}
+            <button
+              onClick={() => {
+                setIsLogin(!isLogin)
+                setError('')
+                setMessage('')
+                setEmail('')
+                setPassword('')
+                setConfirmPassword('')
+              }}
+              className="cursor-pointer text-purple-400 hover:text-purple-300 font-medium transition-colors"
+            >
+              {isLogin ? 'Sign up' : 'Sign in'}
+            </button>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.1 }}
+            className="mt-6 pt-4 border-t border-white/10 text-center"
+          >
+            <div className="flex justify-center gap-4 text-xs text-white/40">
+              <a 
+                href="/nutzungsbedingungen" 
+                className="hover:text-white/60 transition-colors"
+              >
+                Terms
+              </a>
+              <span>•</span>
+              <a 
+                href="/datenschutz-chat" 
+                className="hover:text-white/60 transition-colors"
+              >
+                Privacy
+              </a>
+              <span>•</span>
+              <a 
+                href="/haftungsausschluss" 
+                className="hover:text-white/60 transition-colors"
+              >
+                Disclaimer
+              </a>
+            </div>
+          </motion.div>
+        </motion.div>
+      </motion.div>
     </div>
   )
 } 
