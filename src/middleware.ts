@@ -35,6 +35,8 @@ export async function middleware(request: NextRequest) {
   const publicRoutes = [
     '/',
     '/login',
+    '/auth/callback',
+    '/auth/auth-code-error',
     '/nutzungsbedingungen',
     '/datenschutz-chat',
     '/haftungsausschluss'
@@ -43,6 +45,12 @@ export async function middleware(request: NextRequest) {
   const isPublicRoute = publicRoutes.some(route => 
     request.nextUrl.pathname === route || request.nextUrl.pathname.startsWith(route + '/')
   )
+  
+  // Skip middleware for all auth routes to prevent interference with OAuth flow
+  const isAuthRoute = request.nextUrl.pathname.startsWith('/auth/')
+  if (isAuthRoute) {
+    return supabaseResponse
+  }
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone()

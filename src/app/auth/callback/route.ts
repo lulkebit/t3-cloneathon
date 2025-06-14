@@ -11,15 +11,28 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     
     if (!error) {
+      // Create a more robust redirect URL
       const forwardedHost = request.headers.get('x-forwarded-host')
       const isLocalEnv = process.env.NODE_ENV === 'development'
+      
+      let redirectUrl: string
       if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${next}`)
+        redirectUrl = `${origin}${next}`
       } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`)
+        redirectUrl = `https://${forwardedHost}${next}`
       } else {
-        return NextResponse.redirect(`${origin}${next}`)
+        redirectUrl = `${origin}${next}`
       }
+      
+      // Add a small delay to ensure session is properly set
+      const response = NextResponse.redirect(redirectUrl)
+      
+      // Ensure cookies are properly set for the redirect
+      response.headers.set('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate')
+      
+      return response
+    } else {
+      console.error('Auth callback error:', error)
     }
   }
 
