@@ -79,11 +79,10 @@ export default function LoginPage() {
       
       if (error) {
         setError(error.message)
-        setLoading(false)
       }
-      // Don't set loading to false here as we're redirecting
     } catch (err) {
       setError('An unexpected error occurred')
+    } finally {
       setLoading(false)
     }
   }
