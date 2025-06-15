@@ -97,14 +97,6 @@ const MODEL_CAPABILITIES: Record<string, ModelCapabilities> = {
     supportedImageTypes: [],
     supportedDocumentTypes: [],
   },
-  'openai/o3': {
-    supportsImages: false,
-    supportsPDF: false,
-    supportsVision: false,
-    maxFileSize: 0,
-    supportedImageTypes: [],
-    supportedDocumentTypes: [],
-  },
   'anthropic/claude-opus-4': {
     supportsImages: true,
     supportsPDF: true,

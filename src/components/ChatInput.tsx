@@ -34,9 +34,9 @@ export function ChatInput() {
     // Initialize with last used model from localStorage, fallback to 'openai/o3'
     if (typeof window !== 'undefined') {
       const lastUsedModel = localStorage.getItem('lastUsedModel');
-      return lastUsedModel || 'openai/o3';
+      return lastUsedModel || 'openai/o3-mini';
     }
-    return 'openai/o3';
+    return 'openai/o3-mini';
   });
   const [isLoading, setIsLoading] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState('');
@@ -68,7 +68,7 @@ export function ChatInput() {
       setIsConsensusMode(false);
       // Load last used model from localStorage for new conversations
       const lastUsedModel = localStorage.getItem('lastUsedModel');
-      setSelectedModel(lastUsedModel || 'openai/o3');
+      setSelectedModel(lastUsedModel || 'openai/o3-mini');
       
       // Load last used consensus models from localStorage
       const lastUsedConsensusModels = localStorage.getItem('lastUsedConsensusModels');

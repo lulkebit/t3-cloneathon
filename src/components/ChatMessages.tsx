@@ -99,7 +99,7 @@ export function ChatMessages() {
         throw new Error('Failed to delete message');
       }
 
-      const model = activeConversation.model || 'openai/o3';
+      const model = activeConversation.model || 'openai/o3-mini';
 
       const response = await fetch('/api/chat', {
         method: 'POST',

@@ -132,7 +132,6 @@ export const getPopularModels = (): string[] => [
   'openai/gpt-4.1-nano',
   'openai/o3-mini',
   'openai/o4-mini',
-  'openai/o3',
   'anthropic/claude-opus-4',
   'anthropic/claude-sonnet-4',
   'anthropic/claude-3.7-sonnet',
