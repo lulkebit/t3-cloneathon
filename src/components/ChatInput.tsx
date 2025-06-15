@@ -256,15 +256,17 @@ export function ChatInput() {
                 
                 (async () => {
                   try {
-                    if (conversationId) {
-                      await refreshMessages(conversationId);
-                    }
-                    
+                    // Remove optimistic messages first to prevent duplicates
                     if (userMessageId) {
                       removeOptimisticMessage(userMessageId);
                     }
                     if (assistantMessageId) {
                       removeOptimisticMessage(assistantMessageId);
+                    }
+                    
+                    // Then refresh messages from server
+                    if (conversationId) {
+                      await refreshMessages(conversationId);
                     }
                   } catch (error) {
                     console.error('Error refreshing messages after error:', error);
@@ -278,15 +280,17 @@ export function ChatInput() {
                 
                 (async () => {
                   try {
-                    if (conversationId) {
-                      await refreshMessages(conversationId);
-                    }
-                    
+                    // Remove optimistic messages first to prevent duplicates
                     if (userMessageId) {
                       removeOptimisticMessage(userMessageId);
                     }
                     if (assistantMessageId) {
                       removeOptimisticMessage(assistantMessageId);
+                    }
+                    
+                    // Then refresh messages from server
+                    if (conversationId) {
+                      await refreshMessages(conversationId);
                     }
                   } catch (error) {
                     console.error('Error refreshing messages after streaming:', error);
@@ -537,15 +541,17 @@ export function ChatInput() {
                 
                 (async () => {
                   try {
-                    if (conversationId) {
-                      await refreshMessages(conversationId);
-                    }
-                    
+                    // Remove optimistic messages first to prevent duplicates
                     if (userMessageId) {
                       removeOptimisticMessage(userMessageId);
                     }
                     if (assistantMessageId) {
                       removeOptimisticMessage(assistantMessageId);
+                    }
+                    
+                    // Then refresh messages from server
+                    if (conversationId) {
+                      await refreshMessages(conversationId);
                     }
                   } catch (error) {
                     console.error('Error refreshing messages after consensus:', error);

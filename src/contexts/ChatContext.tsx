@@ -95,7 +95,11 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         const serverMessages = data.messages || [];
         
         setMessages(prev => {
-          const optimisticMessages = prev.filter(msg => msg.isOptimistic);
+          // Keep only optimistic messages for this conversation that are still relevant
+          const optimisticMessages = prev.filter(msg => 
+            msg.isOptimistic && 
+            msg.conversation_id === conversationId
+          );
           return [...serverMessages, ...optimisticMessages];
         });
       }
