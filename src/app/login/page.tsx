@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase-client'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Github, Mail, Lock, Eye, EyeOff, Sparkles } from 'lucide-react'
+import Image from 'next/image'
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true)
@@ -87,6 +88,28 @@ export default function LoginPage() {
     }
   }
 
+  const handleGoogleAuth = async () => {
+    setLoading(true)
+    setError('')
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=/chat`,
+        },
+      })
+      
+      if (error) {
+        setError(error.message)
+      }
+    } catch (err) {
+      setError('An unexpected error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen animated-bg flex items-center justify-center p-4">
       <motion.div
@@ -149,19 +172,41 @@ export default function LoginPage() {
             </motion.div>
           )}
 
-          <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            onClick={handleGithubAuth}
-            disabled={loading}
-            className="cursor-pointer w-full mb-6 p-3 glass-hover rounded-xl border border-white/10 text-white flex items-center justify-center gap-3 transition-all hover:border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-          >
-            <Github size={18} />
-            {isLogin ? 'Sign in with GitHub' : 'Sign up with GitHub'}
-          </motion.button>
+          <div className="space-y-3 mb-6">
+            <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              onClick={handleGoogleAuth}
+              disabled={loading}
+              className="cursor-pointer w-full p-3 glass-hover rounded-xl border border-white/10 text-white flex items-center justify-center gap-3 transition-all hover:border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+            >
+              <Image 
+                src="/logos/google.svg" 
+                alt="Google" 
+                width={18} 
+                height={18}
+                className="brightness-0 invert"
+              />
+              {isLogin ? 'Sign in with Google' : 'Sign up with Google'}
+            </motion.button>
+
+            <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              onClick={handleGithubAuth}
+              disabled={loading}
+              className="cursor-pointer w-full p-3 glass-hover rounded-xl border border-white/10 text-white flex items-center justify-center gap-3 transition-all hover:border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+            >
+              <Github size={18} />
+              {isLogin ? 'Sign in with GitHub' : 'Sign up with GitHub'}
+            </motion.button>
+          </div>
 
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">
@@ -176,7 +221,7 @@ export default function LoginPage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
+              transition={{ delay: 0.7 }}
             >
               <label className="block text-sm font-medium text-white/80 mb-2">
                 Email Address
@@ -197,7 +242,7 @@ export default function LoginPage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 }}
+              transition={{ delay: 0.8 }}
             >
               <label className="block text-sm font-medium text-white/80 mb-2">
                 Password
@@ -223,7 +268,11 @@ export default function LoginPage() {
             </motion.div>
 
             {!isLogin && (
-              <div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.9 }}
+              >
                 <label className="block text-sm font-medium text-white/80 mb-2">
                   Confirm Password
                 </label>
@@ -245,13 +294,13 @@ export default function LoginPage() {
                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                    </button>
                  </div>
-              </div>
+              </motion.div>
             )}
 
             <motion.button
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.9 }}
+              transition={{ delay: 1.0 }}
               type="submit"
               disabled={loading}
               className="w-full btn-primary mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -272,7 +321,7 @@ export default function LoginPage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
+            transition={{ delay: 1.1 }}
             className="mt-6 text-center"
           >
             <span className="text-white/60">
@@ -297,7 +346,7 @@ export default function LoginPage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 1.1 }}
+            transition={{ delay: 1.2 }}
             className="mt-6 pt-4 border-t border-white/10 text-center"
           >
             <div className="flex justify-center gap-4 text-xs text-white/40">
