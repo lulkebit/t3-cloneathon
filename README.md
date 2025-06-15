@@ -55,7 +55,7 @@ The application supports **20+ cutting-edge AI models** from major providers:
 ### OpenAI Models
 - GPT-4o Mini & GPT-4o (2024-11-20)
 - GPT-4.1 (Full, Mini, Nano)
-- o3 & o3-mini
+- o3-mini
 - o4-mini
 
 ### Anthropic Models
