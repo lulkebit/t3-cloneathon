@@ -392,7 +392,8 @@ export function ChatMessages() {
                         <TypeWriter 
                           text={message.content} 
                           isComplete={false}
-                          speed={20}
+                          speed={15}
+                          typingMode="character"
                         />
                       ) : (
                         <MarkdownRenderer content={message.content} />
