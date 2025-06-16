@@ -278,8 +278,6 @@ export function MultiModelSelector({
                               </div>
                             </div>
                           </div>
-                        
-                        
                       </button>
                     );
                   })}
@@ -309,7 +307,7 @@ export function MultiModelSelector({
             <button
               onClick={onClose}
               disabled={selectedModels.length === 0}
-              className={`px-8 py-3 rounded-2xl font-semibold transition-all duration-200 ${
+              className={`cursor-pointer px-8 py-3 rounded-2xl font-semibold transition-all duration-200 ${
                 selectedModels.length === 0
                   ? 'bg-white/5 text-white/40 cursor-not-allowed'
                   : 'bg-purple-500 text-white hover:bg-purple-600 hover:shadow-lg hover:shadow-purple-500/25'
