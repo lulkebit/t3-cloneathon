@@ -48,7 +48,17 @@ export async function POST(request: NextRequest) {
         
         const { data: existingMessages } = await supabase
           .from('messages')
-          .select('*')
+          .select(`
+            *,
+            attachments (
+              id,
+              filename,
+              file_type,
+              file_size,
+              file_url,
+              created_at
+            )
+          `)
           .eq('conversation_id', conversationId)
           .order('created_at', { ascending: true });
 
@@ -107,20 +117,134 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Build the current message content including attachments
-    let currentMessageContent = message || '';
-    if (attachments.length > 0) {
-      const attachmentDescriptions = attachments.map((att: any) => 
-        `[Attachment: ${att.filename} (${att.file_type})]`
-      ).join('\n');
-      currentMessageContent = `${currentMessageContent}\n\n${attachmentDescriptions}`;
+    // Build the current message content array format for OpenRouter Vision API
+    const contentParts: any[] = [];
+    
+    // Add text content if present
+    if (message && message.trim()) {
+      contentParts.push({
+        type: "text",
+        text: message
+      });
     }
 
-    // Build conversation history
-    const conversationHistory = messages.map((msg: any) => ({
-      role: msg.role,
-      content: msg.content,
-    }));
+    // Add attachments in proper OpenRouter format
+    if (attachments.length > 0) {
+      for (const attachment of attachments) {
+        if (attachment.file_type.startsWith('image/')) {
+          // For images, use image_url format
+          contentParts.push({
+            type: "image_url",
+            image_url: {
+              url: attachment.file_url
+            }
+          });
+        } else if (attachment.file_type === 'application/pdf') {
+          // For PDFs, we need to fetch and encode as base64
+          try {
+            const response = await fetch(attachment.file_url);
+            const arrayBuffer = await response.arrayBuffer();
+            const base64Data = Buffer.from(arrayBuffer).toString('base64');
+            const dataUrl = `data:application/pdf;base64,${base64Data}`;
+            
+            contentParts.push({
+              type: "file",
+              file: {
+                filename: attachment.filename,
+                file_data: dataUrl
+              }
+            });
+          } catch (error) {
+            console.error('Failed to process PDF attachment:', error);
+            // Fallback to text description if PDF processing fails
+            contentParts.push({
+              type: "text",
+              text: `[PDF Document: ${attachment.filename} - Unable to process file content]`
+            });
+          }
+        } else {
+          // For other file types, add as text description
+          contentParts.push({
+            type: "text",
+            text: `[File: ${attachment.filename}]`
+          });
+        }
+      }
+    }
+
+    // Helper function to format message content with attachments
+    const formatMessageContent = async (msg: any) => {
+      if (msg.role === 'assistant' || !msg.attachments || msg.attachments.length === 0) {
+        return msg.content;
+      }
+
+      const msgContentParts: any[] = [];
+      
+      // Add text content if present
+      if (msg.content && msg.content.trim()) {
+        msgContentParts.push({
+          type: "text",
+          text: msg.content
+        });
+      }
+
+      // Add attachments in proper OpenRouter format
+      for (const attachment of msg.attachments) {
+        if (attachment.file_type.startsWith('image/')) {
+          msgContentParts.push({
+            type: "image_url",
+            image_url: {
+              url: attachment.file_url
+            }
+          });
+        } else if (attachment.file_type === 'application/pdf') {
+          try {
+            const response = await fetch(attachment.file_url);
+            const arrayBuffer = await response.arrayBuffer();
+            const base64Data = Buffer.from(arrayBuffer).toString('base64');
+            const dataUrl = `data:application/pdf;base64,${base64Data}`;
+            
+            msgContentParts.push({
+              type: "file",
+              file: {
+                filename: attachment.filename,
+                file_data: dataUrl
+              }
+            });
+          } catch (error) {
+            console.error('Failed to process PDF attachment:', error);
+            msgContentParts.push({
+              type: "text",
+              text: `[PDF Document: ${attachment.filename} - Unable to process file content]`
+            });
+          }
+        } else {
+          msgContentParts.push({
+            type: "text",
+            text: `[File: ${attachment.filename}]`
+          });
+        }
+      }
+
+      return msgContentParts.length > 1 || (msgContentParts.length === 1 && msgContentParts[0].type !== 'text') 
+        ? msgContentParts 
+        : msgContentParts[0]?.text || msg.content;
+    };
+
+    // Build conversation history with proper attachment formatting
+    const formattedMessages = await Promise.all(
+      messages.map(async (msg) => ({
+        role: msg.role,
+        content: await formatMessageContent(msg)
+      }))
+    );
+
+    const conversationHistory = formattedMessages;
+
+    // Add current user message with proper content format
+    const currentMessageContent = contentParts.length > 1 || (contentParts.length === 1 && contentParts[0].type !== 'text') 
+      ? contentParts 
+      : contentParts[0]?.text || message || '';
 
     conversationHistory.push({
       role: 'user',
