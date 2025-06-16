@@ -18,7 +18,7 @@ export class TitleGenerator {
           'X-Title': 'Convex Chat Title Generator',
         },
         body: JSON.stringify({
-          model: 'deepseek/deepseek-chat-v3-0324:free', // Fast and cheap model for title generation
+          model: 'google/gemini-2.0-flash-lite-001', // Fast and cheap model for title generation
           messages: [
             {
               role: 'user',
