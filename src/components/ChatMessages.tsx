@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from '@/contexts/ChatContext';
-import { User, Bot, Sparkles, Copy, Check, RotateCcw, Loader2, FileImage, FileText, Download, Users } from 'lucide-react';
+import { User, Sparkles, Copy, Check, RotateCcw, Loader2, FileImage, FileText, Download, Users } from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { LoadingIndicator } from './LoadingIndicator';
 import { TypeWriter } from './TypeWriter';
@@ -179,7 +179,11 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
         <div className="text-center max-w-md">
           <div className="w-20 h-20 mx-auto mb-6 glass-strong rounded-3xl flex items-center justify-center relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20"></div>
-            <Bot size={32} className="text-blue-400 relative z-10" />
+            <img 
+              src="/ai.png" 
+              alt="AI Assistant" 
+              className="w-14 h-14 object-contain relative z-10"
+            />
           </div>
           
           <h3 className="text-2xl font-bold text-white mb-4">
@@ -264,8 +268,8 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
                       );
                     }
                     
-                    // Fallback to Bot icon for assistant messages
-                    return <Bot size={16} className="text-blue-400" />;
+                    // Fallback to AI image for assistant messages
+                    return <img src="/ai.png" alt="AI Assistant" className="w-4 h-4 object-contain" />;
                   })()
                 )}
               </div>
