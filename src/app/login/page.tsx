@@ -349,7 +349,7 @@ export default function LoginPage() {
             transition={{ delay: 1.2 }}
             className="mt-6 pt-4 border-t border-white/10 text-center"
           >
-            <div className="flex justify-center gap-4 text-xs text-white/40">
+            <div className="flex justify-center gap-4 text-xs text-white/40 mb-3">
               <a 
                 href="/nutzungsbedingungen" 
                 className="hover:text-white/60 transition-colors"
@@ -371,6 +371,30 @@ export default function LoginPage() {
                 Disclaimer
               </a>
             </div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.3 }}
+              className="flex justify-center"
+            >
+              <motion.a
+                href="https://github.com/lulkebit/t3-cloneathon"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-3 py-2 text-white/40 hover:text-white/70 transition-all duration-200 hover:bg-white/5 rounded-lg"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Image 
+                  src="/logos/github.svg" 
+                  alt="GitHub" 
+                  width={16} 
+                  height={16}
+                  className="brightness-0 invert opacity-60"
+                />
+                <span className="text-xs font-medium">Project Info & Source Code</span>
+              </motion.a>
+            </motion.div>
           </motion.div>
         </motion.div>
       </motion.div>
