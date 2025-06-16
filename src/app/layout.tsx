@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Chat - t3-cloneathon",
+  title: "Convex Chat - t3-cloneathon",
   description: "A t3.chat clone, submission for the t3-cloneathon",
 };
 

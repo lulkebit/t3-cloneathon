@@ -1,4 +1,4 @@
-# T3 Chat Clone - Cloneathon Submission
+# T3 Chat Clone - Convex Chat - Cloneathon Submission
 
 > **Live Demo:** [https://t3-clonathon.lukeschroeter.de/](https://t3-clonathon.lukeschroeter.de/)
 

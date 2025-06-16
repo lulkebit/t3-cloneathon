@@ -340,14 +340,7 @@ html, body {
   margin-bottom: 0;
 }
 
-/* Streaming message specific styles */
-.streaming-message p:last-child {
-  display: inline;
-}
-
-.streaming-message p:empty {
-  display: none;
-}
+/* Legacy streaming message styles - moved to enhanced section below */
 
 /* Override highlight.js theme for better dark mode integration */
 .hljs {
@@ -396,4 +389,62 @@ html, body {
 
 .hljs-strong {
   font-weight: bold;
+}
+
+/* Typewriter Effect Animations */
+@keyframes typewriterCursor {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.typewriter-cursor {
+  animation: typewriterCursor 1.2s infinite;
+  transition: opacity 0.1s ease;
+}
+
+.typewriter-cursor.typing {
+  animation: none;
+  opacity: 1;
+}
+
+/* Smooth text reveal animation */
+@keyframes textReveal {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.text-reveal {
+  animation: textReveal 0.1s ease-out;
+}
+
+/* Enhanced streaming message styles */
+.streaming-message {
+  position: relative;
+}
+
+.streaming-message p:last-child {
+  display: inline;
+  margin-bottom: 0;
+}
+
+.streaming-message p:empty {
+  display: none;
+}
+
+/* Smooth content transitions */
+.streaming-message * {
+  transition: opacity 0.1s ease-out;
+}
+
+/* Prevent layout shifts during typing */
+.streaming-message pre,
+.streaming-message code {
+  white-space: pre-wrap;
+  word-break: break-word;
 }

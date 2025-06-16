@@ -17,6 +17,7 @@ interface ChatPageContentProps {
 export function ChatPageContent({ chatId }: ChatPageContentProps) {
   const { profile, isLoading, conversations, setActiveConversation, activeConversation } = useChat();
   const [showSettings, setShowSettings] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
   useDynamicTitle(activeConversation);
 
@@ -84,7 +85,7 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
             transition={{ delay: 0.2 }}
             className="text-2xl font-bold text-white mb-4"
           >
-            Welcome to AI Chat
+            Welcome to Convex Chat
           </motion.h1>
           
           <motion.p
@@ -136,7 +137,10 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
         animate={{ x: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
       >
-        <ChatSidebar />
+        <ChatSidebar 
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        />
       </motion.div>
       
       <motion.div
@@ -145,7 +149,7 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
         transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 30 }}
         className="flex-1 flex flex-col relative"
       >
-        <ChatMessages />
+        <ChatMessages isSidebarCollapsed={isSidebarCollapsed} />
         
         <ChatInput />
       </motion.div>

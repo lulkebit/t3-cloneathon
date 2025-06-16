@@ -15,7 +15,7 @@ export class TitleGenerator {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
           'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
-          'X-Title': 'AI Chat Title Generator',
+          'X-Title': 'Convex Chat Title Generator',
         },
         body: JSON.stringify({
           model: 'deepseek/deepseek-chat-v3-0324:free', // Fast and cheap model for title generation
