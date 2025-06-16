@@ -183,7 +183,7 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
           </div>
           
           <h3 className="text-2xl font-bold text-white mb-4">
-            Welcome to AI Chat
+            Welcome to Convex Chat
           </h3>
           
           <p className="text-white/60 leading-relaxed">
