@@ -7,7 +7,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from '@/contexts/ChatContext';
 import { Plus, MessageSquare, Trash2, Settings, ChevronLeft, ChevronRight, X, Check, Users } from 'lucide-react';
 
-export function ChatSidebar() {
+interface ChatSidebarProps {
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
+}
+
+export function ChatSidebar({ isCollapsed, onToggleCollapse }: ChatSidebarProps) {
   const {
     conversations,
     activeConversation,
@@ -19,7 +24,6 @@ export function ChatSidebar() {
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const handleDeleteClick = (e: React.MouseEvent, conversationId: string) => {
     e.stopPropagation();
@@ -78,7 +82,7 @@ export function ChatSidebar() {
           >
             <div className="relative group/expand">
               <motion.button
-                onClick={() => setIsCollapsed(false)}
+                onClick={onToggleCollapse}
                 className="cursor-pointer w-10 h-10 bg-white/5 hover:bg-white/10 backdrop-blur-sm flex items-center justify-center rounded-lg transition-colors text-white/50 hover:text-white/80 border border-white/10"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -173,7 +177,7 @@ export function ChatSidebar() {
 
                   <div className="relative group/collapse">
                     <motion.button
-                      onClick={() => setIsCollapsed(true)}
+                      onClick={onToggleCollapse}
                       className="cursor-pointer w-8 h-8 bg-white/5 hover:bg-white/10 flex items-center justify-center rounded-md transition-colors text-white/50 hover:text-white/80"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}

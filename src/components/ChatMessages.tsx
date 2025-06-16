@@ -8,6 +8,7 @@ import { MarkdownRenderer } from './MarkdownRenderer';
 import { LoadingIndicator } from './LoadingIndicator';
 import { TypeWriter } from './TypeWriter';
 import { ConsensusMessage } from './ConsensusMessage';
+import { ScrollToBottomButton } from './ScrollToBottomButton';
 import { ConsensusResponse } from '@/types/chat';
 
 const getProviderLogo = (model: string) => {
@@ -55,9 +56,14 @@ const formatFileSize = (bytes: number) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-export function ChatMessages() {
+interface ChatMessagesProps {
+  isSidebarCollapsed: boolean;
+}
+
+export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
   const { messages, activeConversation, isLoading, refreshMessages, user } = useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [retryingId, setRetryingId] = useState<string | null>(null);
 
@@ -195,7 +201,12 @@ export function ChatMessages() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto relative">
+    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto relative">
+      <ScrollToBottomButton 
+        scrollContainerRef={scrollContainerRef}
+        onScrollToBottom={scrollToBottom}
+        isSidebarCollapsed={isSidebarCollapsed}
+      />
       <div className="w-full max-w-4xl mx-auto px-6 py-8 space-y-6">
         {messages.map((message, index) => (
           <motion.div
