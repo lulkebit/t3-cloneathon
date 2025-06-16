@@ -35,6 +35,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [user, setUser] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [newConversationIds, setNewConversationIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const handlePopState = () => {
@@ -95,12 +96,13 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         const serverMessages = data.messages || [];
         
         setMessages(prev => {
-          // Keep only optimistic messages for this conversation that are still relevant
-          const optimisticMessages = prev.filter(msg => 
+          // Keep only optimistic messages for this conversation that are actively streaming/loading
+          const activeOptimisticMessages = prev.filter(msg => 
             msg.isOptimistic && 
-            msg.conversation_id === conversationId
+            msg.conversation_id === conversationId &&
+            (msg.isStreaming || msg.isLoading)
           );
-          return [...serverMessages, ...optimisticMessages];
+          return [...serverMessages, ...activeOptimisticMessages];
         });
       }
     } catch (error) {
@@ -213,6 +215,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   const addNewConversation = (conversation: Conversation) => {
     setConversations(prev => [conversation, ...prev]);
+    setNewConversationIds(prev => new Set([...prev, conversation.id]));
   };
 
   useEffect(() => {
@@ -231,6 +234,22 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (activeConversation) {
+      // Check if this is a new conversation that shouldn't be refreshed yet
+      if (newConversationIds.has(activeConversation.id)) {
+        // For new conversations, just filter messages but don't refresh
+        setMessages(prev => prev.filter(msg => 
+          msg.conversation_id === activeConversation.id
+        ));
+        // Remove from new conversations set
+        setNewConversationIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(activeConversation.id);
+          return newSet;
+        });
+        return;
+      }
+      
+      // For existing conversations, refresh normally
       setMessages(prev => prev.filter(msg => 
         msg.isOptimistic && msg.conversation_id === activeConversation.id
       ));
@@ -238,7 +257,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     } else {
       setMessages([]);
     }
-  }, [activeConversation]);
+  }, [activeConversation]); // Don't include messages as dependency to avoid loops
 
   return (
     <ChatContext.Provider

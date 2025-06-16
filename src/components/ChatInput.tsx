@@ -184,7 +184,7 @@ export function ChatInput() {
         const conversationData = await createConversationResponse.json();
         conversationId = conversationData.conversation.id;
         
-        // Add the new conversation to the list without triggering a full refresh
+        // Add the new conversation to the list but don't set it as active yet
         addNewConversation(conversationData.conversation);
         
         window.history.pushState(null, '', `/chat/${conversationId}`);
@@ -253,49 +253,27 @@ export function ChatInput() {
                 // Handle error from API - show error message in chat
                 const errorContent = parsed.errorContent || `❌ **Error**: ${parsed.error}`;
                 finalizeMessage(assistantMessageId, errorContent);
-                
-                (async () => {
-                  try {
-                    // Remove optimistic messages first to prevent duplicates
-                    if (userMessageId) {
-                      removeOptimisticMessage(userMessageId);
-                    }
-                    if (assistantMessageId) {
-                      removeOptimisticMessage(assistantMessageId);
-                    }
-                    
-                    // Then refresh messages from server
-                    if (conversationId) {
-                      await refreshMessages(conversationId);
-                    }
-                  } catch (error) {
-                    console.error('Error refreshing messages after error:', error);
-                  }
-                })();
               } else if (parsed.titleUpdate && parsed.conversationId && parsed.title) {
                 // Handle title update - update conversation title without switching chats
                 updateConversationTitle(parsed.conversationId, parsed.title);
               } else if (parsed.done && assistantMessageId) {
                 finalizeMessage(assistantMessageId, assistantContent);
                 
-                (async () => {
-                  try {
-                    // Remove optimistic messages first to prevent duplicates
-                    if (userMessageId) {
-                      removeOptimisticMessage(userMessageId);
+                // For new conversations, just set as active without refreshing
+                if (!activeConversation && conversationId) {
+                  setTimeout(async () => {
+                    try {
+                      // Set the conversation as active but don't refresh messages
+                      const conversationResponse = await fetch(`/api/conversations/${conversationId}`);
+                      if (conversationResponse.ok) {
+                        const conversationData = await conversationResponse.json();
+                        setActiveConversation(conversationData.conversation);
+                      }
+                    } catch (error) {
+                      console.error('Error setting active conversation:', error);
                     }
-                    if (assistantMessageId) {
-                      removeOptimisticMessage(assistantMessageId);
-                    }
-                    
-                    // Then refresh messages from server
-                    if (conversationId) {
-                      await refreshMessages(conversationId);
-                    }
-                  } catch (error) {
-                    console.error('Error refreshing messages after streaming:', error);
-                  }
-                })();
+                  }, 100);
+                }
               }
             } catch (e) {
               console.error('Error parsing streaming data:', e, 'Data:', data);
@@ -419,7 +397,7 @@ export function ChatInput() {
         const conversationData = await createConversationResponse.json();
         conversationId = conversationData.conversation.id;
         
-        // Add the new conversation to the list without triggering a full refresh
+        // Add the new conversation to the list but don't set it as active yet
         addNewConversation(conversationData.conversation);
         
         window.history.pushState(null, '', `/chat/${conversationId}`);
@@ -539,24 +517,21 @@ export function ChatInput() {
               } else if (parsed.type === 'consensus_final' && assistantMessageId) {
                 finalizeMessage(assistantMessageId, JSON.stringify(parsed.responses));
                 
-                (async () => {
-                  try {
-                    // Remove optimistic messages first to prevent duplicates
-                    if (userMessageId) {
-                      removeOptimisticMessage(userMessageId);
+                // For new conversations, just set as active without refreshing
+                if (!activeConversation && conversationId) {
+                  setTimeout(async () => {
+                    try {
+                      // Set the conversation as active but don't refresh messages
+                      const conversationResponse = await fetch(`/api/conversations/${conversationId}`);
+                      if (conversationResponse.ok) {
+                        const conversationData = await conversationResponse.json();
+                        setActiveConversation(conversationData.conversation);
+                      }
+                    } catch (error) {
+                      console.error('Error setting active conversation:', error);
                     }
-                    if (assistantMessageId) {
-                      removeOptimisticMessage(assistantMessageId);
-                    }
-                    
-                    // Then refresh messages from server
-                    if (conversationId) {
-                      await refreshMessages(conversationId);
-                    }
-                  } catch (error) {
-                    console.error('Error refreshing messages after consensus:', error);
-                  }
-                })();
+                  }, 100);
+                }
               }
             } catch (e) {
               console.error('Error parsing consensus streaming data:', e, 'Data:', data);
