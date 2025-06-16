@@ -72,6 +72,27 @@ The application supports **20+ cutting-edge AI models** from major providers:
 - DeepSeek Chat V3 & R1 (Free)
 - X.AI Grok 3 Beta & Mini
 
+
+## 🧪 Testing Instructions
+
+### Quick Start Testing
+
+1. **Visit the Live Demo:** Navigate to [https://t3-clonathon.lukeschroeter.de/](https://t3-clonathon.lukeschroeter.de/)
+
+2. **Create an Account:** Register with your email address, github or google profile through the secure Supabase authentication system
+
+3. **Add Your API Key:** When prompted, enter your OpenRouter API key in the settings. This enables access to all 20+ AI models
+   - Don't have an OpenRouter key? Get one free at [openrouter.ai](https://openrouter.ai)
+   - Your key is encrypted and stored securely
+
+4. **Start Chatting:** You're ready to explore all features immediately!
+
+### Local Development Note
+
+**⚠️ Local testing is currently not supported and not recommended.** The application relies on Supabase database functions with specialized configurations that are complex to replicate locally. The live demo provides the full, intended experience with all features working seamlessly.
+
+For the best testing experience and to evaluate all competition features, please use the deployed version above.
+
 ## 📸 Screenshots
 
 ### Main Chat Interface
