@@ -103,6 +103,7 @@ For the best testing experience and to evaluate all competition features, please
 ### Multi-Model Consensus Chat
 ![Consensus Chat](./screenshots/consensus-chat-01.png)
 ![Consensus Chat](./screenshots/consensus-chat-02.png)
+![Consensus Chat](./screenshots/consensus-chat-03.png)
 *Compare responses from multiple AI models side-by-side*
 
 ### Model Selection
