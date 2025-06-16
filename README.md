@@ -1,6 +1,6 @@
 # T3 Chat Clone - Convex Chat - Cloneathon Submission
 
-> **Live Demo:** [https://t3-clonathon.lukeschroeter.de/](https://t3-clonathon.lukeschroeter.de/)
+> **Live Demo:** [https://t3-cloneathon.lukeschroeter.de/](https://t3-cloneathon.lukeschroeter.de/)
 
 A modern, feature-rich AI chat application built for the T3 Chat Cloneathon hosted by Theo Browne. This submission showcases advanced chat capabilities with multi-model consensus, file attachments, and a beautiful, responsive interface.
 
@@ -77,7 +77,7 @@ The application supports **20+ cutting-edge AI models** from major providers:
 
 ### Quick Start Testing
 
-1. **Visit the Live Demo:** Navigate to [https://t3-clonathon.lukeschroeter.de/](https://t3-clonathon.lukeschroeter.de/)
+1. **Visit the Live Demo:** Navigate to [https://t3-cloneathon.lukeschroeter.de/](https://t3-cloneathon.lukeschroeter.de/)
 
 2. **Create an Account:** Register with your email address, github or google profile through the secure Supabase authentication system
 
