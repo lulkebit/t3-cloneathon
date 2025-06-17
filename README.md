@@ -196,10 +196,10 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## 🙏 Acknowledgments
 
-- **Theo Browne** for organizing the T3 Chat Cloneathon
-- **OpenRouter** for providing unified AI model access
-- **Supabase** for authentication and database services
-- **Vercel** for hosting and deployment platform
+- **[Theo Browne](https://github.com/t3dotgg)** for organizing the T3 Chat Cloneathon
+- **[OpenRouter](https://github.com/OpenRouterTeam)** for providing unified AI model access
+- **[Supabase](https://github.com/supabase)** for authentication and database services
+- **[Vercel](https://github.com/vercel)** for hosting and deployment platform
 
 ---
 
