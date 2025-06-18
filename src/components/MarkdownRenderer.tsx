@@ -128,9 +128,9 @@ export function MarkdownRenderer({ content, className = '', isUserMessage = fals
           ),
           
           p: ({ children }) => (
-            <p className="text-white/90 leading-relaxed mb-3 last:mb-0">
+            <div className="text-white/90 leading-relaxed mb-3 last:mb-0">
               {children}
-            </p>
+            </div>
           ),
           
           ul: ({ children, ...props }) => {
