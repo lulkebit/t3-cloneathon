@@ -10,6 +10,7 @@ import { SettingsModal } from '@/components/SettingsModal';
 import { ConversationSettingsModal } from '@/components/ConversationSettingsModal';
 import { Conversation } from '@/types/chat';
 import { useDynamicTitle } from '@/lib/useDynamicTitle';
+import { useLayout } from '@/contexts/LayoutContext'; // Import useLayout
 import { Key, Sparkles, Settings } from 'lucide-react';
 
 interface ChatPageContentProps {
@@ -18,6 +19,7 @@ interface ChatPageContentProps {
 
 export function ChatPageContent({ chatId }: ChatPageContentProps) {
   const { profile, isLoading, conversations, setActiveConversation, activeConversation, updateConversation } = useChat();
+  const { chatStyle } = useLayout(); // Get chatStyle from LayoutContext
   const [showSettings, setShowSettings] = useState(false);
   const [showConversationSettingsModal, setShowConversationSettingsModal] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -178,6 +180,7 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 30 }}
         className="flex-1 flex flex-col relative"
+        data-chat-style={chatStyle} // Apply data-chat-style attribute here
       >
         {activeConversation && (
           <div className="p-4 border-b border-[var(--border-default)] flex justify-between items-center">

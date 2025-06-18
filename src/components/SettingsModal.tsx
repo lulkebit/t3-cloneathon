@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ChangeEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from '@/contexts/ChatContext';
-import { X, Key, Save, Loader2, ExternalLink, Shield, Eye, EyeOff, Palette } from 'lucide-react';
-import ThemeSwitcher from './ThemeSwitcher'; // Import ThemeSwitcher
+import { useLayout } from '@/contexts/LayoutContext'; // Import useLayout
+import { X, Key, Save, Loader2, ExternalLink, Shield, Eye, EyeOff, Palette, LayoutDashboard, Image as ImageIcon, Trash2 } from 'lucide-react';
+import ThemeSwitcher from './ThemeSwitcher';
+import ChatStyleSwitcher from './ChatStyleSwitcher';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -24,6 +26,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [defaultSeed, setDefaultSeed] = useState<number | undefined>(undefined);
   const [defaultSystemPrompt, setDefaultSystemPrompt] = useState<string | undefined>(undefined);
 
+  // Layout context for background image
+  const { customBackgroundImage, setCustomBackgroundImage } = useLayout();
+  const [bgImageUrl, setBgImageUrl] = useState<string>('');
+
   useEffect(() => {
     if (profile) {
       setApiKey(profile.openrouter_api_key || '');
@@ -33,7 +39,25 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       setDefaultSeed(profile.default_seed);
       setDefaultSystemPrompt(profile.default_system_prompt);
     }
-  }, [profile]);
+    // Initialize bgImageUrl from context
+    if (customBackgroundImage) {
+      setBgImageUrl(customBackgroundImage);
+    } else {
+      setBgImageUrl('');
+    }
+  }, [profile, customBackgroundImage]);
+
+  const handleBgImageUrlChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setBgImageUrl(e.target.value);
+    // Apply immediately for live preview (optional, or apply on blur/save)
+    // For now, let's assume applying it directly is fine for this input
+    setCustomBackgroundImage(e.target.value.trim() || null);
+  };
+
+  const clearBgImage = () => {
+    setBgImageUrl('');
+    setCustomBackgroundImage(null);
+  };
 
   const handleSave = async () => {
     // API key is still mandatory for saving any settings for now
@@ -293,14 +317,47 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <Palette size={18} className="mr-2 text-[var(--accent-default)]" />
                   Appearance
                 </h3>
-                <div className="mb-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
                     <label htmlFor="theme-switcher-label" className="block text-sm font-medium text-[var(--text-subtle)] mb-1">
-                        Select Theme
+                        Color Theme
                     </label>
                     <ThemeSwitcher />
+                  </div>
+                  <div>
+                    <label htmlFor="chat-style-switcher-label" className="block text-sm font-medium text-[var(--text-subtle)] mb-1">
+                        Chat View Style
+                    </label>
+                    <ChatStyleSwitcher />
+                  </div>
                 </div>
-                 <p className="text-xs text-[var(--text-muted)] mt-2">
-                  Choose your preferred interface theme.
+                <div className="mt-4">
+                  <label htmlFor="custom-bg-url" className="block text-sm font-medium text-[var(--text-subtle)] mb-1">
+                    Custom Background Image URL
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      id="custom-bg-url"
+                      value={bgImageUrl}
+                      onChange={handleBgImageUrlChange}
+                      placeholder="Enter image URL (e.g., https://...)"
+                      className="w-full input-glass text-sm" // Using existing input-glass
+                    />
+                    {bgImageUrl && (
+                      <button
+                        type="button"
+                        onClick={clearBgImage}
+                        className="p-2 btn-ghost text-[var(--text-muted)] hover:text-[var(--error-default)]"
+                        title="Clear background image"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                 <p className="text-xs text-[var(--text-muted)] mt-3">
+                  Customize the look and feel of your chat interface. Background image changes are applied live.
                 </p>
               </section>
 

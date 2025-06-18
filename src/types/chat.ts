@@ -43,6 +43,17 @@ export interface Conversation {
   min_p?: number;
   seed?: number;
   systemPrompt?: string;
+  folder_id?: string | null;
+  is_pinned: boolean;
+  is_archived: boolean;
+}
+
+export interface Folder {
+  id: string;
+  user_id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Profile {

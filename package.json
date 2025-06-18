@@ -28,7 +28,8 @@
     "remark-gfm": "^4.0.1",
     "react-katex": "^3.0.1",
     "katex": "^0.16.10",
-    "mermaid": "^10.9.1"
+    "mermaid": "^10.9.1",
+    "pyodide": "0.25.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

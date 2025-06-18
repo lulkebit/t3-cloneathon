@@ -6,11 +6,12 @@ import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
-import { Copy, Check } from 'lucide-react';
-import { useState, Children } from 'react';
+import { Copy, Check, Play, Loader2 as Loader } from 'lucide-react'; // Added Play, Loader
+import { useState, Children, useEffect } from 'react'; // Added useEffect
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
-import MermaidDiagram from './MermaidDiagram'; // Import MermaidDiagram
+import MermaidDiagram from './MermaidDiagram';
+import pyodideService from '@/lib/pyodideService'; // Import Pyodide Service
 import 'highlight.js/styles/github-dark.css';
 
 interface MarkdownRendererProps {
@@ -29,11 +30,70 @@ interface CodeBlockProps {
 function CodeBlock({ children, className, inline, ...props }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
   const match = /language-(\w+)/.exec(className || '');
-  const language = match ? match[1] : '';
-  const diagramText = String(children).replace(/\n$/, '');
+  const language = match ? match[1]?.toLowerCase() : '';
+  const codeContent = String(children).replace(/\n$/, '');
+
+  // Pyodide specific state
+  const [isPyodideReady, setIsPyodideReady] = useState(!!pyodideService.instance);
+  const [isPyodideLoading, setIsPyodideLoading] = useState(pyodideService.isLoading);
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [executionOutput, setExecutionOutput] = useState<string[]>([]);
+  const [executionError, setExecutionError] = useState<string[]>([]);
+
+  const isPython = ['python', 'python3', 'py'].includes(language);
+
+  // Effect to update local state based on the global pyodideService
+  useEffect(() => {
+    const updateStatus = () => {
+      setIsPyodideReady(!!pyodideService.instance);
+      setIsPyodideLoading(pyodideService.isLoading);
+    };
+    updateStatus(); // Initial check
+    const intervalId = setInterval(updateStatus, 500); // Periodic check
+    return () => clearInterval(intervalId);
+  }, []);
+
+
+  const handleRunPythonCodeInternal = async () => {
+    setIsExecuting(true);
+    setExecutionOutput([]);
+    setExecutionError([]);
+
+    const outputCollector: string[] = [];
+    const errorCollector: string[] = [];
+
+    const handleOutput = (msg: string) => {
+      outputCollector.push(msg);
+      setExecutionOutput(prev => [...prev, msg]); // More direct update
+    };
+    const handleError = (msg: string) => {
+      errorCollector.push(msg);
+      setExecutionError(prev => [...prev, msg]); // More direct update
+    };
+
+    try {
+      if (!pyodideService.instance) {
+        setIsPyodideLoading(true); // Indicate local loading state
+        await pyodideService.initPyodide(handleOutput, handleError);
+        setIsPyodideReady(true);
+        setIsPyodideLoading(false);
+      } else {
+        // Ensure callbacks are fresh if instance already exists
+        pyodideService.instance.setStdout({ batched: handleOutput });
+        pyodideService.instance.setStderr({ batched: handleError });
+      }
+
+      await pyodideService.runPython(codeContent);
+    } catch (e: any) {
+      console.error("Python execution failed:", e);
+      handleError(e.message || String(e));
+    } finally {
+      setIsExecuting(false);
+    }
+  };
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(diagramText);
+    await navigator.clipboard.writeText(codeContent);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -56,39 +116,74 @@ function CodeBlock({ children, className, inline, ...props }: CodeBlockProps) {
 
   // Default code block rendering
   return (
-    <div className="w-full block">
-      <div className="relative group my-4 border border-gray-700/50 rounded-lg overflow-hidden w-full">
-        <div className="flex items-center justify-between px-4 py-2 bg-gray-800/80 border-b border-gray-700/50">
-          <span className="text-xs text-gray-300 font-medium">
+    <div className="w-full block code-block-wrapper my-4">
+      <div className="relative group border border-[var(--border-default)] rounded-lg overflow-hidden w-full bg-[var(--bg-element)]">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-subtle)]">
+          <span className="text-xs text-[var(--text-subtle)] font-medium">
             {language || 'code'}
           </span>
-          <button
-            onClick={handleCopy}
-            className="cursor-pointer flex items-center gap-1.5 px-2 py-1 text-xs text-gray-300 hover:text-white bg-gray-700/50 hover:bg-gray-600/50 rounded transition-colors"
-          >
-            {copied ? (
-              <>
-                <Check size={12} />
-                Copied!
-              </>
-            ) : (
-              <>
-                <Copy size={12} />
-                Copy
-              </>
+          <div className="flex items-center gap-2">
+            {isPython && !inline && (
+              <button
+                onClick={handleRunPythonCodeInternal} // Use the internal handler
+                disabled={isPyodideLoading || isExecuting}
+                className="cursor-pointer flex items-center gap-1.5 px-2 py-1 text-xs text-[var(--text-subtle)] hover:text-[var(--text-default)] bg-[var(--glass-bg)] hover:bg-[var(--glass-hover-bg)] rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isPyodideLoading ? (
+                  <Loader size={12} className="animate-spin" />
+                ) : isExecuting ? (
+                  <Loader size={12} className="animate-spin" />
+                ) : (
+                  <Play size={12} />
+                )}
+                {isPyodideLoading ? 'Loading Pyodide...' : isExecuting ? 'Running...' : 'Run Code'}
+              </button>
             )}
-          </button>
+            <button
+              onClick={handleCopy}
+              className="cursor-pointer flex items-center gap-1.5 px-2 py-1 text-xs text-[var(--text-subtle)] hover:text-[var(--text-default)] bg-[var(--glass-bg)] hover:bg-[var(--glass-hover-bg)] rounded transition-colors"
+            >
+              {copied ? (
+                <>
+                  <Check size={12} />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy size={12} />
+                  Copy
+                </>
+              )}
+            </button>
+          </div>
         </div>
         
-        <pre className="bg-gray-900/90 overflow-x-auto m-0 p-4 w-full">
+        <pre className="overflow-x-auto m-0 p-4 w-full bg-[var(--hljs-bg)] text-[var(--hljs-text)]">
           <code className={className} {...props}>
             {children}
           </code>
         </pre>
       </div>
+      {(executionOutput.length > 0 || executionError.length > 0) && (
+        <div className="mt-2 p-3 border border-[var(--border-default)] rounded-md bg-[var(--bg-subtle)] text-xs">
+          {executionOutput.length > 0 && (
+            <div className="output-section mb-2">
+              <strong className="text-[var(--text-default)]">Output:</strong>
+              <pre className="whitespace-pre-wrap text-[var(--text-subtle)] max-h-48 overflow-y-auto">{executionOutput.join('\n')}</pre>
+            </div>
+          )}
+          {executionError.length > 0 && (
+            <div className="error-section">
+              <strong className="text-red-500">Error:</strong>
+              <pre className="whitespace-pre-wrap text-red-400 max-h-48 overflow-y-auto">{executionError.join('\n')}</pre>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
+
 
 export function MarkdownRenderer({ content, className = '', isUserMessage = false }: MarkdownRendererProps) {
   // Check if this is an error message
@@ -96,16 +191,24 @@ export function MarkdownRenderer({ content, className = '', isUserMessage = fals
   
   return (
     <div className={`markdown-content ${className} ${isUserMessage ? 'user-message' : 'assistant-message'} ${
-      isErrorMessage ? 'error-message border border-red-500/30 bg-red-500/5 rounded-lg p-3' : ''
+      isErrorMessage ? 'error-message border-[var(--error-default)] bg-red-500/10 rounded-lg p-3' : '' // Themed error message
     }`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkBreaks]}
         rehypePlugins={[rehypeHighlight, rehypeRaw]}
         components={{
-          code: CodeBlock,
+          code: function CodeBlockWrapper(props) {
+            // Need to lift state or pass setters to the external handleRunPythonCode
+            // Or, more React-idiomatically, define handleRunPythonCode inside CodeBlock
+            // For now, let's assume CodeBlock itself contains the logic.
+            // This wrapper is just to show where it plugs in.
+            // The actual logic is now being moved into the CodeBlock component directly.
+            // @ts-ignore
+            return <CodeBlock {...props} />;
+          },
           
           h1: ({ children }) => (
-            <h1 className="text-2xl font-bold text-white mb-4 mt-6 border-b border-gray-700/50 pb-2">
+            <h1 className="text-2xl font-bold text-[var(--text-default)] mb-4 mt-6 border-b border-[var(--border-subtle)] pb-2">
               {children}
             </h1>
           ),

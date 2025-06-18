@@ -218,8 +218,12 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className={`group ${message.role === 'user' ? 'flex flex-col items-end' : ''}`}
+            // Add message-item class here. The specific alignment will be controlled by CSS via [data-chat-style]
+            // The existing user-message/assistant-message classes on MarkdownRenderer's wrapper will be key
+            className={`group message-item ${message.role === 'user' ? 'user-message-item' : 'assistant-message-item'}`}
           >
+            {/* Sender information can be styled using .message-sender if needed, placed inside message-item */}
+            {/* For now, keeping existing avatar/name structure */}
             <div className={`flex items-center gap-3 mb-3 ${
               message.role === 'user' ? 'flex-row-reverse' : ''
             }`}>
@@ -298,164 +302,148 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
               </div>
             </div>
 
-            <div className={`relative ${
-              message.role === 'user' 
-                ? 'mr-11' 
-                : 'ml-11'
-            }`} style={{
-              maxWidth: message.role === 'assistant' ? 'calc(100% - 2.75rem - 2.75rem)' : 'calc(100% - 2.75rem - 2.75rem)'
-            }}>
-              <div className={`${
-                message.role === 'user' ? 'text-right' : 'text-left'
-              }`}>
-                {message.role === 'user' ? (
-                  <div className={`prose prose-sm max-w-none ${
-                    message.role === 'user' ? 'text-right' : 'text-left'
-                  }`}>
-                    {message.attachments && message.attachments.length > 0 && (
-                      <div className={`mb-3 flex flex-wrap gap-2 ${
-                        message.role === 'user' ? 'justify-end' : 'justify-start'
-                      }`}>
-                        {message.attachments.map((attachment, index) => (
-                          <div
-                            key={attachment.id || index}
-                            className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm max-w-xs"
-                          >
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              {attachment.file_type.startsWith('image/') ? (
-                                <div className="flex items-center gap-2">
-                                  <FileImage size={16} className="text-blue-400 flex-shrink-0" />
-                                  <div className="min-w-0 flex-1">
-                                    <div className="text-white/80 truncate text-xs">
-                                      {attachment.filename}
-                                    </div>
-                                    <div className="text-white/40 text-xs">
-                                      {formatFileSize(attachment.file_size)}
-                                    </div>
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-2">
-                                  <FileText size={16} className="text-red-400 flex-shrink-0" />
-                                  <div className="min-w-0 flex-1">
-                                    <div className="text-white/80 truncate text-xs">
-                                      {attachment.filename}
-                                    </div>
-                                    <div className="text-white/40 text-xs">
-                                      {formatFileSize(attachment.file_size)}
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                            <a
-                              href={attachment.file_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="cursor-pointer p-1 rounded hover:bg-white/10 transition-colors flex-shrink-0"
-                            >
-                              <Download size={14} className="text-white/60 hover:text-white" />
-                            </a>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    
-                    {message.content && (
-                      <MarkdownRenderer 
-                        content={message.content} 
-                        isUserMessage={true}
-                        className="text-right"
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <div>
-                      {message.isConsensus || (message.content && message.content.startsWith('[{') && message.content.includes('"model"')) ? (
-                        (() => {
-                          let consensusResponses: ConsensusResponse[] = [];
-                          try {
-                            if (message.consensusResponses) {
-                              consensusResponses = message.consensusResponses;
-                            } else if (message.content) {
-                              // Try to parse the content as consensus responses
-                              const parsed = JSON.parse(message.content);
-                              if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].model) {
-                                consensusResponses = parsed;
-                              } else {
-                                // If it's not consensus data, fall back to regular rendering
-                                return <MarkdownRenderer content={message.content} />;
-                              }
-                            }
-                          } catch (e) {
-                            console.error('Error parsing consensus responses:', e);
-                            // If parsing fails, render as regular markdown
-                            return <MarkdownRenderer content={message.content} />;
-                          }
-                          
-                          return (
-                            <ConsensusMessage 
-                              responses={consensusResponses}
-                              isStreaming={message.isStreaming}
-                            />
-                          );
-                        })()
-                      ) : message.isLoading ? (
-                        <LoadingIndicator />
-                      ) : message.isStreaming ? (
-                        <TypeWriter 
-                          text={message.content} 
-                          isComplete={false}
-                          speed={15}
-                          typingMode="character"
-                        />
-                      ) : (
-                        <MarkdownRenderer content={message.content} />
-                      )}
-                    </div>
-                    
-                    {!(message.isConsensus || (message.content && message.content.startsWith('[{') && message.content.includes('"model"'))) && (
-                      <div className="flex justify-start gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        <div className="relative group/copy">
-                          <button
-                            onClick={() => handleCopy(message.id, message.content)}
-                            className="cursor-pointer p-2 rounded-lg hover:bg-white/10 transition-colors duration-150"
-                          >
-                            {copiedId === message.id ? (
-                              <Check size={16} className="text-green-400" />
-                            ) : (
-                              <Copy size={16} className="text-white/60 hover:text-white" />
-                            )}
-                          </button>
-                          
-                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/copy:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-                            {copiedId === message.id ? 'Copied!' : 'Copy'}
-                          </div>
-                        </div>
-
-                      <div className="relative group/retry">
-                        <button
-                          onClick={() => handleRetry(message.id, index)}
-                          disabled={retryingId === message.id || !activeConversation}
-                          className="cursor-pointer p-2 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+            {/* This div acts as the main content wrapper for the message bubble/block */}
+            <div
+              className={`message-content-wrapper relative ${
+                message.role === 'user'
+                  ? 'mr-11' // Keep avatar spacing
+                  : 'ml-11' // Keep avatar spacing
+              }`}
+              // Max width is handled by .message-item and its align-self
+            >
+              {message.role === 'user' ? (
+                <>
+                  {message.attachments && message.attachments.length > 0 && (
+                    <div className={`mb-2 flex flex-wrap gap-2 ${ // Reduced bottom margin for attachments
+                      // Styling for attachments inside user bubble might need adjustment via CSS
+                      // For bubble view, attachments are typically above the text content inside the bubble
+                      'justify-start' // Align attachments to the start of the bubble content
+                    }`}>
+                      {message.attachments.map((attachment, idx) => (
+                        <div
+                          key={attachment.id || idx}
+                          // Attachment styling might need to adapt to bubble background
+                          className="flex items-center gap-2 px-3 py-2 bg-[var(--glass-bg)] border border-[var(--glass-border-color)] rounded-lg text-sm max-w-xs"
                         >
-                          {retryingId === message.id ? (
-                            <Loader2 size={16} className="text-blue-400 animate-spin" />
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            {attachment.file_type.startsWith('image/') ? (
+                              <div className="flex items-center gap-2">
+                                <FileImage size={16} className="text-[var(--accent-default)] flex-shrink-0" />
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-[var(--text-default)] opacity-80 truncate text-xs">
+                                    {attachment.filename}
+                                  </div>
+                                  <div className="text-[var(--text-muted)] text-xs">
+                                    {formatFileSize(attachment.file_size)}
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <FileText size={16} className="text-red-400 flex-shrink-0" />
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-[var(--text-default)] opacity-80 truncate text-xs">
+                                    {attachment.filename}
+                                  </div>
+                                  <div className="text-[var(--text-muted)] text-xs">
+                                    {formatFileSize(attachment.file_size)}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <a
+                            href={attachment.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="cursor-pointer p-1 rounded hover:bg-[var(--bg-hover)] transition-colors flex-shrink-0"
+                          >
+                            <Download size={14} className="text-[var(--text-subtle)] hover:text-[var(--text-default)]" />
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {message.content && (
+                    <MarkdownRenderer
+                      content={message.content}
+                      isUserMessage={true}
+                      // className prop on MarkdownRenderer adds to its root div.
+                      // The text-align for user messages is handled by CSS based on chat-style.
+                    />
+                  )}
+                </>
+              ) : (
+                // Assistant messages
+                <>
+                  {message.isConsensus || (message.content && message.content.startsWith('[{') && message.content.includes('"model"')) ? (
+                    (() => {
+                      // ... (consensus logic remains the same)
+                        let consensusResponses: ConsensusResponse[] = [];
+                        try {
+                          if (message.consensusResponses) {
+                            consensusResponses = message.consensusResponses;
+                          } else if (message.content) {
+                            const parsed = JSON.parse(message.content);
+                            if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].model) {
+                              consensusResponses = parsed;
+                            } else {
+                              return <MarkdownRenderer content={message.content} isUserMessage={false} />;
+                            }
+                          }
+                        } catch (e) {
+                          console.error('Error parsing consensus responses:', e);
+                          return <MarkdownRenderer content={message.content} isUserMessage={false} />;
+                        }
+                        return <ConsensusMessage responses={consensusResponses} isStreaming={message.isStreaming}/>;
+                    })()
+                  ) : message.isLoading ? (
+                    <LoadingIndicator />
+                  ) : message.isStreaming ? (
+                    <TypeWriter text={message.content} isComplete={false} speed={15} typingMode="character"/>
+                  ) : (
+                    <MarkdownRenderer content={message.content} isUserMessage={false} />
+                  )}
+
+                  {!(message.isConsensus || (message.content && message.content.startsWith('[{') && message.content.includes('"model"'))) && !message.isLoading && (
+                    <div className="flex justify-start gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute bottom-[-20px] left-1">
+                      <div className="relative group/copy">
+                        <button
+                          onClick={() => handleCopy(message.id, message.content)}
+                          className="cursor-pointer p-1.5 rounded-md hover:bg-[var(--bg-hover)] transition-colors duration-150"
+                        >
+                          {copiedId === message.id ? (
+                            <Check size={14} className="text-green-400" />
                           ) : (
-                            <RotateCcw size={16} className="text-white/60 hover:text-white" />
+                            <Copy size={14} className="text-[var(--text-muted)] hover:text-[var(--text-default)]" />
                           )}
                         </button>
-                        
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/retry:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-                          {retryingId === message.id ? 'Retrying...' : 'Retry'}
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 px-2 py-0.5 bg-[var(--bg-element)] text-[var(--text-default)] text-xs rounded shadow-lg opacity-0 group-hover/copy:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                          {copiedId === message.id ? 'Copied!' : 'Copy'}
                         </div>
                       </div>
+
+                    <div className="relative group/retry">
+                      <button
+                        onClick={() => handleRetry(message.id, index)}
+                        disabled={retryingId === message.id || !activeConversation}
+                        className="cursor-pointer p-1.5 rounded-md hover:bg-[var(--bg-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                      >
+                        {retryingId === message.id ? (
+                          <Loader2 size={14} className="text-[var(--accent-default)] animate-spin" />
+                        ) : (
+                          <RotateCcw size={14} className="text-[var(--text-muted)] hover:text-[var(--text-default)]" />
+                        )}
+                      </button>
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 px-2 py-0.5 bg-[var(--bg-element)] text-[var(--text-default)] text-xs rounded shadow-lg opacity-0 group-hover/retry:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                        {retryingId === message.id ? 'Retrying...' : 'Retry'}
+                      </div>
                     </div>
-                    )}
                   </div>
-                )}
-              </div>
+                  )}
+                </>
+              )}
             </div>
           </motion.div>
         ))}

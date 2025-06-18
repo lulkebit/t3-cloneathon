@@ -599,3 +599,140 @@ body, html { /* Ensure body and html also transition background */
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* Chat Visual Styles */
+/* Common styles for all chat messages (e.g., .message-item can be a common class) */
+.message-item {
+  max-width: 85%; /* Messages don't take full width */
+  margin-bottom: 0.75rem; /* Space between messages */
+  display: flex;
+  flex-direction: column; /* Stack content (like sender + bubble) */
+  position: relative; /* For potential pseudo-elements or avatar positioning */
+}
+
+.message-content-wrapper { /* This will be the bubble or the main content block */
+  padding: 0.75rem 1rem;
+  border-radius: 1.25rem; /* Generous rounding for bubbles */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  /* Common text color, can be overridden by user/assistant specific styles if needed */
+  color: var(--text-default);
+}
+
+/* Bubble UI Specific Styles */
+[data-chat-style="bubbles"] .message-item {
+  /* No specific styles here, alignment handled by user/assistant */
+}
+
+[data-chat-style="bubbles"] .message-item.user-message {
+  align-self: flex-end;
+  align-items: flex-end; /* Align content within the item to the end */
+}
+[data-chat-style="bubbles"] .message-item.user-message .message-content-wrapper {
+  background-color: var(--accent-default);
+  color: var(--accent-contrast); /* Text on accent */
+  border-bottom-right-radius: 0.5rem; /* Bubble tail effect */
+}
+[data-chat-style="bubbles"] .message-item.user-message .markdown-content,
+[data-chat-style="bubbles"] .message-item.user-message .markdown-content p,
+[data-chat-style="bubbles"] .message-item.user-message .markdown-content ul,
+[data-chat-style="bubbles"] .message-item.user-message .markdown-content ol,
+[data-chat-style="bubbles"] .message-item.user-message .markdown-content code:not(pre code) {
+  color: var(--accent-contrast); /* Ensure all text inside user bubble is contrasty */
+  /* Reset text-align if it was globally set for user messages in MarkdownRenderer */
+  text-align: left;
+}
+[data-chat-style="bubbles"] .message-item.user-message .markdown-content a {
+  color: color-mix(in srgb, var(--accent-contrast) 80%, var(--accent-default) 20%); /* Link color that works on accent bg */
+}
+[data-chat-style="bubbles"] .message-item.user-message .markdown-content code:not(pre code) {
+  background-color: color-mix(in srgb, var(--accent-contrast) 10%, transparent);
+  border-color: color-mix(in srgb, var(--accent-contrast) 20%, transparent);
+}
+
+
+[data-chat-style="bubbles"] .message-item.assistant-message {
+  align-self: flex-start;
+  align-items: flex-start; /* Align content within the item to the start */
+}
+[data-chat-style="bubbles"] .message-item.assistant-message .message-content-wrapper {
+  background-color: var(--bg-element);
+  border-bottom-left-radius: 0.5rem; /* Bubble tail effect */
+}
+/* Ensure text-align for assistant messages is left in bubble view */
+[data-chat-style="bubbles"] .message-item.assistant-message .markdown-content {
+  text-align: left;
+}
+
+
+/* Classic View Specific Styles */
+[data-chat-style="classic"] .message-item {
+  max-width: 100%; /* Messages can take full width */
+  margin-bottom: 1rem; /* Slightly more space */
+}
+
+[data-chat-style="classic"] .message-item.user-message .message-content-wrapper {
+  background-color: var(--bg-subtle); /* Slightly different bg for user */
+  /* User messages might still be aligned to the right if desired, or full width */
+  /* align-self: flex-end; */ /* Optional: Keep user messages to the right */
+  /* border: 1px solid var(--border-subtle); */ /* Optional border */
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem; /* Less pronounced rounding */
+}
+/* In classic view, user message markdown content might not need text-align override if it's full width */
+[data-chat-style="classic"] .message-item.user-message .markdown-content {
+   text-align: left; /* Or inherit, depending on overall design */
+}
+
+
+[data-chat-style="classic"] .message-item.assistant-message .message-content-wrapper {
+  background-color: transparent; /* Or var(--bg-default) if different from page bg */
+  /* border: 1px solid var(--border-subtle); */ /* Optional border */
+  padding: 0.5rem 0.75rem; /* Consistent padding */
+  border-radius: 0.75rem; /* Less pronounced rounding */
+}
+/* Ensure text-align for assistant messages is left in classic view */
+[data-chat-style="classic"] .message-item.assistant-message .markdown-content {
+  text-align: left;
+}
+
+/* Sender information styling (example, might need specific classes) */
+.message-sender {
+  font-size: 0.75rem; /* Small text for sender */
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+  padding: 0 0.75rem; /* Align with message content padding */
+}
+
+[data-chat-style="bubbles"] .message-item.user-message .message-sender {
+  text-align: right; /* Align sender to the right for user messages */
+}
+[data-chat-style="bubbles"] .message-item.assistant-message .message-sender {
+  text-align: left; /* Align sender to the left for assistant messages */
+}
+
+[data-chat-style="classic"] .message-sender {
+  /* For classic view, sender info might be more prominent or styled differently */
+  /* Example: text-align: left for all, or above the message content */
+  text-align: left;
+  padding-left: 0; /* No indent if above message */
+}
+
+/* This is a basic structure. More detailed styling for avatars, timestamps, etc., would go here. */
+/* The .user-message and .assistant-message classes on MarkdownRenderer's wrapper will be key. */
+/* The .markdown-content class within those will also be targeted. */
+
+/* Custom Background Image Styles */
+:root, [data-theme="dark"], [data-theme="light"], [data-theme="oled"] {
+  /* Initialize variable for all themes, default to none */
+  --custom-background-image: none;
+}
+
+/* This class will be applied to the body or a main wrapper */
+.custom-background-enabled {
+  background-image: var(--custom-background-image);
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed; /* Fixed background, content scrolls over it */
+}
