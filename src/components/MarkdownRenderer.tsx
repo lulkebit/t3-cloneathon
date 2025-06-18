@@ -4,12 +4,15 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
+import remarkMath from 'remark-math';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
+import rehypeKatex from 'rehype-katex';
 import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 
 import 'highlight.js/styles/github-dark.css';
+import 'katex/dist/katex.min.css';
 
 interface MarkdownRendererProps {
   content: string;
@@ -36,10 +39,15 @@ function CodeBlock({ children, className, inline, ...props }: CodeBlockProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (inline) {
+  // Better inline detection - check multiple conditions for inline code
+  const isInline = inline === true || 
+    (inline !== false && !className && typeof children === 'string' && !children.includes('\n')) ||
+    (inline !== false && !props.node?.tagName && typeof children === 'string');
+  
+  if (isInline) {
     return (
       <code
-        className="px-1.5 py-0.5 text-sm bg-gray-800/50 border border-gray-700/50 rounded text-blue-300 font-mono"
+        className="px-1.5 py-0.5 text-sm bg-gray-800/50 border border-gray-700/50 rounded text-blue-300 font-mono whitespace-nowrap inline"
         {...props}
       >
         {children}
@@ -47,6 +55,7 @@ function CodeBlock({ children, className, inline, ...props }: CodeBlockProps) {
     );
   }
 
+  // Handle code blocks - return full block element
   return (
     <div className="w-full block">
       <div className="relative group my-4 border border-gray-700/50 rounded-lg overflow-hidden w-full">
@@ -91,8 +100,12 @@ export function MarkdownRenderer({ content, className = '', isUserMessage = fals
       isErrorMessage ? 'error-message border border-red-500/30 bg-red-500/5 rounded-lg p-3' : ''
     }`}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkBreaks]}
-        rehypePlugins={[rehypeHighlight, rehypeRaw]}
+        remarkPlugins={[remarkGfm, remarkBreaks, remarkMath]}
+        rehypePlugins={[
+          rehypeRaw, 
+          rehypeKatex, 
+          [rehypeHighlight, { detect: true, ignoreMissing: true }]
+        ]}
         components={{
           code: CodeBlock,
           
