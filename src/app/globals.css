@@ -1,24 +1,164 @@
 @import "tailwindcss";
 
-/* Custom CSS Variables for Glassmorphism */
-:root {
-  --bg-primary: #0a0a0a;
-  --bg-secondary: #151515;
-  --bg-tertiary: #1f1f1f;
-  --glass-bg: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-hover: rgba(255, 255, 255, 0.08);
-  --text-primary: #ffffff;
-  --text-secondary: #a0a0a0;
-  --text-tertiary: #6b7280;
-  --accent: #8b5cf6;
-  --accent-hover: #7c3aed;
-  --success: #34d399;
-  --warning: #fbbf24;
-  --error: #ef4444;
+/* Theme Definitions */
+/* Default theme is dark. Applied to :root or html/body directly if no data-theme is set,
+   or explicitly with data-theme="dark". */
+:root, [data-theme="dark"] {
+  --bg-default: #0a0a0a; /* Primary background */
+  --bg-subtle: #151515; /* Secondary background, e.g., sidebars, cards */
+  --bg-element: #1f1f1f; /* UI elements like buttons, inputs if not glass */
+  --bg-hover: #2a2a2a; /* Hover state for elements */
+  --bg-active: #3a3a3a; /* Active state for elements */
+
+  --text-default: #ffffff; /* Primary text */
+  --text-subtle: #a0a0a0; /* Secondary text */
+  --text-muted: #6b7280; /* Muted text, placeholders */
+  --text-on-accent: #ffffff; /* Text on accent-colored backgrounds */
+
+  --border-default: #333333; /* Borders for elements */
+  --border-subtle: #222222; /* Subtle borders, dividers */
+
+  --accent-default: #8b5cf6; /* Primary accent color */
+  --accent-hover: #7c3aed; /* Accent hover */
+  --accent-active: #6d28d9; /* Accent active/pressed */
+  --accent-contrast: #ffffff; /* Text/icon color on accent */
+
+  --shadow-color: rgba(0, 0, 0, 0.5); /* For drop shadows */
+
+  /* Glassmorphism specific for dark theme */
+  --glass-bg: rgba(31, 31, 31, 0.6); /* Slightly more opaque for better readability */
+  --glass-border-color: rgba(255, 255, 255, 0.1);
+  --glass-hover-bg: rgba(42, 42, 42, 0.7);
+  --glass-strong-bg: rgba(42, 42, 42, 0.8);
+  --glass-strong-border-color: rgba(255, 255, 255, 0.15);
+
+  /* Semantic colors */
+  --success-default: #34d399;
+  --warning-default: #fbbf24;
+  --error-default: #ef4444;
+
+  /* Animated background colors (dark theme specific) */
+  --anim-bg-color1: rgba(139, 92, 246, 0.1);
+  --anim-bg-color2: rgba(52, 211, 153, 0.08);
+  --anim-bg-color3: rgba(251, 191, 36, 0.06);
+
+  /* Scrollbar */
+  --scrollbar-thumb-bg: rgba(255, 255, 255, 0.1);
+  --scrollbar-thumb-hover-bg: rgba(255, 255, 255, 0.2);
+
+  /* Highlight.js specific for dark theme */
+  --hljs-bg: rgba(17, 24, 39, 0.8);
+  --hljs-text: #e5e7eb;
+  --hljs-keyword: #a78bfa;
+  --hljs-string: #34d399;
+  --hljs-comment: #6b7280;
+  --hljs-variable: #f59e0b;
 }
 
-/* Global Styles */
+[data-theme="oled"] {
+  --bg-default: #000000;
+  --bg-subtle: #0d0d0d; /* Very dark grey, not pure black for subtle distinction */
+  --bg-element: #121212;
+  --bg-hover: #1a1a1a;
+  --bg-active: #222222;
+
+  --text-default: #e0e0e0; /* Slightly off-white for OLED comfort */
+  --text-subtle: #909090;
+  --text-muted: #5f5f5f;
+  --text-on-accent: #ffffff;
+
+  --border-default: #282828;
+  --border-subtle: #181818;
+
+  --accent-default: #8b5cf6; /* Keep accent vibrant */
+  --accent-hover: #7c3aed;
+  --accent-active: #6d28d9;
+  --accent-contrast: #ffffff;
+
+  --shadow-color: rgba(0, 0, 0, 0.7); /* Deeper shadows if needed, or none */
+
+  /* Glassmorphism for OLED - can be tricky, might need to be less transparent */
+  --glass-bg: rgba(18, 18, 18, 0.65); /* Dark, less transparent glass */
+  --glass-border-color: rgba(255, 255, 255, 0.1);
+  --glass-hover-bg: rgba(26, 26, 26, 0.75);
+  --glass-strong-bg: rgba(26, 26, 26, 0.85);
+  --glass-strong-border-color: rgba(255, 255, 255, 0.15);
+
+  --success-default: #34d399;
+  --warning-default: #fbbf24;
+  --error-default: #ef4444;
+
+  /* Animated background colors (OLED theme specific - more subtle or different effect) */
+  --anim-bg-color1: rgba(139, 92, 246, 0.08);
+  --anim-bg-color2: rgba(52, 211, 153, 0.06);
+  --anim-bg-color3: rgba(251, 191, 36, 0.04);
+
+  /* Scrollbar */
+  --scrollbar-thumb-bg: rgba(255, 255, 255, 0.1);
+  --scrollbar-thumb-hover-bg: rgba(255, 255, 255, 0.2);
+
+  /* Highlight.js specific for oled theme */
+  --hljs-bg: rgba(10, 10, 10, 0.8);
+  --hljs-text: #d4d4d4;
+  --hljs-keyword: #a78bfa;
+  --hljs-string: #34d399;
+  --hljs-comment: #5f5f5f;
+  --hljs-variable: #f59e0b;
+}
+
+[data-theme="light"] {
+  --bg-default: #ffffff;
+  --bg-subtle: #f3f4f6; /* Light gray for sidebars, cards */
+  --bg-element: #e5e7eb; /* UI elements */
+  --bg-hover: #d1d5db;
+  --bg-active: #9ca3af;
+
+  --text-default: #1f2937; /* Dark gray for text */
+  --text-subtle: #4b5563;
+  --text-muted: #9ca3af;
+  --text-on-accent: #ffffff;
+
+  --border-default: #d1d5db; /* Light gray borders */
+  --border-subtle: #e5e7eb;
+
+  --accent-default: #6d28d9; /* Original accent might be too light, using a darker variant */
+  --accent-hover: #5b21b6;
+  --accent-active: #4c1d95;
+  --accent-contrast: #ffffff;
+
+  --shadow-color: rgba(0, 0, 0, 0.1);
+
+  /* Glassmorphism for light theme */
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border-color: rgba(0, 0, 0, 0.1);
+  --glass-hover-bg: rgba(243, 244, 246, 0.7); /* More opaque hover */
+  --glass-strong-bg: rgba(243, 244, 246, 0.8);
+  --glass-strong-border-color: rgba(0, 0, 0, 0.15);
+
+  --success-default: #10b981; /* Slightly darker green */
+  --warning-default: #f59e0b; /* Slightly darker yellow */
+  --error-default: #ef4444; /* Red can stay vibrant */
+
+  /* Animated background colors (light theme specific) */
+  --anim-bg-color1: rgba(109, 40, 217, 0.08); /* Accent color with low opacity */
+  --anim-bg-color2: rgba(16, 185, 129, 0.06); /* Success color with low opacity */
+  --anim-bg-color3: rgba(245, 158, 11, 0.05); /* Warning color with low opacity */
+
+  /* Scrollbar */
+  --scrollbar-thumb-bg: rgba(0, 0, 0, 0.15);
+  --scrollbar-thumb-hover-bg: rgba(0, 0, 0, 0.25);
+
+  /* Highlight.js specific for light theme */
+  --hljs-bg: #f3f4f6; /* Light background for code blocks */
+  --hljs-text: #374151; /* Dark text for code */
+  --hljs-keyword: #5b21b6; /* Darker purple */
+  --hljs-string: #059669; /* Darker green */
+  --hljs-comment: #6b7280; /* Grey for comments */
+  --hljs-variable: #d97706; /* Darker orange/yellow */
+}
+
+
+/* Global Styles using new CSS variables */
 * {
   box-sizing: border-box;
 }
@@ -26,38 +166,38 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  background: var(--bg-default);
+  color: var(--text-default);
   font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   overflow-x: hidden;
 }
 
-/* Glassmorphism Utility Classes */
+/* Glassmorphism Utility Classes using new variables */
 .glass {
   background: var(--glass-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--glass-border-color);
 }
 
 .glass-hover:hover {
-  background: var(--glass-hover);
+  background: var(--glass-hover-bg);
 }
 
 .glass-strong {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--glass-strong-bg);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--glass-strong-border-color);
 }
 
-/* Animated Background */
+/* Animated Background using new variables */
 .animated-bg {
   background: 
-    radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(52, 211, 153, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 40% 80%, rgba(251, 191, 36, 0.06) 0%, transparent 50%),
-    var(--bg-primary);
+    radial-gradient(circle at 20% 50%, var(--anim-bg-color1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, var(--anim-bg-color2) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, var(--anim-bg-color3) 0%, transparent 50%),
+    var(--bg-default); /* Use themed background */
   animation: bgMove 20s ease-in-out infinite;
 }
 
@@ -70,99 +210,103 @@ html, body {
   }
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar using new variables */
 ::-webkit-scrollbar {
   width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: transparent; /* Usually fine, or use var(--bg-subtle) if needed */
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--scrollbar-thumb-bg);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--scrollbar-thumb-hover-bg);
 }
 
-/* Smooth Animations */
+/* Smooth Animations - Keep this, but be mindful of color transitions */
 * {
-  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+}
+body, html { /* Ensure body and html also transition background */
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Selection Styles */
+
+/* Selection Styles using new variables */
 ::selection {
-  background: rgba(139, 92, 246, 0.3);
-  color: white;
+  background: color-mix(in srgb, var(--accent-default) 30%, transparent);
+  color: var(--text-on-accent); /* Or var(--text-default) if accent is too light */
 }
 
-/* Focus Styles */
+/* Focus Styles using new variables */
 .focus-ring:focus {
   outline: none;
-  box-shadow: 0 0 0 2px var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-default);
 }
 
-/* Button Styles */
+/* Button Styles using new variables */
 .btn-primary {
-  background: var(--accent);
-  color: white;
+  background: var(--accent-default);
+  color: var(--accent-contrast);
   border: none;
   border-radius: 12px;
   padding: 12px 24px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  /* transition: all 0.2s ease; */ /* Handled by global * transition */
 }
 
 .btn-primary:hover {
   background: var(--accent-hover);
   transform: translateY(-1px);
-  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 8px 32px color-mix(in srgb, var(--accent-default) 30%, transparent);
 }
 
 .btn-ghost {
   background: transparent;
-  color: var(--text-secondary);
-  border: 1px solid var(--glass-border);
+  color: var(--text-subtle);
+  border: 1px solid var(--border-default); /* Use themed border */
   border-radius: 12px;
   padding: 12px 24px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  /* transition: all 0.2s ease; */
 }
 
 .btn-ghost:hover {
-  background: var(--glass-hover);
-  color: var(--text-primary);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--glass-hover-bg); /* Use themed glass hover */
+  color: var(--text-default);
+  border-color: var(--accent-default); /* Highlight with accent on hover */
 }
 
-/* Input Styles */
+/* Input Styles using new variables */
 .input-glass {
   background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--glass-border-color);
   border-radius: 12px;
   padding: 12px 16px;
-  color: var(--text-primary);
+  color: var(--text-default);
   font-size: 14px;
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px); /* Keep blur for glass effect */
   -webkit-backdrop-filter: blur(20px);
 }
 
 .input-glass:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+  border-color: var(--accent-default);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-default) 20%, transparent);
 }
 
 .input-glass::placeholder {
-  color: var(--text-tertiary);
+  color: var(--text-muted);
 }
 
-/* Loading Animation */
+/* Loading Animation using new variables */
 .loading-dots {
   display: inline-flex;
   gap: 4px;
@@ -171,7 +315,7 @@ html, body {
 .loading-dots span {
   width: 4px;
   height: 4px;
-  background: var(--text-secondary);
+  background: var(--text-subtle);
   border-radius: 50%;
   animation: loadingDots 1.4s ease-in-out infinite both;
 }
@@ -215,9 +359,9 @@ html, body {
   overflow: hidden;
 }
 
-/* Glow Effect */
+/* Glow Effect using new variables */
 .glow {
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--accent-default) 30%, transparent);
 }
 
 /* Modal Animation */
@@ -236,33 +380,48 @@ html, body {
   }
 }
 
-/* Card Hover Effects */
+/* Card Hover Effects using new variables */
 .card-hover {
-  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  /* transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94); */ /* Handled by global * transition */
 }
 
 .card-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px var(--shadow-color);
 }
 
-/* Markdown Content Styles */
+/* Markdown Content Styles - General structure should remain, colors will adapt if they use vars */
 .markdown-content {
   line-height: 1.6;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  color: var(--text-default); /* Ensure markdown text uses themed color */
 }
 
 .markdown-content pre {
   font-size: 0.875rem;
+  background-color: var(--bg-element); /* Themed background for pre */
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px; /* Match other rounded elements */
 }
 
 .markdown-content code:not(pre code) {
   font-size: 0.875rem;
+  background-color: var(--bg-element); /* Themed background for inline code */
+  color: var(--accent-default); /* Themed accent for inline code text */
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  border: 1px solid var(--border-subtle);
 }
 
 .markdown-content p:last-child {
   margin-bottom: 0;
+}
+
+.markdown-content h1, .markdown-content h2, .markdown-content h3,
+.markdown-content h4, .markdown-content h5, .markdown-content h6 {
+  color: var(--text-default); /* Ensure headings use themed text color */
+  border-color: var(--border-subtle); /* Themed border for h1 if it has one */
 }
 
 .markdown-content h1:first-child,
@@ -274,11 +433,10 @@ html, body {
   margin-top: 0;
 }
 
-/* User message specific styles */
+/* User message specific styles - these are structural, should be fine */
 .markdown-content.user-message {
   text-align: right;
 }
-
 .markdown-content.user-message ul,
 .markdown-content.user-message ol {
   text-align: left;
@@ -286,7 +444,6 @@ html, body {
   margin-left: auto;
   margin-right: 0;
 }
-
 .markdown-content.user-message blockquote {
   text-align: left;
   margin-left: auto;
@@ -294,28 +451,26 @@ html, body {
   display: inline-block;
   max-width: 90%;
 }
-
 .markdown-content.user-message pre {
   text-align: left;
   width: 100%;
   max-width: none;
 }
-
 .markdown-content.user-message > div {
   width: 100%;
   display: block;
 }
-
 .markdown-content.user-message code:not(pre code) {
   text-align: left;
 }
 
-/* Fix list spacing and indentation */
+
+/* Fix list spacing and indentation - structural, should be fine */
 .markdown-content ul,
 .markdown-content ol {
-  padding-left: 0;
+  padding-left: 0; /* This might remove list markers if not handled by Tailwind/browser defaults */
+  color: var(--text-subtle); /* Themed list text */
 }
-
 .markdown-content ul ul,
 .markdown-content ol ol,
 .markdown-content ul ol,
@@ -323,29 +478,25 @@ html, body {
   margin-top: 0.25rem;
   margin-bottom: 0.25rem;
 }
-
 .markdown-content li {
   margin-bottom: 0.25rem;
 }
-
 .markdown-content li:last-child {
   margin-bottom: 0;
 }
-
 .markdown-content li > p {
   margin-bottom: 0.5rem;
 }
-
 .markdown-content li > p:last-child {
   margin-bottom: 0;
 }
 
-/* Legacy streaming message styles - moved to enhanced section below */
 
-/* Override highlight.js theme for better dark mode integration */
+/* Override highlight.js theme for better theme integration */
 .hljs {
-  background: rgba(17, 24, 39, 0.8) !important;
-  color: #e5e7eb !important;
+  background: var(--hljs-bg) !important;
+  color: var(--hljs-text) !important;
+  border-radius: 6px; /* Slightly less than pre's parent */
 }
 
 .hljs-keyword,
@@ -357,7 +508,7 @@ html, body {
 .hljs-type,
 .hljs-name,
 .hljs-strong {
-  color: #a78bfa !important;
+  color: var(--hljs-keyword) !important;
 }
 
 .hljs-string,
@@ -367,20 +518,20 @@ html, body {
 .hljs-attribute,
 .hljs-template-tag,
 .hljs-addition {
-  color: #34d399 !important;
+  color: var(--hljs-string) !important;
 }
 
 .hljs-comment,
 .hljs-quote,
 .hljs-deletion,
 .hljs-meta {
-  color: #6b7280 !important;
+  color: var(--hljs-comment) !important;
 }
 
 .hljs-variable,
 .hljs-template-variable,
 .hljs-link {
-  color: #f59e0b !important;
+  color: var(--hljs-variable) !important;
 }
 
 .hljs-emphasis {

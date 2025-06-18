@@ -21,17 +21,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Model is required' }, { status: 400 });
     }
 
-    const { data: profile } = await supabase
+    // Fetch the full profile to get API key and any default settings
+    const { data: userProfile, error: profileError } = await supabase
       .from('profiles')
-      .select('openrouter_api_key')
+      .select('*') // Select all columns from profile
       .eq('id', user.id)
       .single();
 
-    if (!profile?.openrouter_api_key) {
+    if (profileError || !userProfile) {
+      console.error('Profile fetch error for chat:', profileError);
+      return NextResponse.json({ error: 'Failed to fetch user profile or profile not found' }, { status: 500 });
+    }
+
+    if (!userProfile.openrouter_api_key) {
       return NextResponse.json({ error: 'OpenRouter API key not configured' }, { status: 400 });
     }
 
-    let conversation = null;
+    let conversation: any = null; // Use 'any' for conversation to handle profile defaults easily
     let messages = [];
 
     if (conversationId) {
@@ -66,20 +72,39 @@ export async function POST(request: NextRequest) {
     }
 
     if (!conversation) {
+      // New conversation: apply default settings from profile
+      const newConversationData: any = {
+        user_id: user.id,
+        title: 'New Chat', // Default title, can be updated later
+        model,
+      };
+
+      if (userProfile.default_temperature !== null && userProfile.default_temperature !== undefined) {
+        newConversationData.temperature = userProfile.default_temperature;
+      }
+      if (userProfile.default_top_p !== null && userProfile.default_top_p !== undefined) {
+        newConversationData.top_p = userProfile.default_top_p;
+      }
+      if (userProfile.default_min_p !== null && userProfile.default_min_p !== undefined) {
+        newConversationData.min_p = userProfile.default_min_p;
+      }
+      if (userProfile.default_seed !== null && userProfile.default_seed !== undefined) {
+        newConversationData.seed = userProfile.default_seed;
+      }
+      if (userProfile.default_system_prompt !== null && userProfile.default_system_prompt !== undefined) {
+        newConversationData.systemPrompt = userProfile.default_system_prompt;
+      }
+
       const { data: newConversation, error: conversationError } = await supabase
         .from('conversations')
-        .insert({
-          user_id: user.id,
-          title: 'New Chat',
-          model,
-        })
+        .insert(newConversationData)
         .select()
         .single();
 
       if (conversationError || !newConversation) {
-        return NextResponse.json({ error: 'Failed to create conversation' }, { status: 500 });
+        console.error('Failed to create new conversation:', conversationError);
+        return NextResponse.json({ error: 'Failed to create conversation', details: conversationError?.message }, { status: 500 });
       }
-
       conversation = newConversation;
     }
 
@@ -249,7 +274,28 @@ export async function POST(request: NextRequest) {
       }
     ];
 
-    const openRouter = new OpenRouterService(profile.openrouter_api_key);
+    // Use the API key from the fetched userProfile
+    const openRouter = new OpenRouterService(userProfile.openrouter_api_key);
+
+    const params: { temperature?: number; top_p?: number; min_p?: number; seed?: number } = {};
+    // conversation object might be from DB or newly created with defaults
+    if (conversation.temperature !== undefined && conversation.temperature !== null) params.temperature = conversation.temperature;
+    if (conversation.top_p !== undefined && conversation.top_p !== null) params.top_p = conversation.top_p;
+    if (conversation.min_p !== undefined && conversation.min_p !== null) params.min_p = conversation.min_p;
+    if (conversation.seed !== undefined && conversation.seed !== null) params.seed = conversation.seed;
+
+    let finalChatMessages = [...chatMessages];
+
+    if (conversation.systemPrompt && conversation.systemPrompt.trim() !== '') {
+      let processedSystemPrompt = conversation.systemPrompt;
+      processedSystemPrompt = processedSystemPrompt.replace(/{{CURRENT_DATE}}/g, new Date().toISOString().split('T')[0]);
+      // Assuming user.email is available. If profile has a display name, that could be used.
+      processedSystemPrompt = processedSystemPrompt.replace(/{{USER_NAME}}/g, user.email || 'User');
+
+      if (processedSystemPrompt.trim() !== '') {
+        finalChatMessages.unshift({ role: 'system', content: processedSystemPrompt });
+      }
+    }
     
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
@@ -257,14 +303,16 @@ export async function POST(request: NextRequest) {
         try {
           let assistantResponse = '';
 
+          // Use finalChatMessages which may include the processed system prompt
           const response = await openRouter.createChatCompletion(
             model,
-            chatMessages,
+            finalChatMessages,
             (chunk: string) => {
               assistantResponse += chunk;
               controller.enqueue(encoder.encode(`data: ${JSON.stringify({ chunk })}\n\n`));
             },
-            request.headers.get('origin') || undefined
+            request.headers.get('origin') || undefined,
+            params
           );
 
           await supabase

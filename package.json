@@ -25,7 +25,10 @@
     "rehype-highlight": "^7.0.2",
     "rehype-raw": "^7.0.0",
     "remark-breaks": "^4.0.0",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "react-katex": "^3.0.1",
+    "katex": "^0.16.10",
+    "mermaid": "^10.9.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -38,6 +38,11 @@ export interface Conversation {
   created_at: string;
   updated_at: string;
   messages?: Message[];
+  temperature?: number;
+  top_p?: number;
+  min_p?: number;
+  seed?: number;
+  systemPrompt?: string;
 }
 
 export interface Profile {
@@ -46,6 +51,11 @@ export interface Profile {
   openrouter_api_key: string | null;
   created_at: string;
   updated_at: string;
+  default_temperature?: number;
+  default_top_p?: number;
+  default_min_p?: number;
+  default_seed?: number;
+  default_system_prompt?: string;
 }
 
 export interface OpenRouterModel {

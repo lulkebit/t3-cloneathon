@@ -34,7 +34,8 @@ export class OpenRouterService {
     model: string,
     messages: ChatMessage[],
     onChunk?: (chunk: string) => void,
-    referer?: string
+    referer?: string,
+    params?: { temperature?: number; top_p?: number; min_p?: number; seed?: number }
   ): Promise<string> {
     try {
       const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
@@ -51,6 +52,7 @@ export class OpenRouterService {
           stream: !!onChunk,
           max_tokens: 4000,
           temperature: 0.7,
+          ...params,
         }),
       });
 

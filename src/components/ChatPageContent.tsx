@@ -7,16 +7,19 @@ import { ChatSidebar } from '@/components/ChatSidebar';
 import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
 import { SettingsModal } from '@/components/SettingsModal';
+import { ConversationSettingsModal } from '@/components/ConversationSettingsModal';
+import { Conversation } from '@/types/chat';
 import { useDynamicTitle } from '@/lib/useDynamicTitle';
-import { Key, Sparkles } from 'lucide-react';
+import { Key, Sparkles, Settings } from 'lucide-react';
 
 interface ChatPageContentProps {
   chatId?: string;
 }
 
 export function ChatPageContent({ chatId }: ChatPageContentProps) {
-  const { profile, isLoading, conversations, setActiveConversation, activeConversation } = useChat();
+  const { profile, isLoading, conversations, setActiveConversation, activeConversation, updateConversation } = useChat();
   const [showSettings, setShowSettings] = useState(false);
+  const [showConversationSettingsModal, setShowConversationSettingsModal] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
   useDynamicTitle(activeConversation);
@@ -43,6 +46,33 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
     }
   }, [profile, isLoading]);
 
+  const handleSaveConversationSettings = async (settings: Partial<Conversation>) => {
+    if (!activeConversation) return;
+
+    try {
+      const response = await fetch(`/api/conversations/${activeConversation.id}/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Failed to save conversation settings:', errorData.error);
+        // Optionally, show an error message to the user
+        return;
+      }
+
+      const updatedConversation = await response.json();
+      updateConversation(updatedConversation); // Assuming useChat has an updateConversation method
+      setActiveConversation(updatedConversation);
+      setShowConversationSettingsModal(false);
+    } catch (error) {
+      console.error('Error saving conversation settings:', error);
+      // Optionally, show an error message to the user
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center animated-bg">
@@ -56,7 +86,7 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
             <span></span>
             <span></span>
           </div>
-          <p className="text-white/60">Loading chat...</p>
+          <p className="text-[var(--text-subtle)]">Loading chat...</p>
         </motion.div>
       </div>
     );
@@ -76,14 +106,14 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
             transition={{ delay: 0.1 }}
             className="w-20 h-20 mx-auto mb-6 glass rounded-3xl flex items-center justify-center"
           >
-            <Key size={32} className="text-blue-400" />
+            <Key size={32} className="text-[var(--accent-default)]" />
           </motion.div>
           
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-2xl font-bold text-white mb-4"
+            className="text-2xl font-bold text-[var(--text-default)] mb-4"
           >
             Welcome to Convex Chat
           </motion.h1>
@@ -92,7 +122,7 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="text-white/60 mb-8 leading-relaxed"
+            className="text-[var(--text-subtle)] mb-8 leading-relaxed"
           >
             To get started, you'll need to configure your OpenRouter API key. 
             This allows you to chat with various AI models.
@@ -149,10 +179,31 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
         transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 30 }}
         className="flex-1 flex flex-col relative"
       >
+        {activeConversation && (
+          <div className="p-4 border-b border-[var(--border-default)] flex justify-between items-center">
+            <h2 className="text-lg font-semibold text-[var(--text-default)]">{activeConversation.title}</h2>
+            <button
+              onClick={() => setShowConversationSettingsModal(true)}
+              className="p-2 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-subtle)] hover:text-[var(--text-default)]"
+              title="Conversation Settings"
+            >
+              <Settings size={20} />
+            </button>
+          </div>
+        )}
         <ChatMessages isSidebarCollapsed={isSidebarCollapsed} />
         
         <ChatInput />
       </motion.div>
+
+      {activeConversation && (
+        <ConversationSettingsModal
+          isOpen={showConversationSettingsModal}
+          onClose={() => setShowConversationSettingsModal(false)}
+          conversation={activeConversation}
+          onSave={handleSaveConversationSettings}
+        />
+      )}
     </motion.div>
   );
 } 

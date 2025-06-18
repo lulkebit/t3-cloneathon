@@ -7,8 +7,10 @@ import remarkBreaks from 'remark-breaks';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import { Copy, Check } from 'lucide-react';
-import { useState } from 'react';
-
+import { useState, Children } from 'react';
+import { InlineMath, BlockMath } from 'react-katex';
+import 'katex/dist/katex.min.css';
+import MermaidDiagram from './MermaidDiagram'; // Import MermaidDiagram
 import 'highlight.js/styles/github-dark.css';
 
 interface MarkdownRendererProps {
@@ -28,10 +30,10 @@ function CodeBlock({ children, className, inline, ...props }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
   const match = /language-(\w+)/.exec(className || '');
   const language = match ? match[1] : '';
+  const diagramText = String(children).replace(/\n$/, '');
 
   const handleCopy = async () => {
-    const text = String(children).replace(/\n$/, '');
-    await navigator.clipboard.writeText(text);
+    await navigator.clipboard.writeText(diagramText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -47,6 +49,12 @@ function CodeBlock({ children, className, inline, ...props }: CodeBlockProps) {
     );
   }
 
+  // Handle Mermaid diagrams
+  if (language === 'mermaid' && !inline) {
+    return <MermaidDiagram chart={diagramText} />;
+  }
+
+  // Default code block rendering
   return (
     <div className="w-full block">
       <div className="relative group my-4 border border-gray-700/50 rounded-lg overflow-hidden w-full">
@@ -127,11 +135,58 @@ export function MarkdownRenderer({ content, className = '', isUserMessage = fals
             </h6>
           ),
           
-          p: ({ children }) => (
-            <p className="text-white/90 leading-relaxed mb-3 last:mb-0">
-              {children}
-            </p>
-          ),
+          p: ({ node, children }) => {
+            const newChildren = Children.toArray(children).flatMap((child, childIndex) => {
+              if (typeof child === 'string') {
+                // Process block math first: $$...$$
+                const blockProcessed: (string | JSX.Element)[] = [];
+                let lastIndex = 0;
+                const blockRegex = /\$\$([\s\S]*?)\$\$/g;
+                let match;
+
+                while ((match = blockRegex.exec(child)) !== null) {
+                  if (match.index > lastIndex) {
+                    blockProcessed.push(child.substring(lastIndex, match.index));
+                  }
+                  blockProcessed.push(<BlockMath key={`block-${childIndex}-${lastIndex}`} math={match[1]} />);
+                  lastIndex = blockRegex.lastIndex;
+                }
+                if (lastIndex < child.length) {
+                  blockProcessed.push(child.substring(lastIndex));
+                }
+
+                // Process inline math for remaining string parts: $...$
+                const finalProcessed: (string | JSX.Element)[] = [];
+                blockProcessed.forEach((part, partIndex) => {
+                  if (typeof part === 'string') {
+                    const inlineRegex = /(?<!\$)\$([^\$\n]+?)\$(?!\$)/g; // $...$ but not $$...$$
+                    let inlineLastIndex = 0;
+                    let inlineMatch;
+                    while ((inlineMatch = inlineRegex.exec(part)) !== null) {
+                      if (inlineMatch.index > inlineLastIndex) {
+                        finalProcessed.push(part.substring(inlineLastIndex, inlineMatch.index));
+                      }
+                      // Basic check to prevent rendering things like $5 or $something_
+                      if (!/^\d+(\.\d+)?$/.test(inlineMatch[1]) && !/\s/.test(inlineMatch[1].trim())) {
+                        finalProcessed.push(<InlineMath key={`inline-${childIndex}-${partIndex}-${inlineLastIndex}`} math={inlineMatch[1]} />);
+                      } else {
+                        finalProcessed.push(inlineMatch[0]); // Revert to original text if it looks like money or has spaces
+                      }
+                      inlineLastIndex = inlineRegex.lastIndex;
+                    }
+                    if (inlineLastIndex < part.length) {
+                      finalProcessed.push(part.substring(inlineLastIndex));
+                    }
+                  } else {
+                    finalProcessed.push(part); // Already a JSX element (BlockMath)
+                  }
+                });
+                return finalProcessed;
+              }
+              return child;
+            });
+            return <p className="text-white/90 leading-relaxed mb-3 last:mb-0">{newChildren}</p>;
+          },
           
           ul: ({ children, ...props }) => {
             const depth = (props as any)?.depth || 0;
