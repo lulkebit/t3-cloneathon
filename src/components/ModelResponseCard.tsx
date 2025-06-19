@@ -58,10 +58,10 @@ export function ModelResponseCard({
           : response.isLoading
             ? 'border-yellow-400/30 bg-yellow-500/5'
             : 'border-white/10'
-      } ${isSideBySide ? 'h-full flex flex-col' : ''}`}
+      } ${isSideBySide ? 'consensus-card' : ''}`}
     >
       <div
-        className={`flex items-center gap-3 p-4 ${hasContent && !isSideBySide ? 'cursor-pointer' : ''}`}
+        className={`flex items-start gap-3 p-4 ${hasContent && !isSideBySide ? 'cursor-pointer' : ''} ${isSideBySide ? 'model-header' : ''}`}
         onClick={() =>
           hasContent && !isSideBySide && onToggleExpanded(response.model)
         }
@@ -85,103 +85,122 @@ export function ModelResponseCard({
           />
         </div>
 
-        <div className="flex-1 min-w-0">
-          <div className="font-medium text-white/90 truncate">
+        <div className="flex-1 min-w-0 pr-2">
+          <div className="font-medium text-white/90 truncate text-sm">
             {modelInfo.name}
           </div>
-          <div className="text-sm text-white/50">{modelInfo.provider}</div>
+          <div className="text-xs text-white/50 truncate">
+            {modelInfo.provider}
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {response.error && (
-            <div className="flex items-center gap-1 text-red-400 text-xs">
-              <AlertCircle size={12} />
-              Error
-            </div>
-          )}
+        <div className="flex flex-col items-end gap-1 min-w-0">
+          {/* Top row - Status and Quality Score */}
+          <div className="flex items-center gap-1.5 justify-end">
+            {response.error && (
+              <div className="flex items-center gap-1 text-red-400 text-xs shrink-0">
+                <AlertCircle size={10} />
+                <span className="hidden sm:inline">Error</span>
+              </div>
+            )}
 
-          {response.isLoading && (
-            <div className="flex items-center gap-1 text-yellow-400 text-xs">
-              <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
-              Loading...
-            </div>
-          )}
-
-          {/* Quality Score Badge */}
-          {hasQualityMetrics && response.qualityMetrics && (
-            <QualityScoreBadge
-              score={response.qualityMetrics.qualityScore}
-              className="text-xs"
-            />
-          )}
-
-          {response.responseTime && (
-            <div className="flex items-center gap-1 text-white/40 text-xs">
-              <Clock size={12} />
-              {formatResponseTime(response.responseTime)}
-            </div>
-          )}
-
-          {hasQualityMetrics && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowQualityMetrics(!showQualityMetrics);
-              }}
-              className="cursor-pointer p-1 rounded hover:bg-white/10 transition-colors"
-            >
-              <BarChart3
-                size={14}
-                className={`${showQualityMetrics ? 'text-purple-400' : 'text-white/40'} hover:text-white/60`}
+            {response.isLoading && (
+              <div className="flex items-center gap-1 text-yellow-400 text-xs shrink-0">
+                <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse" />
+                <span className="hidden sm:inline">Loading...</span>
+              </div>
+            )}
+            {/* Quality Score Badge */}
+            {hasQualityMetrics && response.qualityMetrics && (
+              <QualityScoreBadge
+                score={response.qualityMetrics.qualityScore}
+                className="text-xs shrink-0"
               />
-            </button>
-          )}
+            )}
+          </div>
 
-          {hasContent && !response.isLoading && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onCopyResponse(response.content, response.model);
-              }}
-              className="cursor-pointer p-1 rounded hover:bg-white/10 transition-colors"
-            >
-              {copiedModel === response.model ? (
-                <Check size={14} className="text-green-400" />
-              ) : (
-                <Copy size={14} className="text-white/40 hover:text-white/60" />
-              )}
-            </button>
-          )}
+          {/* Bottom row - Time and Actions */}
+          <div className="flex items-center gap-1 justify-end">
+            {response.responseTime && (
+              <div className="flex items-center gap-1 text-white/40 text-xs shrink-0">
+                <Clock size={10} />
+                <span className="text-xs">
+                  {formatResponseTime(response.responseTime)}
+                </span>
+              </div>
+            )}
 
-          {hasContent && !isSideBySide && (
-            <button className="cursor-pointer p-1 rounded hover:bg-white/10 transition-colors">
-              {isExpanded ? (
-                <ChevronUp size={16} className="text-white/40" />
-              ) : (
-                <ChevronDown size={16} className="text-white/40" />
-              )}
-            </button>
-          )}
+            {hasQualityMetrics && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowQualityMetrics(!showQualityMetrics);
+                }}
+                className="cursor-pointer p-1 rounded hover:bg-white/10 transition-colors shrink-0"
+                title="Toggle Quality Metrics"
+              >
+                <BarChart3
+                  size={12}
+                  className={`${showQualityMetrics ? 'text-purple-400' : 'text-white/40'} hover:text-white/60`}
+                />
+              </button>
+            )}
+
+            {hasContent && !response.isLoading && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCopyResponse(response.content, response.model);
+                }}
+                className="cursor-pointer p-1 rounded hover:bg-white/10 transition-colors shrink-0"
+                title="Copy Response"
+              >
+                {copiedModel === response.model ? (
+                  <Check size={12} className="text-green-400" />
+                ) : (
+                  <Copy
+                    size={12}
+                    className="text-white/40 hover:text-white/60"
+                  />
+                )}
+              </button>
+            )}
+
+            {hasContent && !isSideBySide && (
+              <button
+                className="cursor-pointer p-1 rounded hover:bg-white/10 transition-colors shrink-0"
+                title={isExpanded ? 'Collapse' : 'Expand'}
+              >
+                {isExpanded ? (
+                  <ChevronUp size={12} className="text-white/40" />
+                ) : (
+                  <ChevronDown size={12} className="text-white/40" />
+                )}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       {hasContent && (isExpanded || isSideBySide) && (
         <div
-          className={`px-4 pb-4 border-t border-white/10 ${isSideBySide ? 'flex-1 overflow-hidden' : ''}`}
+          className={`px-4 pb-4 border-t border-white/10 ${isSideBySide ? 'flex-1 min-h-0 model-content' : ''}`}
         >
           <div
-            className={`mt-4 ${isSideBySide ? 'h-full overflow-y-auto' : ''}`}
+            className={`mt-4 ${isSideBySide ? 'max-h-96 overflow-y-auto' : ''}`}
           >
             <MarkdownRenderer content={response.content} />
 
             {/* Quality Metrics Display */}
-            {hasQualityMetrics &&
-              showQualityMetrics &&
-              response.qualityMetrics && (
-                <div className="mt-4 pt-4 border-t border-white/20">
-                  <QualityMetricsDisplay metrics={response.qualityMetrics} />
-                </div>
-              )}
+            {hasQualityMetrics && response.qualityMetrics && (
+              <div
+                className={`quality-metrics mt-4 pt-4 border-t border-white/20 ${
+                  showQualityMetrics ? 'expanded' : 'collapsed'
+                }`}
+              >
+                <QualityMetricsDisplay metrics={response.qualityMetrics} />
+              </div>
+            )}
           </div>
         </div>
       )}
