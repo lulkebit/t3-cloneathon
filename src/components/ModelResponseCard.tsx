@@ -282,7 +282,7 @@ export function ModelResponseCard({
       {/* Content Area */}
       {hasContent && (isExpanded || isSideBySide) && (
         <div
-          className={`px-4 pb-4 border-t border-white/10 ${isSideBySide ? 'flex-1 overflow-hidden' : ''}`}
+          className={`px-4 pb-4 border-t border-white/10 ${isSideBySide ? 'flex-1 min-h-0 model-content' : ''}`}
         >
           <div
             className={`mt-4 ${isSideBySide ? 'h-full overflow-y-auto scrollbar-thin' : ''}`}
@@ -292,13 +292,15 @@ export function ModelResponseCard({
             </div>
 
             {/* Quality Metrics Display */}
-            {hasQualityMetrics &&
-              showQualityMetrics &&
-              response.qualityMetrics && (
-                <div className="mt-4 pt-4 border-t border-white/20">
-                  <QualityMetricsDisplay metrics={response.qualityMetrics} />
-                </div>
-              )}
+            {hasQualityMetrics && response.qualityMetrics && (
+              <div
+                className={`quality-metrics mt-4 pt-4 border-t border-white/20 ${
+                  showQualityMetrics ? 'expanded' : 'collapsed'
+                }`}
+              >
+                <QualityMetricsDisplay metrics={response.qualityMetrics} />
+              </div>
+            )}
           </div>
         </div>
       )}

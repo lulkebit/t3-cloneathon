@@ -137,6 +137,56 @@ body {
   transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
+/* Grid Layout Utilities */
+.consensus-grid {
+  display: grid;
+  grid-auto-rows: max-content;
+  align-items: start;
+  grid-auto-flow: row;
+}
+
+.consensus-card {
+  display: flex;
+  flex-direction: column;
+  min-height: fit-content;
+  max-height: 600px;
+  overflow: hidden;
+}
+
+.consensus-card .model-header {
+  flex-shrink: 0;
+  min-height: 80px;
+}
+
+@media (max-width: 640px) {
+  .consensus-card .model-header {
+    min-height: 90px;
+  }
+}
+
+.consensus-card .model-content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.consensus-card .quality-metrics {
+  transition:
+    max-height 0.3s ease-in-out,
+    opacity 0.2s ease-in-out;
+  overflow: hidden;
+}
+
+.consensus-card .quality-metrics.collapsed {
+  max-height: 0;
+  opacity: 0;
+}
+
+.consensus-card .quality-metrics.expanded {
+  max-height: 500px;
+  opacity: 1;
+}
+
 /* Selection Styles */
 ::selection {
   background: rgba(139, 92, 246, 0.3);
