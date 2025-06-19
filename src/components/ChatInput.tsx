@@ -191,11 +191,14 @@ export function ChatInput() {
         const conversationData = await createConversationResponse.json();
         conversationId = conversationData.conversation.id;
 
-        // Add the new conversation to the list but don't set it as active yet
+        // FIRST: Add the new conversation to the list
         addNewConversation(conversationData.conversation);
 
+        // SECOND: Set active conversation and update URL BEFORE adding messages
+        setActiveConversation(conversationData.conversation);
         window.history.pushState(null, '', `/chat/${conversationId}`);
 
+        // THIRD: Add optimistic messages after conversation is properly set
         userMessageId = addOptimisticMessage({
           conversation_id: conversationId!,
           role: 'user',
@@ -270,28 +273,6 @@ export function ChatInput() {
                 updateConversationTitle(parsed.conversationId, parsed.title);
               } else if (parsed.done && assistantMessageId) {
                 finalizeMessage(assistantMessageId, assistantContent);
-
-                // For new conversations, just set as active without refreshing
-                if (!activeConversation && conversationId) {
-                  setTimeout(async () => {
-                    try {
-                      // Set the conversation as active but don't refresh messages
-                      const conversationResponse = await fetch(
-                        `/api/conversations/${conversationId}`
-                      );
-                      if (conversationResponse.ok) {
-                        const conversationData =
-                          await conversationResponse.json();
-                        setActiveConversation(conversationData.conversation);
-                      }
-                    } catch (error) {
-                      console.error(
-                        'Error setting active conversation:',
-                        error
-                      );
-                    }
-                  }, 100);
-                }
               }
             } catch (e) {
               console.error('Error parsing streaming data:', e, 'Data:', data);
@@ -420,11 +401,14 @@ export function ChatInput() {
         const conversationData = await createConversationResponse.json();
         conversationId = conversationData.conversation.id;
 
-        // Add the new conversation to the list but don't set it as active yet
+        // FIRST: Add the new conversation to the list
         addNewConversation(conversationData.conversation);
 
+        // SECOND: Set active conversation and update URL BEFORE adding messages
+        setActiveConversation(conversationData.conversation);
         window.history.pushState(null, '', `/chat/${conversationId}`);
 
+        // THIRD: Add optimistic messages after conversation is properly set
         userMessageId = addOptimisticMessage({
           conversation_id: conversationId!,
           role: 'user',
@@ -566,28 +550,6 @@ export function ChatInput() {
                   assistantMessageId,
                   JSON.stringify(parsed.responses)
                 );
-
-                // For new conversations, just set as active without refreshing
-                if (!activeConversation && conversationId) {
-                  setTimeout(async () => {
-                    try {
-                      // Set the conversation as active but don't refresh messages
-                      const conversationResponse = await fetch(
-                        `/api/conversations/${conversationId}`
-                      );
-                      if (conversationResponse.ok) {
-                        const conversationData =
-                          await conversationResponse.json();
-                        setActiveConversation(conversationData.conversation);
-                      }
-                    } catch (error) {
-                      console.error(
-                        'Error setting active conversation:',
-                        error
-                      );
-                    }
-                  }, 100);
-                }
               }
             } catch (e) {
               console.error(

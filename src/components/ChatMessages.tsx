@@ -13,6 +13,13 @@ interface ChatMessagesProps {
 export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
   const { messages, activeConversation, isLoading, refreshMessages, user } =
     useChat();
+
+  // Filter messages to only show those for the active conversation
+  const conversationMessages = messages.filter(
+    (message) =>
+      !activeConversation || message.conversation_id === activeConversation.id
+  );
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -24,7 +31,7 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [conversationMessages]);
 
   const handleCopy = async (messageId: string, content: string) => {
     try {
@@ -42,7 +49,7 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
     setRetryingId(messageId);
 
     try {
-      const userMessage = messages[messageIndex - 1];
+      const userMessage = conversationMessages[messageIndex - 1];
       if (!userMessage || userMessage.role !== 'user') {
         console.error('Could not find preceding user message');
         return;
@@ -126,7 +133,7 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
     );
   }
 
-  if (!activeConversation && messages.length === 0) {
+  if (!activeConversation && conversationMessages.length === 0) {
     return <ChatEmptyState />;
   }
 
@@ -138,7 +145,7 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
         isSidebarCollapsed={isSidebarCollapsed}
       />
       <div className="w-full max-w-4xl mx-auto px-6 py-8 space-y-6">
-        {messages.map((message, index) => (
+        {conversationMessages.map((message, index) => (
           <MessageItem
             key={message.id}
             message={message}

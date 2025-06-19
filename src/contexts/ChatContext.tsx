@@ -108,14 +108,28 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         const serverMessages = data.messages || [];
 
         setMessages((prev) => {
-          // Keep only optimistic messages for this conversation that are actively streaming/loading
+          // Keep only ACTIVE optimistic messages (still streaming or loading)
           const activeOptimisticMessages = prev.filter(
             (msg) =>
               msg.isOptimistic &&
               msg.conversation_id === conversationId &&
               (msg.isStreaming || msg.isLoading)
           );
-          return [...serverMessages, ...activeOptimisticMessages];
+
+          // If we have active optimistic messages, preserve them
+          if (activeOptimisticMessages.length > 0) {
+            // Only keep optimistic messages, server messages will come later
+            return [
+              ...prev.filter((msg) => msg.conversation_id !== conversationId),
+              ...activeOptimisticMessages,
+            ];
+          }
+
+          // No active optimistic messages, safe to use server messages
+          return [
+            ...prev.filter((msg) => msg.conversation_id !== conversationId),
+            ...serverMessages,
+          ];
         });
       }
     } catch (error) {
@@ -209,8 +223,11 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   };
 
   const finalizeMessage = (messageId: string, finalContent: string) => {
-    setMessages((prev) =>
-      prev.map((msg) =>
+    setMessages((prev) => {
+      const messageToFinalize = prev.find((msg) => msg.id === messageId);
+      const conversationId = messageToFinalize?.conversation_id;
+
+      const updatedMessages = prev.map((msg) =>
         msg.id === messageId
           ? {
               ...msg,
@@ -220,8 +237,31 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
               isLoading: false,
             }
           : msg
-      )
-    );
+      );
+
+      // Check if this was the last active optimistic message for this conversation
+      if (conversationId) {
+        const remainingActiveOptimistic = updatedMessages.filter(
+          (msg) =>
+            msg.isOptimistic &&
+            msg.conversation_id === conversationId &&
+            (msg.isStreaming || msg.isLoading)
+        );
+
+        // If no more active optimistic messages, refresh from server to get final state
+        if (remainingActiveOptimistic.length === 0) {
+          // Remove from new conversations set to allow future refreshes
+          setNewConversationIds((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(conversationId);
+            return newSet;
+          });
+          setTimeout(() => refreshMessages(conversationId), 100);
+        }
+      }
+
+      return updatedMessages;
+    });
   };
 
   const removeOptimisticMessage = (messageId: string) => {
@@ -276,6 +316,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   const addNewConversation = (conversation: Conversation) => {
     setConversations((prev) => [conversation, ...prev]);
+    // Mark this as a new conversation to prevent immediate refreshMessages
     setNewConversationIds((prev) => new Set([...prev, conversation.id]));
   };
 
@@ -295,33 +336,16 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (activeConversation) {
-      // Check if this is a new conversation that shouldn't be refreshed yet
-      if (newConversationIds.has(activeConversation.id)) {
-        // For new conversations, just filter messages but don't refresh
-        setMessages((prev) =>
-          prev.filter((msg) => msg.conversation_id === activeConversation.id)
-        );
-        // Remove from new conversations set
-        setNewConversationIds((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(activeConversation.id);
-          return newSet;
-        });
-        return;
+      // Don't refresh messages for new conversations - they rely on optimistic messages
+      if (!newConversationIds.has(activeConversation.id)) {
+        // This is an existing conversation - refresh messages from server
+        refreshMessages(activeConversation.id);
       }
-
-      // For existing conversations, refresh normally
-      setMessages((prev) =>
-        prev.filter(
-          (msg) =>
-            msg.isOptimistic && msg.conversation_id === activeConversation.id
-        )
-      );
-      refreshMessages(activeConversation.id);
     } else {
+      // Clear messages when no conversation is selected
       setMessages([]);
     }
-  }, [activeConversation]); // Don't include messages as dependency to avoid loops
+  }, [activeConversation]);
 
   return (
     <ChatContext.Provider

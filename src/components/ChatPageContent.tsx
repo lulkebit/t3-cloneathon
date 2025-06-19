@@ -34,8 +34,12 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
         if (conversation) {
           setActiveConversation(conversation);
         } else {
-          window.history.replaceState(null, '', '/chat');
-          setActiveConversation(null);
+          // Don't redirect if we're already on a specific chat ID - might be a new conversation being created
+          // Only redirect to /chat if the URL doesn't have a chat ID or it's been confirmed the conversation doesn't exist
+          console.warn(
+            `Conversation with ID ${chatId} not found in conversations list`
+          );
+          // We'll let the ChatContext handle this case instead of forcing a redirect here
         }
       } else {
         setActiveConversation(null);
