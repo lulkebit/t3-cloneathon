@@ -11,4 +11,4 @@ export function useDynamicTitle(activeConversation: Conversation | null) {
       document.title = DEFAULT_TITLE;
     }
   }, [activeConversation]);
-} 
+}

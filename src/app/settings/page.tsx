@@ -5,23 +5,23 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChatProvider, useChat } from '@/contexts/ChatContext';
 import { createClient } from '@/lib/supabase-client';
-import { 
-  Key, 
-  Eye, 
-  EyeOff, 
-  ExternalLink, 
-  ArrowLeft, 
-  LogOut, 
-  Save, 
-  User, 
-  CheckCircle, 
+import {
+  Key,
+  Eye,
+  EyeOff,
+  ExternalLink,
+  ArrowLeft,
+  LogOut,
+  Save,
+  User,
+  CheckCircle,
   XCircle,
   Settings,
   Palette,
   Globe,
   ChevronRight,
   Menu,
-  X
+  X,
 } from 'lucide-react';
 
 type SettingsSection = 'profile' | 'api' | 'appearance' | 'general';
@@ -35,12 +35,39 @@ interface SettingsSidebarProps {
   isLogoutLoading: boolean;
 }
 
-function SettingsSidebar({ activeSection, onSectionChange, isCollapsed, onToggleCollapse, onLogout, isLogoutLoading }: SettingsSidebarProps) {
+function SettingsSidebar({
+  activeSection,
+  onSectionChange,
+  isCollapsed,
+  onToggleCollapse,
+  onLogout,
+  isLogoutLoading,
+}: SettingsSidebarProps) {
   const settingsSections = [
-    { id: 'profile' as SettingsSection, label: 'Profile', icon: User, color: 'blue' },
-    { id: 'api' as SettingsSection, label: 'API Keys', icon: Key, color: 'yellow' },
-    { id: 'appearance' as SettingsSection, label: 'Appearance', icon: Palette, color: 'pink' },
-    { id: 'general' as SettingsSection, label: 'General', icon: Globe, color: 'indigo' },
+    {
+      id: 'profile' as SettingsSection,
+      label: 'Profile',
+      icon: User,
+      color: 'blue',
+    },
+    {
+      id: 'api' as SettingsSection,
+      label: 'API Keys',
+      icon: Key,
+      color: 'yellow',
+    },
+    {
+      id: 'appearance' as SettingsSection,
+      label: 'Appearance',
+      icon: Palette,
+      color: 'pink',
+    },
+    {
+      id: 'general' as SettingsSection,
+      label: 'General',
+      icon: Globe,
+      color: 'indigo',
+    },
   ];
 
   return (
@@ -51,7 +78,7 @@ function SettingsSidebar({ activeSection, onSectionChange, isCollapsed, onToggle
             initial={{ opacity: 0, x: -50, scale: 0.8 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: -50, scale: 0.8 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="fixed left-4 top-4 z-50 lg:hidden"
           >
             <motion.button
@@ -72,7 +99,7 @@ function SettingsSidebar({ activeSection, onSectionChange, isCollapsed, onToggle
             initial={{ opacity: 0, x: -256, width: 0 }}
             animate={{ opacity: 1, x: 0, width: 256 }}
             exit={{ opacity: 0, x: -256, width: 0 }}
-            transition={{ duration: 0.4, ease: "easeInOut" }}
+            transition={{ duration: 0.4, ease: 'easeInOut' }}
             className="bg-black/20 backdrop-blur-sm border-r border-white/5 flex flex-col h-screen overflow-hidden fixed lg:relative z-40"
           >
             <div className="p-4 border-b border-white/5">
@@ -99,7 +126,7 @@ function SettingsSidebar({ activeSection, onSectionChange, isCollapsed, onToggle
                 {settingsSections.map((section, index) => {
                   const Icon = section.icon;
                   const isActive = activeSection === section.id;
-                  
+
                   return (
                     <motion.button
                       key={section.id}
@@ -124,24 +151,32 @@ function SettingsSidebar({ activeSection, onSectionChange, isCollapsed, onToggle
                           transition={{ duration: 0.2 }}
                         />
                       )}
-                      
-                      <div className={`w-6 h-6 rounded-md flex items-center justify-center ${
-                        isActive 
-                          ? `bg-${section.color}-500/20` 
-                          : 'bg-white/5'
-                      }`}>
-                        <Icon size={14} className={
-                          isActive 
-                            ? `text-${section.color}-400` 
-                            : 'text-white/40'
-                        } />
+
+                      <div
+                        className={`w-6 h-6 rounded-md flex items-center justify-center ${
+                          isActive ? `bg-${section.color}-500/20` : 'bg-white/5'
+                        }`}
+                      >
+                        <Icon
+                          size={14}
+                          className={
+                            isActive
+                              ? `text-${section.color}-400`
+                              : 'text-white/40'
+                          }
+                        />
                       </div>
-                      
-                      <span className="text-sm font-medium">{section.label}</span>
-                      
-                      <ChevronRight size={12} className={`ml-auto transition-transform ${
-                        isActive ? 'rotate-90' : ''
-                      }`} />
+
+                      <span className="text-sm font-medium">
+                        {section.label}
+                      </span>
+
+                      <ChevronRight
+                        size={12}
+                        className={`ml-auto transition-transform ${
+                          isActive ? 'rotate-90' : ''
+                        }`}
+                      />
                     </motion.button>
                   );
                 })}
@@ -159,7 +194,11 @@ function SettingsSidebar({ activeSection, onSectionChange, isCollapsed, onToggle
                 {isLogoutLoading ? (
                   <motion.div
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: 'linear',
+                    }}
                     className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full"
                   />
                 ) : (
@@ -169,31 +208,31 @@ function SettingsSidebar({ activeSection, onSectionChange, isCollapsed, onToggle
                   {isLogoutLoading ? 'Logging out...' : 'Logout'}
                 </span>
               </motion.button>
-              
+
               <div className="pt-2 border-t border-white/5 space-y-3">
                 <div className="flex justify-center gap-3 text-xs text-white/30">
-                  <a 
-                    href="/nutzungsbedingungen" 
+                  <a
+                    href="/nutzungsbedingungen"
                     className="hover:text-white/50 transition-colors"
                   >
                     Terms
                   </a>
                   <span>•</span>
-                  <a 
-                    href="/datenschutz-chat" 
+                  <a
+                    href="/datenschutz-chat"
                     className="hover:text-white/50 transition-colors"
                   >
                     Privacy
                   </a>
                   <span>•</span>
-                  <a 
-                    href="/haftungsausschluss" 
+                  <a
+                    href="/haftungsausschluss"
                     className="hover:text-white/50 transition-colors"
                   >
                     Disclaimer
                   </a>
                 </div>
-                <motion.div 
+                <motion.div
                   className="flex justify-center"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -207,10 +246,18 @@ function SettingsSidebar({ activeSection, onSectionChange, isCollapsed, onToggle
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="opacity-70">
-                      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="opacity-70"
+                    >
+                      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                     </svg>
-                    <span className="font-medium">Project Info & Source Code</span>
+                    <span className="font-medium">
+                      Project Info & Source Code
+                    </span>
                   </motion.a>
                 </motion.div>
               </div>
@@ -255,7 +302,7 @@ function ProfileSection() {
                 This is your login email and cannot be changed.
               </p>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-white/60 mb-2">
                 Account Status
@@ -277,7 +324,9 @@ function ApiKeysSection() {
   const [apiKey, setApiKey] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [saveStatus, setSaveStatus] = useState<
+    'idle' | 'saving' | 'saved' | 'error'
+  >('idle');
 
   useEffect(() => {
     if (profile?.openrouter_api_key) {
@@ -293,7 +342,7 @@ function ApiKeysSection() {
 
     setIsLoading(true);
     setSaveStatus('saving');
-    
+
     try {
       const response = await fetch('/api/profile', {
         method: 'PUT',
@@ -312,7 +361,7 @@ function ApiKeysSection() {
 
       await refreshProfile();
       setSaveStatus('saved');
-      
+
       setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (error) {
       console.error('Error saving API key:', error);
@@ -362,11 +411,11 @@ function ApiKeysSection() {
 
   const getSaveButtonClass = () => {
     switch (saveStatus) {
-      case 'saved': 
+      case 'saved':
         return 'bg-green-500 hover:bg-green-600';
-      case 'error': 
+      case 'error':
         return 'bg-red-500 hover:bg-red-600';
-      default: 
+      default:
         return 'bg-blue-500 hover:bg-blue-600';
     }
   };
@@ -380,11 +429,13 @@ function ApiKeysSection() {
       <div className="glass-strong rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h4 className="text-lg font-medium text-white">OpenRouter API Key</h4>
-          <div className={`px-3 py-1.5 rounded-lg font-medium text-sm flex items-center gap-2 ${
-            profile?.openrouter_api_key 
-              ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-              : 'bg-red-500/20 text-red-400 border border-red-500/30'
-          }`}>
+          <div
+            className={`px-3 py-1.5 rounded-lg font-medium text-sm flex items-center gap-2 ${
+              profile?.openrouter_api_key
+                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                : 'bg-red-500/20 text-red-400 border border-red-500/30'
+            }`}
+          >
             {profile?.openrouter_api_key ? (
               <>
                 <CheckCircle size={14} />
@@ -433,15 +484,20 @@ function ApiKeysSection() {
                 Current API Key
               </label>
               <div className="px-4 py-3 glass rounded-xl text-white/60 font-mono text-sm">
-                {profile.openrouter_api_key.slice(0, 4) + '•'.repeat(profile.openrouter_api_key.length - 8) + profile.openrouter_api_key.slice(-4)}
+                {profile.openrouter_api_key.slice(0, 4) +
+                  '•'.repeat(profile.openrouter_api_key.length - 8) +
+                  profile.openrouter_api_key.slice(-4)}
               </div>
             </div>
           )}
 
           <div className="glass rounded-xl p-4">
-            <h5 className="text-sm font-medium text-white mb-2">Need an API key?</h5>
+            <h5 className="text-sm font-medium text-white mb-2">
+              Need an API key?
+            </h5>
             <p className="text-xs text-white/60 mb-3">
-              Get your free OpenRouter API key to access various AI models including GPT-4, Claude, and more.
+              Get your free OpenRouter API key to access various AI models
+              including GPT-4, Claude, and more.
             </p>
             <motion.a
               href="https://openrouter.ai/keys"
@@ -470,8 +526,6 @@ function ApiKeysSection() {
   );
 }
 
-
-
 function AppearanceSection() {
   return (
     <motion.div
@@ -480,7 +534,9 @@ function AppearanceSection() {
       className="space-y-6"
     >
       <div className="glass-strong rounded-2xl p-6">
-        <p className="text-white/60 text-sm">Appearance customization will be available in a future update.</p>
+        <p className="text-white/60 text-sm">
+          Appearance customization will be available in a future update.
+        </p>
       </div>
     </motion.div>
   );
@@ -494,14 +550,17 @@ function GeneralSection() {
       className="space-y-6"
     >
       <div className="glass-strong rounded-2xl p-6">
-        <p className="text-white/60 text-sm">General settings will be available in a future update.</p>
+        <p className="text-white/60 text-sm">
+          General settings will be available in a future update.
+        </p>
       </div>
     </motion.div>
   );
 }
 
 function SettingsPageContent() {
-  const [activeSection, setActiveSection] = useState<SettingsSection>('profile');
+  const [activeSection, setActiveSection] =
+    useState<SettingsSection>('profile');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isLogoutLoading, setIsLogoutLoading] = useState(false);
   const router = useRouter();
@@ -523,15 +582,30 @@ function SettingsPageContent() {
   const getSectionTitle = () => {
     switch (activeSection) {
       case 'profile':
-        return { title: 'Profile Information', description: 'Manage your account details and preferences.' };
+        return {
+          title: 'Profile Information',
+          description: 'Manage your account details and preferences.',
+        };
       case 'api':
-        return { title: 'API Keys', description: 'Configure your API keys to access AI models.' };
+        return {
+          title: 'API Keys',
+          description: 'Configure your API keys to access AI models.',
+        };
       case 'appearance':
-        return { title: 'Appearance', description: 'Customize the look and feel of the application.' };
+        return {
+          title: 'Appearance',
+          description: 'Customize the look and feel of the application.',
+        };
       case 'general':
-        return { title: 'General Settings', description: 'General application preferences and settings.' };
+        return {
+          title: 'General Settings',
+          description: 'General application preferences and settings.',
+        };
       default:
-        return { title: 'Profile Information', description: 'Manage your account details and preferences.' };
+        return {
+          title: 'Profile Information',
+          description: 'Manage your account details and preferences.',
+        };
     }
   };
 
@@ -567,8 +641,12 @@ function SettingsPageContent() {
             <div className="px-4 sm:px-6 lg:px-8 py-8 h-full">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-xl font-semibold text-white mb-1">{getSectionTitle().title}</h3>
-                  <p className="text-white/60 text-sm">{getSectionTitle().description}</p>
+                  <h3 className="text-xl font-semibold text-white mb-1">
+                    {getSectionTitle().title}
+                  </h3>
+                  <p className="text-white/60 text-sm">
+                    {getSectionTitle().description}
+                  </p>
                 </div>
                 <motion.button
                   onClick={() => router.back()}
@@ -580,9 +658,7 @@ function SettingsPageContent() {
                   <span className="text-sm font-medium">Back to Chat</span>
                 </motion.button>
               </div>
-              <div className="h-[calc(100%-4rem)]">
-                {renderActiveSection()}
-              </div>
+              <div className="h-[calc(100%-4rem)]">{renderActiveSection()}</div>
             </div>
           </div>
         </div>

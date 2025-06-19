@@ -5,16 +5,27 @@ import { OpenRouterService } from '@/lib/openrouter';
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { conversationId, message, model, attachments = [] } = await request.json();
+    const {
+      conversationId,
+      message,
+      model,
+      attachments = [],
+    } = await request.json();
 
     if ((!message || message.trim() === '') && attachments.length === 0) {
-      return NextResponse.json({ error: 'Message or attachments required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Message or attachments required' },
+        { status: 400 }
+      );
     }
 
     if (!model) {
@@ -28,7 +39,10 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (!profile?.openrouter_api_key) {
-      return NextResponse.json({ error: 'OpenRouter API key not configured' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'OpenRouter API key not configured' },
+        { status: 400 }
+      );
     }
 
     let conversation = null;
@@ -44,10 +58,11 @@ export async function POST(request: NextRequest) {
 
       if (existingConversation) {
         conversation = existingConversation;
-        
+
         const { data: existingMessages } = await supabase
           .from('messages')
-          .select(`
+          .select(
+            `
             *,
             attachments (
               id,
@@ -57,7 +72,8 @@ export async function POST(request: NextRequest) {
               file_url,
               created_at
             )
-          `)
+          `
+          )
           .eq('conversation_id', conversationId)
           .order('created_at', { ascending: true });
 
@@ -77,7 +93,10 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (conversationError || !newConversation) {
-        return NextResponse.json({ error: 'Failed to create conversation' }, { status: 500 });
+        return NextResponse.json(
+          { error: 'Failed to create conversation' },
+          { status: 500 }
+        );
       }
 
       conversation = newConversation;
@@ -94,7 +113,10 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (messageError || !userMessage) {
-      return NextResponse.json({ error: 'Failed to save user message' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Failed to save user message' },
+        { status: 500 }
+      );
     }
 
     // Save attachments if any
@@ -119,12 +141,12 @@ export async function POST(request: NextRequest) {
 
     // Build the current message content array format for OpenRouter Vision API
     const contentParts: any[] = [];
-    
+
     // Add text content if present
     if (message && message.trim()) {
       contentParts.push({
-        type: "text",
-        text: message
+        type: 'text',
+        text: message,
       });
     }
 
@@ -134,10 +156,10 @@ export async function POST(request: NextRequest) {
         if (attachment.file_type.startsWith('image/')) {
           // For images, use image_url format
           contentParts.push({
-            type: "image_url",
+            type: 'image_url',
             image_url: {
-              url: attachment.file_url
-            }
+              url: attachment.file_url,
+            },
           });
         } else if (attachment.file_type === 'application/pdf') {
           // For PDFs, we need to fetch and encode as base64
@@ -146,27 +168,27 @@ export async function POST(request: NextRequest) {
             const arrayBuffer = await response.arrayBuffer();
             const base64Data = Buffer.from(arrayBuffer).toString('base64');
             const dataUrl = `data:application/pdf;base64,${base64Data}`;
-            
+
             contentParts.push({
-              type: "file",
+              type: 'file',
               file: {
                 filename: attachment.filename,
-                file_data: dataUrl
-              }
+                file_data: dataUrl,
+              },
             });
           } catch (error) {
             console.error('Failed to process PDF attachment:', error);
             // Fallback to text description if PDF processing fails
             contentParts.push({
-              type: "text",
-              text: `[PDF Document: ${attachment.filename} - Unable to process file content]`
+              type: 'text',
+              text: `[PDF Document: ${attachment.filename} - Unable to process file content]`,
             });
           }
         } else {
           // For other file types, add as text description
           contentParts.push({
-            type: "text",
-            text: `[File: ${attachment.filename}]`
+            type: 'text',
+            text: `[File: ${attachment.filename}]`,
           });
         }
       }
@@ -174,17 +196,21 @@ export async function POST(request: NextRequest) {
 
     // Helper function to format message content with attachments
     const formatMessageContent = async (msg: any) => {
-      if (msg.role === 'assistant' || !msg.attachments || msg.attachments.length === 0) {
+      if (
+        msg.role === 'assistant' ||
+        !msg.attachments ||
+        msg.attachments.length === 0
+      ) {
         return msg.content;
       }
 
       const msgContentParts: any[] = [];
-      
+
       // Add text content if present
       if (msg.content && msg.content.trim()) {
         msgContentParts.push({
-          type: "text",
-          text: msg.content
+          type: 'text',
+          text: msg.content,
         });
       }
 
@@ -192,10 +218,10 @@ export async function POST(request: NextRequest) {
       for (const attachment of msg.attachments) {
         if (attachment.file_type.startsWith('image/')) {
           msgContentParts.push({
-            type: "image_url",
+            type: 'image_url',
             image_url: {
-              url: attachment.file_url
-            }
+              url: attachment.file_url,
+            },
           });
         } else if (attachment.file_type === 'application/pdf') {
           try {
@@ -203,31 +229,32 @@ export async function POST(request: NextRequest) {
             const arrayBuffer = await response.arrayBuffer();
             const base64Data = Buffer.from(arrayBuffer).toString('base64');
             const dataUrl = `data:application/pdf;base64,${base64Data}`;
-            
+
             msgContentParts.push({
-              type: "file",
+              type: 'file',
               file: {
                 filename: attachment.filename,
-                file_data: dataUrl
-              }
+                file_data: dataUrl,
+              },
             });
           } catch (error) {
             console.error('Failed to process PDF attachment:', error);
             msgContentParts.push({
-              type: "text",
-              text: `[PDF Document: ${attachment.filename} - Unable to process file content]`
+              type: 'text',
+              text: `[PDF Document: ${attachment.filename} - Unable to process file content]`,
             });
           }
         } else {
           msgContentParts.push({
-            type: "text",
-            text: `[File: ${attachment.filename}]`
+            type: 'text',
+            text: `[File: ${attachment.filename}]`,
           });
         }
       }
 
-      return msgContentParts.length > 1 || (msgContentParts.length === 1 && msgContentParts[0].type !== 'text') 
-        ? msgContentParts 
+      return msgContentParts.length > 1 ||
+        (msgContentParts.length === 1 && msgContentParts[0].type !== 'text')
+        ? msgContentParts
         : msgContentParts[0]?.text || msg.content;
     };
 
@@ -235,22 +262,24 @@ export async function POST(request: NextRequest) {
     const formattedMessages = await Promise.all(
       messages.map(async (msg) => ({
         role: msg.role as 'user' | 'assistant' | 'system',
-        content: await formatMessageContent(msg)
+        content: await formatMessageContent(msg),
       }))
     );
 
     const chatMessages = [
       ...formattedMessages,
-      { 
-        role: 'user' as const, 
-        content: contentParts.length > 1 || (contentParts.length === 1 && contentParts[0].type !== 'text') 
-          ? contentParts 
-          : contentParts[0]?.text || message || ''
-      }
+      {
+        role: 'user' as const,
+        content:
+          contentParts.length > 1 ||
+          (contentParts.length === 1 && contentParts[0].type !== 'text')
+            ? contentParts
+            : contentParts[0]?.text || message || '',
+      },
     ];
 
     const openRouter = new OpenRouterService(profile.openrouter_api_key);
-    
+
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
@@ -262,43 +291,50 @@ export async function POST(request: NextRequest) {
             chatMessages,
             (chunk: string) => {
               assistantResponse += chunk;
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ chunk })}\n\n`));
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify({ chunk })}\n\n`)
+              );
             },
             request.headers.get('origin') || undefined
           );
 
-          await supabase
-            .from('messages')
-            .insert({
-              conversation_id: conversation.id,
-              role: 'assistant',
-              content: assistantResponse,
-            });
+          await supabase.from('messages').insert({
+            conversation_id: conversation.id,
+            role: 'assistant',
+            content: assistantResponse,
+          });
 
           // Generate title for new conversations after first response
           if (messages.length === 0) {
             try {
-              const titleResponse = await fetch(`${request.headers.get('origin') || 'http://localhost:3000'}/api/generate-title`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': request.headers.get('Authorization') || '',
-                  'Cookie': request.headers.get('Cookie') || '',
-                },
-                body: JSON.stringify({
-                  userMessage: message,
-                  assistantResponse,
-                  conversationId: conversation.id,
-                }),
-              });
-              
+              const titleResponse = await fetch(
+                `${request.headers.get('origin') || 'http://localhost:3000'}/api/generate-title`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: request.headers.get('Authorization') || '',
+                    Cookie: request.headers.get('Cookie') || '',
+                  },
+                  body: JSON.stringify({
+                    userMessage: message,
+                    assistantResponse,
+                    conversationId: conversation.id,
+                  }),
+                }
+              );
+
               if (titleResponse.ok) {
                 const titleData = await titleResponse.json();
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-                  titleUpdate: true, 
-                  title: titleData.title,
-                  conversationId: conversation.id 
-                })}\n\n`));
+                controller.enqueue(
+                  encoder.encode(
+                    `data: ${JSON.stringify({
+                      titleUpdate: true,
+                      title: titleData.title,
+                      conversationId: conversation.id,
+                    })}\n\n`
+                  )
+                );
               }
             } catch (titleError) {
               console.error('Failed to generate title:', titleError);
@@ -306,34 +342,40 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, conversationId: conversation.id })}\n\n`));
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({ done: true, conversationId: conversation.id })}\n\n`
+            )
+          );
           controller.close();
         } catch (error) {
           console.error('Error in chat completion:', error);
-          
+
           // Extract meaningful error message
           let errorMessage = 'Failed to generate response';
           if (error instanceof Error) {
             errorMessage = error.message;
           }
-          
+
           // Save error message as assistant response for user to see
           try {
-            await supabase
-              .from('messages')
-              .insert({
-                conversation_id: conversation.id,
-                role: 'assistant',
-                content: `❌ **Error**: ${errorMessage}`,
-              });
+            await supabase.from('messages').insert({
+              conversation_id: conversation.id,
+              role: 'assistant',
+              content: `❌ **Error**: ${errorMessage}`,
+            });
           } catch (dbError) {
             console.error('Failed to save error message:', dbError);
           }
-          
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-            error: errorMessage,
-            errorContent: `❌ **Error**: ${errorMessage}`
-          })}\n\n`));
+
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({
+                error: errorMessage,
+                errorContent: `❌ **Error**: ${errorMessage}`,
+              })}\n\n`
+            )
+          );
           controller.close();
         }
       },
@@ -343,12 +385,14 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
+        Connection: 'keep-alive',
       },
     });
-
   } catch (error) {
     console.error('Error in chat route:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
-} 
+}

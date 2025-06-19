@@ -19,7 +19,10 @@ interface ChatContextType {
   createNewConversation: () => void;
   deleteConversation: (conversationId: string) => Promise<void>;
   updateConversationTitle: (conversationId: string, newTitle: string) => void;
-  renameConversation: (conversationId: string, newTitle: string) => Promise<boolean>;
+  renameConversation: (
+    conversationId: string,
+    newTitle: string
+  ) => Promise<boolean>;
   addNewConversation: (conversation: Conversation) => void;
   addOptimisticMessage: (message: Omit<Message, 'id' | 'created_at'>) => string;
   updateStreamingMessage: (messageId: string, content: string) => void;
@@ -31,21 +34,24 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
+  const [activeConversation, setActiveConversation] =
+    useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [user, setUser] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [newConversationIds, setNewConversationIds] = useState<Set<string>>(new Set());
+  const [newConversationIds, setNewConversationIds] = useState<Set<string>>(
+    new Set()
+  );
 
   useEffect(() => {
     const handlePopState = () => {
       const pathname = window.location.pathname;
       const chatIdMatch = pathname.match(/^\/chat\/(.+)$/);
-      
+
       if (chatIdMatch && chatIdMatch[1] && conversations.length > 0) {
         const chatId = chatIdMatch[1];
-        const conversation = conversations.find(conv => conv.id === chatId);
+        const conversation = conversations.find((conv) => conv.id === chatId);
         if (conversation && conversation.id !== activeConversation?.id) {
           setActiveConversation(conversation);
         }
@@ -62,16 +68,19 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const pathname = window.location.pathname;
     const chatIdMatch = pathname.match(/^\/chat\/(.+)$/);
-    
+
     if (chatIdMatch && chatIdMatch[1] && conversations.length > 0) {
       const chatId = chatIdMatch[1];
-      const conversation = conversations.find(conv => conv.id === chatId);
-      
+      const conversation = conversations.find((conv) => conv.id === chatId);
+
       // Only set active conversation if:
       // 1. We found a conversation with the URL ID
       // 2. It's different from the current active conversation
       // 3. We don't already have an active conversation with the same ID (to prevent switching during title updates)
-      if (conversation && (!activeConversation || activeConversation.id !== conversation.id)) {
+      if (
+        conversation &&
+        (!activeConversation || activeConversation.id !== conversation.id)
+      ) {
         setActiveConversation(conversation);
       }
     }
@@ -91,19 +100,36 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   const refreshMessages = async (conversationId: string) => {
     try {
-      const response = await fetch(`/api/conversations/${conversationId}/messages`);
+      const response = await fetch(
+        `/api/conversations/${conversationId}/messages`
+      );
       if (response.ok) {
         const data = await response.json();
         const serverMessages = data.messages || [];
-        
-        setMessages(prev => {
-          // Keep only optimistic messages for this conversation that are actively streaming/loading
-          const activeOptimisticMessages = prev.filter(msg => 
-            msg.isOptimistic && 
-            msg.conversation_id === conversationId &&
-            (msg.isStreaming || msg.isLoading)
+
+        setMessages((prev) => {
+          // Keep only ACTIVE optimistic messages (still streaming or loading)
+          const activeOptimisticMessages = prev.filter(
+            (msg) =>
+              msg.isOptimistic &&
+              msg.conversation_id === conversationId &&
+              (msg.isStreaming || msg.isLoading)
           );
-          return [...serverMessages, ...activeOptimisticMessages];
+
+          // If we have active optimistic messages, preserve them
+          if (activeOptimisticMessages.length > 0) {
+            // Only keep optimistic messages, server messages will come later
+            return [
+              ...prev.filter((msg) => msg.conversation_id !== conversationId),
+              ...activeOptimisticMessages,
+            ];
+          }
+
+          // No active optimistic messages, safe to use server messages
+          return [
+            ...prev.filter((msg) => msg.conversation_id !== conversationId),
+            ...serverMessages,
+          ];
         });
       }
     } catch (error) {
@@ -137,7 +163,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const refreshUser = async () => {
     try {
       const supabase = createClient();
-      const { data: { user }, error } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
       if (!error && user) {
         setUser(user);
       }
@@ -156,7 +185,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       const response = await fetch(`/api/conversations?id=${conversationId}`, {
         method: 'DELETE',
       });
-      
+
       if (response.ok) {
         await refreshConversations();
         if (activeConversation?.id === conversationId) {
@@ -168,7 +197,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const addOptimisticMessage = (message: Omit<Message, 'id' | 'created_at'>): string => {
+  const addOptimisticMessage = (
+    message: Omit<Message, 'id' | 'created_at'>
+  ): string => {
     const optimisticId = `optimistic-${Date.now()}-${Math.random()}`;
     const optimisticMessage: Message = {
       ...message,
@@ -176,45 +207,89 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       created_at: new Date().toISOString(),
       isOptimistic: true,
     };
-    
-    setMessages(prev => [...prev, optimisticMessage]);
+
+    setMessages((prev) => [...prev, optimisticMessage]);
     return optimisticId;
   };
 
   const updateStreamingMessage = (messageId: string, content: string) => {
-    setMessages(prev => prev.map(msg => 
-      msg.id === messageId 
-        ? { ...msg, content, isStreaming: true, isLoading: false }
-        : msg
-    ));
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === messageId
+          ? { ...msg, content, isStreaming: true, isLoading: false }
+          : msg
+      )
+    );
   };
 
   const finalizeMessage = (messageId: string, finalContent: string) => {
-    setMessages(prev => prev.map(msg => 
-      msg.id === messageId 
-        ? { ...msg, content: finalContent, isOptimistic: false, isStreaming: false, isLoading: false }
-        : msg
-    ));
+    setMessages((prev) => {
+      const messageToFinalize = prev.find((msg) => msg.id === messageId);
+      const conversationId = messageToFinalize?.conversation_id;
+
+      const updatedMessages = prev.map((msg) =>
+        msg.id === messageId
+          ? {
+              ...msg,
+              content: finalContent,
+              isOptimistic: false,
+              isStreaming: false,
+              isLoading: false,
+            }
+          : msg
+      );
+
+      // Check if this was the last active optimistic message for this conversation
+      if (conversationId) {
+        const remainingActiveOptimistic = updatedMessages.filter(
+          (msg) =>
+            msg.isOptimistic &&
+            msg.conversation_id === conversationId &&
+            (msg.isStreaming || msg.isLoading)
+        );
+
+        // If no more active optimistic messages, refresh from server to get final state
+        if (remainingActiveOptimistic.length === 0) {
+          // Remove from new conversations set to allow future refreshes
+          setNewConversationIds((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(conversationId);
+            return newSet;
+          });
+          setTimeout(() => refreshMessages(conversationId), 100);
+        }
+      }
+
+      return updatedMessages;
+    });
   };
 
   const removeOptimisticMessage = (messageId: string) => {
-    setMessages(prev => prev.filter(msg => msg.id !== messageId));
+    setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
   };
 
-  const updateConversationTitle = (conversationId: string, newTitle: string) => {
-    setConversations(prev => prev.map(conv => 
-      conv.id === conversationId 
-        ? { ...conv, title: newTitle }
-        : conv
-    ));
-    
+  const updateConversationTitle = (
+    conversationId: string,
+    newTitle: string
+  ) => {
+    setConversations((prev) =>
+      prev.map((conv) =>
+        conv.id === conversationId ? { ...conv, title: newTitle } : conv
+      )
+    );
+
     // Also update active conversation if it's the one being updated
     if (activeConversation?.id === conversationId) {
-      setActiveConversation(prev => prev ? { ...prev, title: newTitle } : null);
+      setActiveConversation((prev) =>
+        prev ? { ...prev, title: newTitle } : null
+      );
     }
   };
 
-  const renameConversation = async (conversationId: string, newTitle: string): Promise<boolean> => {
+  const renameConversation = async (
+    conversationId: string,
+    newTitle: string
+  ): Promise<boolean> => {
     try {
       const response = await fetch(`/api/conversations?id=${conversationId}`, {
         method: 'PATCH',
@@ -240,8 +315,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addNewConversation = (conversation: Conversation) => {
-    setConversations(prev => [conversation, ...prev]);
-    setNewConversationIds(prev => new Set([...prev, conversation.id]));
+    setConversations((prev) => [conversation, ...prev]);
+    // Mark this as a new conversation to prevent immediate refreshMessages
+    setNewConversationIds((prev) => new Set([...prev, conversation.id]));
   };
 
   useEffect(() => {
@@ -260,30 +336,16 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (activeConversation) {
-      // Check if this is a new conversation that shouldn't be refreshed yet
-      if (newConversationIds.has(activeConversation.id)) {
-        // For new conversations, just filter messages but don't refresh
-        setMessages(prev => prev.filter(msg => 
-          msg.conversation_id === activeConversation.id
-        ));
-        // Remove from new conversations set
-        setNewConversationIds(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(activeConversation.id);
-          return newSet;
-        });
-        return;
+      // Don't refresh messages for new conversations - they rely on optimistic messages
+      if (!newConversationIds.has(activeConversation.id)) {
+        // This is an existing conversation - refresh messages from server
+        refreshMessages(activeConversation.id);
       }
-      
-      // For existing conversations, refresh normally
-      setMessages(prev => prev.filter(msg => 
-        msg.isOptimistic && msg.conversation_id === activeConversation.id
-      ));
-      refreshMessages(activeConversation.id);
     } else {
+      // Clear messages when no conversation is selected
       setMessages([]);
     }
-  }, [activeConversation]); // Don't include messages as dependency to avoid loops
+  }, [activeConversation]);
 
   return (
     <ChatContext.Provider
@@ -321,4 +383,4 @@ export function useChat() {
     throw new Error('useChat must be used within a ChatProvider');
   }
   return context;
-} 
+}

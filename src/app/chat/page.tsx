@@ -8,4 +8,4 @@ export default function ChatPage() {
       <ChatPageContent />
     </ChatProvider>
   );
-} 
+}

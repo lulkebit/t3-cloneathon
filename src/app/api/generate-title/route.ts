@@ -5,16 +5,23 @@ import { TitleGenerator } from '@/lib/titleGenerator';
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { userMessage, assistantResponse, conversationId } = await request.json();
+    const { userMessage, assistantResponse, conversationId } =
+      await request.json();
 
     if (!userMessage || !conversationId) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
     }
 
     // Get user's OpenRouter API key
@@ -25,12 +32,18 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (!profile?.openrouter_api_key) {
-      return NextResponse.json({ error: 'OpenRouter API key not configured' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'OpenRouter API key not configured' },
+        { status: 400 }
+      );
     }
 
     // Generate the title
     const titleGenerator = new TitleGenerator(profile.openrouter_api_key);
-    const generatedTitle = await titleGenerator.generateTitle(userMessage, assistantResponse);
+    const generatedTitle = await titleGenerator.generateTitle(
+      userMessage,
+      assistantResponse
+    );
 
     // Update the conversation with the new title
     const { data: updatedConversation, error: updateError } = await supabase
@@ -43,15 +56,21 @@ export async function POST(request: NextRequest) {
 
     if (updateError) {
       console.error('Failed to update conversation title:', updateError);
-      return NextResponse.json({ error: 'Failed to update title' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Failed to update title' },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       title: generatedTitle,
-      conversation: updatedConversation 
+      conversation: updatedConversation,
     });
   } catch (error) {
     console.error('Error generating title:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
-} 
+}

@@ -7,7 +7,10 @@ export async function GET(
 ) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -24,12 +27,16 @@ export async function GET(
       .single();
 
     if (convError || !conversation) {
-      return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Conversation not found' },
+        { status: 404 }
+      );
     }
 
     const { data: messages, error } = await supabase
       .from('messages')
-      .select(`
+      .select(
+        `
         *,
         attachments (
           id,
@@ -39,18 +46,25 @@ export async function GET(
           file_url,
           created_at
         )
-      `)
+      `
+      )
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: true });
 
     if (error) {
-      return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Failed to fetch messages' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ messages });
   } catch (error) {
     console.error('Error fetching messages:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 
@@ -60,7 +74,10 @@ export async function POST(
 ) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -70,7 +87,10 @@ export async function POST(
     const { role, content } = await request.json();
 
     if (!role || !content) {
-      return NextResponse.json({ error: 'Role and content are required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Role and content are required' },
+        { status: 400 }
+      );
     }
 
     if (!['user', 'assistant', 'system'].includes(role)) {
@@ -86,7 +106,10 @@ export async function POST(
       .single();
 
     if (convError || !conversation) {
-      return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Conversation not found' },
+        { status: 404 }
+      );
     }
 
     // Insert the new message
@@ -101,12 +124,18 @@ export async function POST(
       .single();
 
     if (messageError || !message) {
-      return NextResponse.json({ error: 'Failed to create message' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Failed to create message' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ message });
   } catch (error) {
     console.error('Error creating message:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
-} 
+}

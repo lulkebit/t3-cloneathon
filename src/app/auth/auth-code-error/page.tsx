@@ -1,8 +1,8 @@
-'use client'
+'use client';
 
-import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { AlertTriangle, ArrowLeft } from 'lucide-react'
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { AlertTriangle, ArrowLeft } from 'lucide-react';
 
 export default function AuthCodeError() {
   return (
@@ -26,7 +26,7 @@ export default function AuthCodeError() {
           >
             <AlertTriangle size={24} className="text-red-400" />
           </motion.div>
-          
+
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -35,7 +35,7 @@ export default function AuthCodeError() {
           >
             Authentication Error
           </motion.h1>
-          
+
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -44,7 +44,7 @@ export default function AuthCodeError() {
           >
             An error occurred during authentication. Please try again.
           </motion.p>
-          
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -61,5 +61,5 @@ export default function AuthCodeError() {
         </motion.div>
       </motion.div>
     </div>
-  )
-} 
+  );
+}
