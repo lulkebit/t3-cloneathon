@@ -16,7 +16,11 @@ import {
 } from '@/lib/model-capabilities';
 import { formatModelName } from '@/lib/model-utils';
 
-export function ChatInput() {
+interface ChatInputProps {
+  quickActionPrompt?: string;
+}
+
+export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
   const {
     activeConversation,
     setActiveConversation,
@@ -49,6 +53,24 @@ export function ChatInput() {
     useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Handle quick action prompt changes
+  useEffect(() => {
+    if (quickActionPrompt) {
+      setMessage(quickActionPrompt + ' ');
+      // Focus the textarea after setting the message
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+          // Place cursor at the end
+          textareaRef.current.setSelectionRange(
+            textareaRef.current.value.length,
+            textareaRef.current.value.length
+          );
+        }
+      }, 100);
+    }
+  }, [quickActionPrompt]);
 
   useEffect(() => {
     if (activeConversation && activeConversation.model) {

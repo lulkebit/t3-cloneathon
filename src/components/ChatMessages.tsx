@@ -8,9 +8,13 @@ import { MessageItem } from './MessageItem';
 
 interface ChatMessagesProps {
   isSidebarCollapsed: boolean;
+  onQuickAction?: (prompt: string) => void;
 }
 
-export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
+export function ChatMessages({
+  isSidebarCollapsed,
+  onQuickAction,
+}: ChatMessagesProps) {
   const { messages, activeConversation, isLoading, refreshMessages, user } =
     useChat();
 
@@ -186,7 +190,7 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
 
   // Show empty state only if we have no conversation or no messages and we're not waiting for optimistic updates
   if (!activeConversation && conversationMessages.length === 0) {
-    return <ChatEmptyState />;
+    return <ChatEmptyState onQuickAction={onQuickAction} />;
   }
 
   // If we have an active conversation but no messages and we've never shown messages,
