@@ -24,6 +24,57 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [hasShownMessages, setHasShownMessages] = useState(false);
+
+  // Track if we've shown messages for this conversation to prevent flickering
+  useEffect(() => {
+    if (conversationMessages.length > 0) {
+      setHasShownMessages(true);
+    } else if (!activeConversation) {
+      setHasShownMessages(false);
+    }
+  }, [conversationMessages.length, activeConversation]);
+
+  // Safety mechanism: if we have an active conversation but no messages after loading
+  // and no optimistic messages are being processed, try refreshing
+  useEffect(() => {
+    if (
+      activeConversation &&
+      !isLoading &&
+      conversationMessages.length === 0 &&
+      hasShownMessages === false
+    ) {
+      const hasActiveOptimistic = messages.some(
+        (msg) =>
+          msg.conversation_id === activeConversation.id &&
+          msg.isOptimistic &&
+          (msg.isLoading || msg.isStreaming)
+      );
+
+      if (!hasActiveOptimistic) {
+        // Wait longer to ensure any optimistic operations have settled
+        // and only refresh once
+        const timeoutId = setTimeout(() => {
+          // Double-check conditions haven't changed
+          if (
+            activeConversation &&
+            conversationMessages.length === 0 &&
+            !hasShownMessages
+          ) {
+            refreshMessages(activeConversation.id);
+          }
+        }, 2000); // Increased from 1 second to 2 seconds
+
+        return () => clearTimeout(timeoutId);
+      }
+    }
+  }, [
+    activeConversation?.id, // Only trigger on conversation ID change, not the whole object
+    isLoading,
+    conversationMessages.length,
+    hasShownMessages,
+    refreshMessages,
+  ]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -133,8 +184,39 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
     );
   }
 
+  // Show empty state only if we have no conversation or no messages and we're not waiting for optimistic updates
   if (!activeConversation && conversationMessages.length === 0) {
     return <ChatEmptyState />;
+  }
+
+  // If we have an active conversation but no messages and we've never shown messages,
+  // show a loading state while we wait for messages to load
+  if (
+    activeConversation &&
+    conversationMessages.length === 0 &&
+    !hasShownMessages
+  ) {
+    const hasActiveOptimistic = messages.some(
+      (msg) =>
+        msg.conversation_id === activeConversation.id &&
+        msg.isOptimistic &&
+        (msg.isLoading || msg.isStreaming)
+    );
+
+    if (!hasActiveOptimistic) {
+      return (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="loading-dots mb-4">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <p className="text-white/60">Loading conversation...</p>
+          </div>
+        </div>
+      );
+    }
   }
 
   return (
