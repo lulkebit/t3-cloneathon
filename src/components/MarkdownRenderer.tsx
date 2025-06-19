@@ -59,38 +59,36 @@ function CodeBlock({ children, className, inline, ...props }: CodeBlockProps) {
     );
   }
 
-  // Handle code blocks - return full block element
+  // Handle code blocks - simplified structure to prevent layout issues
   return (
-    <div className="w-full block">
-      <div className="relative group my-4 border border-gray-700/50 rounded-lg overflow-hidden w-full">
-        <div className="flex items-center justify-between px-4 py-2 bg-gray-800/80 border-b border-gray-700/50">
-          <span className="text-xs text-gray-300 font-medium">
-            {language || 'code'}
-          </span>
-          <button
-            onClick={handleCopy}
-            className="cursor-pointer flex items-center gap-1.5 px-2 py-1 text-xs text-gray-300 hover:text-white bg-gray-700/50 hover:bg-gray-600/50 rounded transition-colors"
-          >
-            {copied ? (
-              <>
-                <Check size={12} />
-                Copied!
-              </>
-            ) : (
-              <>
-                <Copy size={12} />
-                Copy
-              </>
-            )}
-          </button>
-        </div>
-
-        <pre className="bg-gray-900/90 overflow-x-auto m-0 p-4 w-full">
-          <code className={className} {...props}>
-            {children}
-          </code>
-        </pre>
+    <div className="relative group my-4 border border-gray-700/50 rounded-lg overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2 bg-gray-800/80 border-b border-gray-700/50">
+        <span className="text-xs text-gray-300 font-medium">
+          {language || 'code'}
+        </span>
+        <button
+          onClick={handleCopy}
+          className="cursor-pointer flex items-center gap-1.5 px-2 py-1 text-xs text-gray-300 hover:text-white bg-gray-700/50 hover:bg-gray-600/50 rounded transition-colors"
+        >
+          {copied ? (
+            <>
+              <Check size={12} />
+              Copied!
+            </>
+          ) : (
+            <>
+              <Copy size={12} />
+              Copy
+            </>
+          )}
+        </button>
       </div>
+
+      <pre className="bg-gray-900/90 overflow-x-auto m-0 p-4">
+        <code className={className} {...props}>
+          {children}
+        </code>
+      </pre>
     </div>
   );
 }
@@ -153,42 +151,26 @@ export function MarkdownRenderer({
           ),
 
           p: ({ children }) => (
-            <div className="text-white/90 leading-relaxed mb-3 last:mb-0">
+            <p className="text-white/90 leading-relaxed mb-3 last:mb-0">
               {children}
-            </div>
+            </p>
           ),
 
-          ul: ({ children, ...props }) => {
-            const depth = (props as any)?.depth || 0;
-            return (
-              <ul
-                className={`text-white/90 mb-3 last:mb-0 ${
-                  depth === 0
-                    ? 'list-disc list-outside ml-5 space-y-1'
-                    : 'list-disc list-outside ml-4 space-y-0.5 mt-1'
-                }`}
-              >
+          ul: ({ children }) => (
+            <ul className="text-white/90 mb-4 last:mb-0 list-disc list-outside ml-5 space-y-2">
+              {children}
+            </ul>
+          ),
+          ol: ({ children }) => (
+            <ol className="text-white/90 mb-4 last:mb-0 list-decimal list-outside ml-5 space-y-2">
+              {children}
+            </ol>
+          ),
+          li: ({ children }) => (
+            <li className="text-white/90 leading-relaxed">
+              <div className="[&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
                 {children}
-              </ul>
-            );
-          },
-          ol: ({ children, ...props }) => {
-            const depth = (props as any)?.depth || 0;
-            return (
-              <ol
-                className={`text-white/90 mb-3 last:mb-0 ${
-                  depth === 0
-                    ? 'list-decimal list-outside ml-5 space-y-1'
-                    : 'list-decimal list-outside ml-4 space-y-0.5 mt-1'
-                }`}
-              >
-                {children}
-              </ol>
-            );
-          },
-          li: ({ children, ...props }) => (
-            <li className="text-white/90 leading-relaxed pl-1">
-              <div className="inline-block w-full">{children}</div>
+              </div>
             </li>
           ),
 
