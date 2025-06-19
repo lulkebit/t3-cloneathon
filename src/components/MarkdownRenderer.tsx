@@ -40,10 +40,14 @@ function CodeBlock({ children, className, inline, ...props }: CodeBlockProps) {
   };
 
   // Better inline detection - check multiple conditions for inline code
-  const isInline = inline === true || 
-    (inline !== false && !className && typeof children === 'string' && !children.includes('\n')) ||
+  const isInline =
+    inline === true ||
+    (inline !== false &&
+      !className &&
+      typeof children === 'string' &&
+      !children.includes('\n')) ||
     (inline !== false && !props.node?.tagName && typeof children === 'string');
-  
+
   if (isInline) {
     return (
       <code
@@ -80,7 +84,7 @@ function CodeBlock({ children, className, inline, ...props }: CodeBlockProps) {
             )}
           </button>
         </div>
-        
+
         <pre className="bg-gray-900/90 overflow-x-auto m-0 p-4 w-full">
           <code className={className} {...props}>
             {children}
@@ -91,24 +95,32 @@ function CodeBlock({ children, className, inline, ...props }: CodeBlockProps) {
   );
 }
 
-export function MarkdownRenderer({ content, className = '', isUserMessage = false }: MarkdownRendererProps) {
+export function MarkdownRenderer({
+  content,
+  className = '',
+  isUserMessage = false,
+}: MarkdownRendererProps) {
   // Check if this is an error message
   const isErrorMessage = content.includes('❌ **Error**:');
-  
+
   return (
-    <div className={`markdown-content ${className} ${isUserMessage ? 'user-message' : 'assistant-message'} ${
-      isErrorMessage ? 'error-message border border-red-500/30 bg-red-500/5 rounded-lg p-3' : ''
-    }`}>
+    <div
+      className={`markdown-content ${className} ${isUserMessage ? 'user-message' : 'assistant-message'} ${
+        isErrorMessage
+          ? 'error-message border border-red-500/30 bg-red-500/5 rounded-lg p-3'
+          : ''
+      }`}
+    >
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkBreaks, remarkMath]}
         rehypePlugins={[
-          rehypeRaw, 
-          rehypeKatex, 
-          [rehypeHighlight, { detect: true, ignoreMissing: true }]
+          rehypeRaw,
+          rehypeKatex,
+          [rehypeHighlight, { detect: true, ignoreMissing: true }],
         ]}
         components={{
           code: CodeBlock,
-          
+
           h1: ({ children }) => (
             <h1 className="text-2xl font-bold text-white mb-4 mt-6 border-b border-gray-700/50 pb-2">
               {children}
@@ -139,21 +151,23 @@ export function MarkdownRenderer({ content, className = '', isUserMessage = fals
               {children}
             </h6>
           ),
-          
+
           p: ({ children }) => (
             <div className="text-white/90 leading-relaxed mb-3 last:mb-0">
               {children}
             </div>
           ),
-          
+
           ul: ({ children, ...props }) => {
             const depth = (props as any)?.depth || 0;
             return (
-              <ul className={`text-white/90 mb-3 last:mb-0 ${
-                depth === 0 
-                  ? 'list-disc list-outside ml-5 space-y-1' 
-                  : 'list-disc list-outside ml-4 space-y-0.5 mt-1'
-              }`}>
+              <ul
+                className={`text-white/90 mb-3 last:mb-0 ${
+                  depth === 0
+                    ? 'list-disc list-outside ml-5 space-y-1'
+                    : 'list-disc list-outside ml-4 space-y-0.5 mt-1'
+                }`}
+              >
                 {children}
               </ul>
             );
@@ -161,23 +175,23 @@ export function MarkdownRenderer({ content, className = '', isUserMessage = fals
           ol: ({ children, ...props }) => {
             const depth = (props as any)?.depth || 0;
             return (
-              <ol className={`text-white/90 mb-3 last:mb-0 ${
-                depth === 0 
-                  ? 'list-decimal list-outside ml-5 space-y-1' 
-                  : 'list-decimal list-outside ml-4 space-y-0.5 mt-1'
-              }`}>
+              <ol
+                className={`text-white/90 mb-3 last:mb-0 ${
+                  depth === 0
+                    ? 'list-decimal list-outside ml-5 space-y-1'
+                    : 'list-decimal list-outside ml-4 space-y-0.5 mt-1'
+                }`}
+              >
                 {children}
               </ol>
             );
           },
           li: ({ children, ...props }) => (
             <li className="text-white/90 leading-relaxed pl-1">
-              <div className="inline-block w-full">
-                {children}
-              </div>
+              <div className="inline-block w-full">{children}</div>
             </li>
           ),
-          
+
           a: ({ href, children }) => (
             <a
               href={href}
@@ -188,26 +202,22 @@ export function MarkdownRenderer({ content, className = '', isUserMessage = fals
               {children}
             </a>
           ),
-          
+
           strong: ({ children }) => (
-            <strong className="font-bold text-white">
-              {children}
-            </strong>
+            <strong className="font-bold text-white">{children}</strong>
           ),
           em: ({ children }) => (
-            <em className="italic text-white/95">
-              {children}
-            </em>
+            <em className="italic text-white/95">{children}</em>
           ),
-          
+
           blockquote: ({ children }) => (
             <blockquote className="border-l-4 border-blue-400/50 bg-gray-800/30 pl-4 py-2 my-3 italic text-white/80">
               {children}
             </blockquote>
           ),
-          
+
           br: () => <br className="leading-relaxed" />,
-          
+
           table: ({ children }) => (
             <div className="overflow-x-auto my-4">
               <table className="w-full border-collapse border border-gray-700/50 bg-gray-800/20">
@@ -216,19 +226,11 @@ export function MarkdownRenderer({ content, className = '', isUserMessage = fals
             </div>
           ),
           thead: ({ children }) => (
-            <thead className="bg-gray-800/50">
-              {children}
-            </thead>
+            <thead className="bg-gray-800/50">{children}</thead>
           ),
-          tbody: ({ children }) => (
-            <tbody>
-              {children}
-            </tbody>
-          ),
+          tbody: ({ children }) => <tbody>{children}</tbody>,
           tr: ({ children }) => (
-            <tr className="border-b border-gray-700/30">
-              {children}
-            </tr>
+            <tr className="border-b border-gray-700/30">{children}</tr>
           ),
           th: ({ children }) => (
             <th className="border border-gray-700/50 px-3 py-2 text-left font-semibold text-white">
@@ -240,14 +242,12 @@ export function MarkdownRenderer({ content, className = '', isUserMessage = fals
               {children}
             </td>
           ),
-          
-          hr: () => (
-            <hr className="border-gray-700/50 my-6" />
-          ),
+
+          hr: () => <hr className="border-gray-700/50 my-6" />,
         }}
       >
         {content}
       </ReactMarkdown>
     </div>
   );
-} 
+}

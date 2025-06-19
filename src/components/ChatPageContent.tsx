@@ -15,21 +15,31 @@ interface ChatPageContentProps {
 }
 
 export function ChatPageContent({ chatId }: ChatPageContentProps) {
-  const { profile, isLoading, conversations, setActiveConversation, activeConversation } = useChat();
+  const {
+    profile,
+    isLoading,
+    conversations,
+    setActiveConversation,
+    activeConversation,
+  } = useChat();
   const [showSettings, setShowSettings] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  
+
   useDynamicTitle(activeConversation);
 
   useEffect(() => {
     if (!isLoading && conversations.length > 0) {
       if (chatId) {
-        const conversation = conversations.find(conv => conv.id === chatId);
+        const conversation = conversations.find((conv) => conv.id === chatId);
         if (conversation) {
           setActiveConversation(conversation);
         } else {
-          window.history.replaceState(null, '', '/chat');
-          setActiveConversation(null);
+          // Don't redirect if we're already on a specific chat ID - might be a new conversation being created
+          // Only redirect to /chat if the URL doesn't have a chat ID or it's been confirmed the conversation doesn't exist
+          console.warn(
+            `Conversation with ID ${chatId} not found in conversations list`
+          );
+          // We'll let the ChatContext handle this case instead of forcing a redirect here
         }
       } else {
         setActiveConversation(null);
@@ -78,7 +88,7 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
           >
             <Key size={32} className="text-blue-400" />
           </motion.div>
-          
+
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -87,17 +97,17 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
           >
             Welcome to Convex Chat
           </motion.h1>
-          
+
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="text-white/60 mb-8 leading-relaxed"
           >
-            To get started, you'll need to configure your OpenRouter API key. 
+            To get started, you'll need to configure your OpenRouter API key.
             This allows you to chat with various AI models.
           </motion.p>
-          
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -117,7 +127,7 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
             </motion.button>
           </motion.div>
         </motion.div>
-        
+
         <SettingsModal
           isOpen={showSettings}
           onClose={() => setShowSettings(false)}
@@ -135,24 +145,24 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
       <motion.div
         initial={{ x: -300 }}
         animate={{ x: 0 }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       >
-        <ChatSidebar 
+        <ChatSidebar
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         />
       </motion.div>
-      
+
       <motion.div
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 30 }}
+        transition={{ delay: 0.2, type: 'spring', stiffness: 300, damping: 30 }}
         className="flex-1 flex flex-col relative"
       >
         <ChatMessages isSidebarCollapsed={isSidebarCollapsed} />
-        
+
         <ChatInput />
       </motion.div>
     </motion.div>
   );
-} 
+}

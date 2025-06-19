@@ -1,46 +1,44 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Brain,
-  Check,
-  X,
   Search,
-  Users,
-  Type,
+  X,
+  Check,
   FileImage,
   FileText,
+  Type,
 } from 'lucide-react';
 import { getPopularModels } from '@/lib/openrouter';
 import { getModelCapabilities } from '@/lib/model-capabilities';
 
-interface MultiModelSelectorProps {
-  selectedModels: string[];
-  onModelsChange: (models: string[]) => void;
+interface ModelSelectorProps {
+  selectedModel: string;
+  onModelSelect: (model: string) => void;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function MultiModelSelector({
-  selectedModels,
-  onModelsChange,
+export function ModelSelector({
+  selectedModel,
+  onModelSelect,
   isOpen,
   onClose,
-}: MultiModelSelectorProps) {
+}: ModelSelectorProps) {
   const [searchQuery, setSearchQuery] = useState('');
-
   const popularModels = getPopularModels();
 
   const getProviderLogo = (provider: string) => {
     const providerLogos: Record<string, string> = {
-      openai: '/logos/openai.svg',
       anthropic: '/logos/anthropic.svg',
+      openai: '/logos/openai.svg',
       google: '/logos/google.svg',
       'meta-llama': '/logos/meta.svg',
       mistralai: '/logos/mistral.svg',
       deepseek: '/logos/deepseek.svg',
-      'x-ai': '/logos/x-ai.svg',
     };
+
     return providerLogos[provider.toLowerCase()] || null;
   };
 
@@ -52,15 +50,13 @@ export function MultiModelSelector({
         name: modelName
           .replace(/-/g, ' ')
           .replace(/\b\w/g, (l) => l.toUpperCase()),
-        provider: provider.charAt(0).toUpperCase() + provider.slice(1),
-        providerKey: provider,
+        provider: provider,
         logo: getProviderLogo(provider),
       };
     }
     return {
       name: model,
-      provider: '',
-      providerKey: '',
+      provider: 'Other',
       logo: null,
     };
   };
@@ -69,7 +65,6 @@ export function MultiModelSelector({
     const capabilities = getModelCapabilities(model);
     const icons = [];
 
-    // Always show text capability
     icons.push(
       <div
         key="text"
@@ -143,18 +138,6 @@ export function MultiModelSelector({
     return result;
   }, [popularModels, searchQuery]);
 
-  const toggleModel = (model: string) => {
-    if (selectedModels.includes(model)) {
-      onModelsChange(selectedModels.filter((m) => m !== model));
-    } else {
-      onModelsChange([...selectedModels, model]);
-    }
-  };
-
-  const clearAll = () => {
-    onModelsChange([]);
-  };
-
   if (!isOpen) return null;
 
   return (
@@ -171,18 +154,13 @@ export function MultiModelSelector({
         <div className="flex items-center justify-between p-8 pb-6 border-b border-white/10">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 glass-strong rounded-2xl flex items-center justify-center border border-white/20">
-              <Users size={24} className="text-purple-400" />
+              <Brain size={24} className="text-blue-400" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">
-                Multi-Model Consensus
-              </h2>
+              <h2 className="text-2xl font-bold text-white">Select AI Model</h2>
               <p className="text-white/60 text-sm mt-1">
-                Select multiple AI models for diverse perspectives
+                Choose the perfect AI model for your task
               </p>
-            </div>
-            <div className="px-4 py-2 bg-purple-500/20 border border-purple-400/30 rounded-full text-sm text-purple-300 font-medium">
-              {selectedModels.length} selected
             </div>
           </div>
 
@@ -199,28 +177,19 @@ export function MultiModelSelector({
         </div>
 
         <div className="px-8 pt-6 pb-4">
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1">
-              <Search
-                size={18}
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/40"
-              />
-              <input
-                type="text"
-                placeholder="Search models by name or provider..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/40 focus:outline-none focus:border-purple-400/50 focus:bg-white/8 transition-all duration-200"
-                autoFocus
-              />
-            </div>
-
-            <button
-              onClick={clearAll}
-              className="px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white/70 hover:bg-white/10 hover:text-white transition-all duration-200 font-medium"
-            >
-              Clear All
-            </button>
+          <div className="relative">
+            <Search
+              size={18}
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/40"
+            />
+            <input
+              type="text"
+              placeholder="Search models by name or provider..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/40 focus:outline-none focus:border-blue-400/50 focus:bg-white/8 transition-all duration-200"
+              autoFocus
+            />
           </div>
         </div>
 
@@ -257,22 +226,25 @@ export function MultiModelSelector({
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   {models.map((model) => {
                     const modelInfo = formatModelName(model);
-                    const isSelected = selectedModels.includes(model);
+                    const isSelected = selectedModel === model;
 
                     return (
                       <button
                         key={model}
-                        onClick={() => toggleModel(model)}
-                        className={`cursor-pointer p-3 rounded-2xl border text-center transition-all group relative min-h-[100px] flex flex-col justify-center items-center hover:scale-[0.98] hover:shadow-lg ${
+                        onClick={() => {
+                          onModelSelect(model);
+                          onClose();
+                        }}
+                        className={`cursor-pointer p-4 rounded-2xl border text-center transition-all group relative min-h-[100px] flex flex-col justify-center items-center hover:scale-[0.98] hover:shadow-lg ${
                           isSelected
-                            ? 'glass-strong border-purple-400/60 bg-purple-500/20 shadow-purple-500/30 ring-2 ring-purple-400/30'
+                            ? 'glass-strong border-blue-400/60 bg-blue-500/20 shadow-blue-500/30 ring-2 ring-blue-400/30'
                             : 'glass border-white/10 hover:border-white/25 hover:bg-white/5'
                         }`}
                       >
                         {isSelected && (
                           <>
-                            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-purple-600/5 rounded-2xl"></div>
-                            <div className="absolute top-3 right-3 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center shadow-lg ring-2 ring-purple-400/30 z-10">
+                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-blue-600/5 rounded-2xl"></div>
+                            <div className="absolute top-3 right-3 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shadow-lg ring-2 ring-blue-400/30 z-10">
                               <Check
                                 size={14}
                                 className="text-white font-bold"
@@ -318,41 +290,6 @@ export function MultiModelSelector({
                 </div>
               </div>
             ))}
-
-            {filteredAndSortedModels.length === 0 && (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 mx-auto mb-4 glass rounded-2xl flex items-center justify-center">
-                  <Search size={24} className="text-white/40" />
-                </div>
-                <h3 className="text-lg font-semibold text-white mb-2">
-                  No models found
-                </h3>
-                <p className="text-white/60">
-                  No models match your search for "{searchQuery}". Try a
-                  different search term.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="px-8 py-6 border-t border-white/10 bg-white/2">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-white/60">
-              Select 2-5 models for best consensus results
-            </div>
-            <button
-              onClick={onClose}
-              disabled={selectedModels.length === 0}
-              className={`cursor-pointer px-8 py-3 rounded-2xl font-semibold transition-all duration-200 ${
-                selectedModels.length === 0
-                  ? 'bg-white/5 text-white/40 cursor-not-allowed'
-                  : 'bg-purple-500 text-white hover:bg-purple-600 hover:shadow-lg hover:shadow-purple-500/25'
-              }`}
-            >
-              Use {selectedModels.length} Model
-              {selectedModels.length !== 1 ? 's' : ''}
-            </button>
           </div>
         </div>
       </div>

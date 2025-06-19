@@ -5,30 +5,37 @@ export class TitleGenerator {
     this.apiKey = apiKey;
   }
 
-  async generateTitle(userMessage: string, assistantResponse?: string): Promise<string> {
+  async generateTitle(
+    userMessage: string,
+    assistantResponse?: string
+  ): Promise<string> {
     try {
       const prompt = this.buildTitlePrompt(userMessage, assistantResponse);
-      
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
-          'X-Title': 'Convex Chat Title Generator',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.0-flash-lite-001', // Fast and cheap model for title generation
-          messages: [
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          max_tokens: 20,
-          temperature: 0.3,
-        }),
-      });
+
+      const response = await fetch(
+        'https://openrouter.ai/api/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer':
+              process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+            'X-Title': 'Convex Chat Title Generator',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.0-flash-lite-001', // Fast and cheap model for title generation
+            messages: [
+              {
+                role: 'user',
+                content: prompt,
+              },
+            ],
+            max_tokens: 20,
+            temperature: 0.3,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`OpenRouter API error: ${response.status}`);
@@ -36,7 +43,7 @@ export class TitleGenerator {
 
       const data = await response.json();
       const generatedTitle = data.choices?.[0]?.message?.content?.trim();
-      
+
       if (!generatedTitle) {
         throw new Error('No title generated');
       }
@@ -54,8 +61,11 @@ export class TitleGenerator {
     }
   }
 
-  private buildTitlePrompt(userMessage: string, assistantResponse?: string): string {
-    const context = assistantResponse 
+  private buildTitlePrompt(
+    userMessage: string,
+    assistantResponse?: string
+  ): string {
+    const context = assistantResponse
       ? `User: ${userMessage}\n\nAssistant: ${assistantResponse.substring(0, 200)}...`
       : `User: ${userMessage}`;
 
@@ -74,14 +84,17 @@ Title:`;
   private getFallbackTitle(userMessage: string): string {
     // Clean fallback - remove common prefixes and create a meaningful short title
     const cleaned = userMessage
-      .replace(/^(hi|hello|hey|can you|could you|please|help me|i need|how do i|what is|explain)/i, '')
+      .replace(
+        /^(hi|hello|hey|can you|could you|please|help me|i need|how do i|what is|explain)/i,
+        ''
+      )
       .trim();
-    
+
     const words = cleaned.split(' ').slice(0, 6); // Max 6 words
     const title = words.join(' ');
-    
-    return title.length > 3 
+
+    return title.length > 3
       ? title.substring(0, 50) + (title.length > 50 ? '...' : '')
       : userMessage.substring(0, 50) + (userMessage.length > 50 ? '...' : '');
   }
-} 
+}

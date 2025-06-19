@@ -187,7 +187,7 @@ const MODEL_CAPABILITIES: Record<string, ModelCapabilities> = {
   },
 
   // Default capabilities for models not explicitly listed (no file support)
-  'default': {
+  default: {
     supportsImages: false,
     supportsPDF: false,
     supportsVision: false,
@@ -214,19 +214,26 @@ export function getModelCapabilities(modelId: string): ModelCapabilities {
   return MODEL_CAPABILITIES['default'];
 }
 
-export function canModelProcessFileType(modelId: string, fileType: string): boolean {
+export function canModelProcessFileType(
+  modelId: string,
+  fileType: string
+): boolean {
   const capabilities = getModelCapabilities(modelId);
-  
+
   if (fileType.startsWith('image/')) {
-    return capabilities.supportsImages && 
-           (capabilities.supportedImageTypes?.includes(fileType) ?? false);
+    return (
+      capabilities.supportsImages &&
+      (capabilities.supportedImageTypes?.includes(fileType) ?? false)
+    );
   }
-  
+
   if (fileType === 'application/pdf') {
-    return capabilities.supportsPDF && 
-           (capabilities.supportedDocumentTypes?.includes(fileType) ?? false);
+    return (
+      capabilities.supportsPDF &&
+      (capabilities.supportedDocumentTypes?.includes(fileType) ?? false)
+    );
   }
-  
+
   return false;
 }
 
@@ -245,41 +252,41 @@ export function getSupportedFileTypesForModel(modelId: string): string[] {
 
 export function getFileUploadAcceptString(modelId: string): string {
   const supportedTypes = getSupportedFileTypesForModel(modelId);
-  
+
   if (supportedTypes.length === 0) {
     return '';
   }
-  
+
   // Convert MIME types to file extensions for the accept attribute
   const acceptTypes: string[] = [];
-  
-  if (supportedTypes.some(type => type.startsWith('image/'))) {
+
+  if (supportedTypes.some((type) => type.startsWith('image/'))) {
     acceptTypes.push('image/*');
   }
-  
+
   if (supportedTypes.includes('application/pdf')) {
     acceptTypes.push('.pdf');
   }
-  
+
   return acceptTypes.join(',');
 }
 
 export function getModelCapabilityDescription(modelId: string): string {
   const capabilities = getModelCapabilities(modelId);
-  
+
   if (!capabilities.supportsImages && !capabilities.supportsPDF) {
     return 'Text only';
   }
-  
+
   const supportedTypes: string[] = [];
-  
+
   if (capabilities.supportsImages) {
     supportedTypes.push('images');
   }
-  
+
   if (capabilities.supportsPDF) {
     supportedTypes.push('PDFs');
   }
-  
+
   return `Supports ${supportedTypes.join(' and ')}`;
-} 
+}

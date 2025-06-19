@@ -10,10 +10,10 @@ interface ChatPageProps {
 
 export default async function ChatPage({ params }: ChatPageProps) {
   const { id } = await params;
-  
+
   return (
     <ChatProvider>
       <ChatPageContent chatId={id} />
     </ChatProvider>
   );
-} 
+}
