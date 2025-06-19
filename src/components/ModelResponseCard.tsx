@@ -58,56 +58,161 @@ export function ModelResponseCard({
           : response.isLoading
             ? 'border-yellow-400/30 bg-yellow-500/5'
             : 'border-white/10'
-      } ${isSideBySide ? 'consensus-card' : ''}`}
+      } ${isSideBySide ? 'h-full flex flex-col min-h-[300px]' : ''}`}
     >
-      <div
-        className={`flex items-start gap-3 p-4 ${hasContent && !isSideBySide ? 'cursor-pointer' : ''} ${isSideBySide ? 'model-header' : ''}`}
-        onClick={() =>
-          hasContent && !isSideBySide && onToggleExpanded(response.model)
-        }
-      >
-        <div className="w-8 h-8 flex items-center justify-center rounded-lg glass border border-white/10">
-          {modelInfo.logo ? (
-            <img
-              src={modelInfo.logo}
-              alt={`${modelInfo.provider} logo`}
-              className="w-5 h-5 object-contain"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                target.nextElementSibling?.classList.remove('hidden');
-              }}
+      {/* Header layout - different for stacked vs grid view */}
+      {isSideBySide ? (
+        // Grid view layout - vertical stacking
+        <div className="flex flex-col gap-3 p-4">
+          {/* Model Info Row */}
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 flex items-center justify-center rounded-lg glass border border-white/10 flex-shrink-0">
+              {modelInfo.logo ? (
+                <img
+                  src={modelInfo.logo}
+                  alt={`${modelInfo.provider} logo`}
+                  className="w-5 h-5 object-contain"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    target.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+              ) : null}
+              <Brain
+                size={14}
+                className={`text-white/60 ${modelInfo.logo ? 'hidden' : ''}`}
+              />
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-white/90 truncate text-sm">
+                {modelInfo.name}
+              </div>
+              <div className="text-xs text-white/50">{modelInfo.provider}</div>
+            </div>
+          </div>
+
+          {/* Status and Actions Row */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {response.error && (
+                <div className="flex items-center gap-1 text-red-400 text-xs">
+                  <AlertCircle size={12} />
+                  <span className="hidden sm:inline">Error</span>
+                </div>
+              )}
+
+              {response.isLoading && (
+                <div className="flex items-center gap-1 text-yellow-400 text-xs">
+                  <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
+                  <span className="hidden sm:inline">Loading</span>
+                </div>
+              )}
+
+              {/* Quality Score Badge */}
+              {hasQualityMetrics && response.qualityMetrics && (
+                <QualityScoreBadge
+                  score={response.qualityMetrics.qualityScore}
+                  className="text-xs"
+                />
+              )}
+
+              {response.responseTime && (
+                <div className="flex items-center gap-1 text-white/40 text-xs">
+                  <Clock size={12} />
+                  <span className="hidden sm:inline">
+                    {formatResponseTime(response.responseTime)}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {hasQualityMetrics && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowQualityMetrics(!showQualityMetrics);
+                  }}
+                  className="cursor-pointer p-1 rounded hover:bg-white/10 transition-colors"
+                  title="Quality Metrics"
+                >
+                  <BarChart3
+                    size={14}
+                    className={`${showQualityMetrics ? 'text-purple-400' : 'text-white/40'} hover:text-white/60`}
+                  />
+                </button>
+              )}
+
+              {hasContent && !response.isLoading && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCopyResponse(response.content, response.model);
+                  }}
+                  className="cursor-pointer p-1 rounded hover:bg-white/10 transition-colors"
+                  title="Copy Response"
+                >
+                  {copiedModel === response.model ? (
+                    <Check size={14} className="text-green-400" />
+                  ) : (
+                    <Copy
+                      size={14}
+                      className="text-white/40 hover:text-white/60"
+                    />
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        // Stacked view layout - horizontal layout with actions on the right
+        <div
+          className={`flex items-center gap-3 p-4 ${hasContent ? 'cursor-pointer' : ''}`}
+          onClick={() => hasContent && onToggleExpanded(response.model)}
+        >
+          <div className="w-8 h-8 flex items-center justify-center rounded-lg glass border border-white/10 flex-shrink-0">
+            {modelInfo.logo ? (
+              <img
+                src={modelInfo.logo}
+                alt={`${modelInfo.provider} logo`}
+                className="w-5 h-5 object-contain"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  target.nextElementSibling?.classList.remove('hidden');
+                }}
+              />
+            ) : null}
+            <Brain
+              size={14}
+              className={`text-white/60 ${modelInfo.logo ? 'hidden' : ''}`}
             />
-          ) : null}
-          <Brain
-            size={14}
-            className={`text-white/60 ${modelInfo.logo ? 'hidden' : ''}`}
-          />
-        </div>
-
-        <div className="flex-1 min-w-0 pr-2">
-          <div className="font-medium text-white/90 truncate text-sm">
-            {modelInfo.name}
           </div>
-          <div className="text-xs text-white/50 truncate">
-            {modelInfo.provider}
-          </div>
-        </div>
 
-        <div className="flex flex-col items-end gap-1 min-w-0">
-          {/* Top row - Status and Quality Score */}
-          <div className="flex items-center gap-1.5 justify-end">
+          <div className="flex-1 min-w-0">
+            <div className="font-medium text-white/90 truncate">
+              {modelInfo.name}
+            </div>
+            <div className="text-sm text-white/50">{modelInfo.provider}</div>
+          </div>
+
+          {/* Status indicators and actions on the right */}
+          <div className="flex items-center gap-2">
             {response.error && (
-              <div className="flex items-center gap-1 text-red-400 text-xs shrink-0">
-                <AlertCircle size={10} />
-                <span className="hidden sm:inline">Error</span>
+              <div className="flex items-center gap-1 text-red-400 text-xs">
+                <AlertCircle size={12} />
+                Error
               </div>
             )}
 
             {response.isLoading && (
-              <div className="flex items-center gap-1 text-yellow-400 text-xs shrink-0">
-                <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse" />
-                <span className="hidden sm:inline">Loading...</span>
+              <div className="flex items-center gap-1 text-yellow-400 text-xs">
+                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
+                Loading...
               </div>
             )}
 
@@ -115,19 +220,14 @@ export function ModelResponseCard({
             {hasQualityMetrics && response.qualityMetrics && (
               <QualityScoreBadge
                 score={response.qualityMetrics.qualityScore}
-                className="text-xs shrink-0"
+                className="text-xs"
               />
             )}
-          </div>
 
-          {/* Bottom row - Time and Actions */}
-          <div className="flex items-center gap-1 justify-end">
             {response.responseTime && (
-              <div className="flex items-center gap-1 text-white/40 text-xs shrink-0">
-                <Clock size={10} />
-                <span className="text-xs">
-                  {formatResponseTime(response.responseTime)}
-                </span>
+              <div className="flex items-center gap-1 text-white/40 text-xs">
+                <Clock size={12} />
+                {formatResponseTime(response.responseTime)}
               </div>
             )}
 
@@ -137,11 +237,11 @@ export function ModelResponseCard({
                   e.stopPropagation();
                   setShowQualityMetrics(!showQualityMetrics);
                 }}
-                className="cursor-pointer p-1 rounded hover:bg-white/10 transition-colors shrink-0"
-                title="Toggle Quality Metrics"
+                className="cursor-pointer p-1 rounded hover:bg-white/10 transition-colors"
+                title="Quality Metrics"
               >
                 <BarChart3
-                  size={12}
+                  size={14}
                   className={`${showQualityMetrics ? 'text-purple-400' : 'text-white/40'} hover:text-white/60`}
                 />
               </button>
@@ -153,68 +253,70 @@ export function ModelResponseCard({
                   e.stopPropagation();
                   onCopyResponse(response.content, response.model);
                 }}
-                className="cursor-pointer p-1 rounded hover:bg-white/10 transition-colors shrink-0"
+                className="cursor-pointer p-1 rounded hover:bg-white/10 transition-colors"
                 title="Copy Response"
               >
                 {copiedModel === response.model ? (
-                  <Check size={12} className="text-green-400" />
+                  <Check size={14} className="text-green-400" />
                 ) : (
                   <Copy
-                    size={12}
+                    size={14}
                     className="text-white/40 hover:text-white/60"
                   />
                 )}
               </button>
             )}
 
-            {hasContent && !isSideBySide && (
-              <button
-                className="cursor-pointer p-1 rounded hover:bg-white/10 transition-colors shrink-0"
-                title={isExpanded ? 'Collapse' : 'Expand'}
-              >
+            {hasContent && (
+              <button className="cursor-pointer p-1 rounded hover:bg-white/10 transition-colors">
                 {isExpanded ? (
-                  <ChevronUp size={12} className="text-white/40" />
+                  <ChevronUp size={16} className="text-white/40" />
                 ) : (
-                  <ChevronDown size={12} className="text-white/40" />
+                  <ChevronDown size={16} className="text-white/40" />
                 )}
               </button>
             )}
           </div>
         </div>
-      </div>
+      )}
 
+      {/* Content Area */}
       {hasContent && (isExpanded || isSideBySide) && (
         <div
-          className={`px-4 pb-4 border-t border-white/10 ${isSideBySide ? 'flex-1 min-h-0 model-content' : ''}`}
+          className={`px-4 pb-4 border-t border-white/10 ${isSideBySide ? 'flex-1 overflow-hidden' : ''}`}
         >
           <div
-            className={`mt-4 ${isSideBySide ? 'max-h-96 overflow-y-auto' : ''}`}
+            className={`mt-4 ${isSideBySide ? 'h-full overflow-y-auto scrollbar-thin' : ''}`}
           >
-            <MarkdownRenderer content={response.content} />
+            <div className={isSideBySide ? 'max-w-none' : ''}>
+              <MarkdownRenderer content={response.content} />
+            </div>
 
             {/* Quality Metrics Display */}
-            {hasQualityMetrics && response.qualityMetrics && (
-              <div
-                className={`quality-metrics mt-4 pt-4 border-t border-white/20 ${
-                  showQualityMetrics ? 'expanded' : 'collapsed'
-                }`}
-              >
-                <QualityMetricsDisplay metrics={response.qualityMetrics} />
-              </div>
-            )}
+            {hasQualityMetrics &&
+              showQualityMetrics &&
+              response.qualityMetrics && (
+                <div className="mt-4 pt-4 border-t border-white/20">
+                  <QualityMetricsDisplay metrics={response.qualityMetrics} />
+                </div>
+              )}
           </div>
         </div>
       )}
 
+      {/* Error State */}
       {response.error && (
         <div className="px-4 pb-4 border-t border-red-400/20">
           <div className="mt-4 p-3 bg-red-500/10 border border-red-400/20 rounded-lg">
             <div className="text-red-400 text-sm font-medium mb-1">Error</div>
-            <div className="text-red-300/80 text-sm">{response.error}</div>
+            <div className="text-red-300/80 text-sm break-words">
+              {response.error}
+            </div>
           </div>
         </div>
       )}
 
+      {/* Loading State */}
       {response.isLoading && (
         <div className="px-4 pb-4 border-t border-yellow-400/20">
           <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-400/20 rounded-lg">
@@ -226,6 +328,7 @@ export function ModelResponseCard({
         </div>
       )}
 
+      {/* Streaming Preview for stacked view */}
       {response.isStreaming && hasContent && !isExpanded && !isSideBySide && (
         <div className="px-4 pb-4 border-t border-white/10">
           <div className="mt-4 text-white/70 text-sm line-clamp-2">
