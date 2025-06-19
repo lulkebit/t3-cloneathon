@@ -335,7 +335,8 @@ export function ChatSidebar({ isCollapsed, onToggleCollapse }: ChatSidebarProps)
                                     value={editTitle}
                                     onChange={(e) => setEditTitle(e.target.value)}
                                     onKeyDown={(e) => handleKeyDown(e, conversation.id)}
-                                    className="text-xs font-medium bg-white/10 border border-white/20 rounded px-2 py-1 text-white flex-1 focus:outline-none focus:ring-1 focus:ring-white/40"
+                                    className="text-xs font-medium bg-white/10 border border-white/20 rounded px-2 py-1 text-white focus:outline-none focus:ring-1 focus:ring-white/40"
+                                    style={{ width: 'calc(100% - 80px)' }}
                                     autoFocus
                                     onFocus={(e) => e.target.select()}
                                   />
