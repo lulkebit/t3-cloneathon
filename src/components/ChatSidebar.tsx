@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from '@/contexts/ChatContext';
-import { Plus, MessageSquare, Trash2, Settings, ChevronLeft, ChevronRight, X, Check, Users } from 'lucide-react';
+import { Plus, MessageSquare, Trash2, Settings, ChevronLeft, ChevronRight, X, Check, Users, Edit3 } from 'lucide-react';
 
 interface ChatSidebarProps {
   isCollapsed: boolean;
@@ -19,11 +19,15 @@ export function ChatSidebar({ isCollapsed, onToggleCollapse }: ChatSidebarProps)
     setActiveConversation,
     createNewConversation,
     deleteConversation,
+    renameConversation,
     isLoading,
   } = useChat();
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState<string>('');
+  const [isRenaming, setIsRenaming] = useState<boolean>(false);
 
   const handleDeleteClick = (e: React.MouseEvent, conversationId: string) => {
     e.stopPropagation();
@@ -47,6 +51,47 @@ export function ChatSidebar({ isCollapsed, onToggleCollapse }: ChatSidebarProps)
   const handleCancelDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     setConfirmingDeleteId(null);
+  };
+
+  const handleEditClick = (e: React.MouseEvent, conversationId: string, currentTitle: string) => {
+    e.stopPropagation();
+    setEditingId(conversationId);
+    setEditTitle(currentTitle);
+    setConfirmingDeleteId(null); // Cancel any pending delete
+  };
+
+  const handleSaveEdit = async (e: React.MouseEvent, conversationId: string) => {
+    e.stopPropagation();
+    if (editTitle.trim() === '') {
+      return;
+    }
+    
+    setIsRenaming(true);
+    try {
+      const success = await renameConversation(conversationId, editTitle.trim());
+      if (success) {
+        setEditingId(null);
+        setEditTitle('');
+      }
+    } finally {
+      setIsRenaming(false);
+    }
+  };
+
+  const handleCancelEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingId(null);
+    setEditTitle('');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, conversationId: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSaveEdit(e as any, conversationId);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleCancelEdit(e as any);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -235,7 +280,7 @@ export function ChatSidebar({ isCollapsed, onToggleCollapse }: ChatSidebarProps)
                             ease: "easeOut"
                           }}
                           onClick={() => {
-                            if (deletingId !== conversation.id) {
+                            if (deletingId !== conversation.id && editingId !== conversation.id) {
                               setActiveConversation(conversation);
                               window.history.replaceState(null, '', `/chat/${conversation.id}`);
                             }
@@ -243,6 +288,8 @@ export function ChatSidebar({ isCollapsed, onToggleCollapse }: ChatSidebarProps)
                           className={`group p-2 rounded-md transition-colors relative ${
                             deletingId === conversation.id
                               ? 'cursor-not-allowed opacity-50'
+                              : editingId === conversation.id
+                              ? 'cursor-default'
                               : 'cursor-pointer'
                           } ${
                             activeConversation?.id === conversation.id
@@ -262,45 +309,40 @@ export function ChatSidebar({ isCollapsed, onToggleCollapse }: ChatSidebarProps)
                             />
                           )}
 
-                          <div className="flex items-center justify-between pl-2">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                                  {isConsensusConversation(conversation.model) && (
-                                    <motion.div
-                                      initial={{ opacity: 0, scale: 0 }}
-                                      animate={{ opacity: 1, scale: 1 }}
-                                      transition={{ delay: 0.1 }}
-                                      className="flex-shrink-0 relative group/consensus"
-                                    >
-                                      <div className="w-4 h-4 bg-purple-500/20 border border-purple-400/30 rounded-full flex items-center justify-center">
-                                        <Users size={8} className="text-purple-400" />
-                                      </div>
-                                      
-                                      <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/consensus:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                                        Multi-Model Consensus Chat
-                                      </div>
-                                    </motion.div>
-                                  )}
-                                  <h3 className="text-xs font-medium truncate mb-1">
-                                    {conversation.title}
-                                  </h3>
-                                </div>
-                                {deletingId === conversation.id && (
+                          <div className="relative pl-2">
+                            {/* Main content area - full width */}
+                            <div className="w-full pr-2">
+                              <div className="flex items-center gap-1.5 mb-1">
+                                {isConsensusConversation(conversation.model) && (
                                   <motion.div
                                     initial={{ opacity: 0, scale: 0 }}
                                     animate={{ opacity: 1, scale: 1 }}
-                                    className="flex items-center gap-1"
+                                    transition={{ delay: 0.1 }}
+                                    className="flex-shrink-0 relative group/consensus"
                                   >
-                                    <motion.div
-                                      animate={{ rotate: 360 }}
-                                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                      className="w-3 h-3 border border-red-400/60 border-t-transparent rounded-full"
-                                    />
-                                    <span className="text-[10px] text-red-400/80 font-medium">
-                                      Deleting...
-                                    </span>
+                                    <div className="w-4 h-4 bg-purple-500/20 border border-purple-400/30 rounded-full flex items-center justify-center">
+                                      <Users size={8} className="text-purple-400" />
+                                    </div>
+                                    
+                                    <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/consensus:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                                      Multi-Model Consensus Chat
+                                    </div>
                                   </motion.div>
+                                )}
+                                {editingId === conversation.id ? (
+                                  <input
+                                    type="text"
+                                    value={editTitle}
+                                    onChange={(e) => setEditTitle(e.target.value)}
+                                    onKeyDown={(e) => handleKeyDown(e, conversation.id)}
+                                    className="text-xs font-medium bg-white/10 border border-white/20 rounded px-2 py-1 text-white flex-1 focus:outline-none focus:ring-1 focus:ring-white/40"
+                                    autoFocus
+                                    onFocus={(e) => e.target.select()}
+                                  />
+                                ) : (
+                                  <h3 className="text-xs font-medium truncate flex-1">
+                                    {conversation.title}
+                                  </h3>
                                 )}
                               </div>
                               <div className="flex items-center gap-2">
@@ -319,14 +361,77 @@ export function ChatSidebar({ isCollapsed, onToggleCollapse }: ChatSidebarProps)
                                 )}
                               </div>
                             </div>
+
+                            {/* Deleting status overlay */}
+                            {deletingId === conversation.id && (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="absolute top-1 right-2 flex items-center gap-1 bg-black/80 backdrop-blur-sm rounded px-2 py-1"
+                              >
+                                <motion.div
+                                  animate={{ rotate: 360 }}
+                                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                  className="w-3 h-3 border border-red-400/60 border-t-transparent rounded-full"
+                                />
+                                <span className="text-[10px] text-red-400/80 font-medium">
+                                  Deleting...
+                                </span>
+                              </motion.div>
+                            )}
                             
-                            <div className="flex items-center gap-1">
-                              {confirmingDeleteId === conversation.id ? (
+                            {/* Gradient background for buttons */}
+                            <div 
+                              className="absolute top-0 right-0 bottom-0 w-32 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 rounded-r-md"
+                              style={{
+                                background: activeConversation?.id === conversation.id
+                                  ? 'linear-gradient(to right, transparent 10%, #27252b 50%)'
+                                  : 'linear-gradient(to right, transparent 10%, #1a191e 50%)'
+                              }}
+                            />
+                            
+                            {/* Action buttons - positioned as overlay */}
+                            <div className="absolute top-1 right-1 flex items-center gap-1 z-20">
+                              {editingId === conversation.id ? (
+                                <>
+                                  <motion.button
+                                    onClick={(e) => handleSaveEdit(e, conversation.id)}
+                                    disabled={isRenaming || editTitle.trim() === ''}
+                                    className={`p-1.5 rounded transition-colors backdrop-blur-sm ${
+                                      isRenaming || editTitle.trim() === ''
+                                        ? 'bg-green-500/10 cursor-not-allowed'
+                                        : 'cursor-pointer bg-green-500/20 hover:bg-green-500/30'
+                                    }`}
+                                    whileHover={isRenaming || editTitle.trim() === '' ? {} : { scale: 1.05 }}
+                                    whileTap={isRenaming || editTitle.trim() === '' ? {} : { scale: 0.95 }}
+                                  >
+                                    {isRenaming ? (
+                                      <motion.div
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                        className="w-4 h-4 border border-white/40 border-t-transparent rounded-full"
+                                      />
+                                    ) : (
+                                      <Check size={14} className="text-green-400" />
+                                    )}
+                                  </motion.button>
+                                  {!isRenaming && (
+                                    <motion.button
+                                      onClick={handleCancelEdit}
+                                      className="cursor-pointer p-1.5 bg-white/10 hover:bg-white/20 rounded transition-colors backdrop-blur-sm"
+                                      whileHover={{ scale: 1.05 }}
+                                      whileTap={{ scale: 0.95 }}
+                                    >
+                                      <X size={14} className="text-white/60" />
+                                    </motion.button>
+                                  )}
+                                </>
+                              ) : confirmingDeleteId === conversation.id ? (
                                 <>
                                   <motion.button
                                     onClick={(e) => handleDeleteClick(e, conversation.id)}
                                     disabled={deletingId === conversation.id}
-                                    className={`p-1.5 rounded transition-colors ${
+                                    className={`p-1.5 rounded transition-colors backdrop-blur-sm ${
                                       deletingId === conversation.id
                                         ? 'bg-red-500/10 cursor-not-allowed'
                                         : 'cursor-pointer bg-red-500/20 hover:bg-red-500/30'
@@ -347,7 +452,7 @@ export function ChatSidebar({ isCollapsed, onToggleCollapse }: ChatSidebarProps)
                                   {deletingId !== conversation.id && (
                                     <motion.button
                                       onClick={handleCancelDelete}
-                                      className="cursor-pointer p-1.5 bg-white/10 hover:bg-white/20 rounded transition-colors"
+                                      className="cursor-pointer p-1.5 bg-white/10 hover:bg-white/20 rounded transition-colors backdrop-blur-sm"
                                       whileHover={{ scale: 1.05 }}
                                       whileTap={{ scale: 0.95 }}
                                     >
@@ -356,15 +461,26 @@ export function ChatSidebar({ isCollapsed, onToggleCollapse }: ChatSidebarProps)
                                   )}
                                 </>
                               ) : (
-                                <motion.button
-                                  onClick={(e) => handleDeleteClick(e, conversation.id)}
-                                  disabled={deletingId === conversation.id}
-                                  className="cursor-pointer opacity-0 group-hover:opacity-60 hover:opacity-100 p-1.5 transition-opacity rounded hover:bg-red-500/20"
-                                  whileHover={{ scale: 1.1 }}
-                                  whileTap={{ scale: 0.9 }}
-                                >
-                                  <Trash2 size={14} className="text-white/60" />
-                                </motion.button>
+                                <>
+                                  <motion.button
+                                    onClick={(e) => handleEditClick(e, conversation.id, conversation.title)}
+                                    disabled={deletingId === conversation.id}
+                                    className="cursor-pointer opacity-0 group-hover:opacity-60 hover:opacity-100 p-1.5 transition-opacity rounded hover:bg-blue-500/20 backdrop-blur-sm"
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                  >
+                                    <Edit3 size={14} className="text-white/60" />
+                                  </motion.button>
+                                  <motion.button
+                                    onClick={(e) => handleDeleteClick(e, conversation.id)}
+                                    disabled={deletingId === conversation.id}
+                                    className="cursor-pointer opacity-0 group-hover:opacity-60 hover:opacity-100 p-1.5 transition-opacity rounded hover:bg-red-500/20 backdrop-blur-sm"
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                  >
+                                    <Trash2 size={14} className="text-white/60" />
+                                  </motion.button>
+                                </>
                               )}
                             </div>
                           </div>
