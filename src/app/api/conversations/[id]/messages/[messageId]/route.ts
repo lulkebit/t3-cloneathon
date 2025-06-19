@@ -7,7 +7,10 @@ export async function DELETE(
 ) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -24,7 +27,10 @@ export async function DELETE(
       .single();
 
     if (convError || !conversation) {
-      return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Conversation not found' },
+        { status: 404 }
+      );
     }
 
     // Delete the specific message
@@ -36,12 +42,18 @@ export async function DELETE(
 
     if (deleteError) {
       console.error('Error deleting message:', deleteError);
-      return NextResponse.json({ error: 'Failed to delete message' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Failed to delete message' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error in delete message route:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
-} 
+}

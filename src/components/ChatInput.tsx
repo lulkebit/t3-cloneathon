@@ -1,25 +1,25 @@
-"use client";
+'use client';
 
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 
-import { useChat } from "@/contexts/ChatContext";
-import { Bot } from "lucide-react";
+import { useChat } from '@/contexts/ChatContext';
+import { Bot } from 'lucide-react';
 
-import { Attachment, ConsensusResponse } from "@/types/chat";
-import { MultiModelSelector } from "./MultiModelSelector";
-import { AttachmentList } from "./AttachmentList";
-import { ChatModeToggle } from "./ChatModeToggle";
-import { ModelSelector } from "./ModelSelector";
-import { FileUploadButton } from "./FileUploadButton";
-import { SendButton } from "./SendButton";
+import { Attachment, ConsensusResponse } from '@/types/chat';
+import { MultiModelSelector } from './MultiModelSelector';
+import { AttachmentList } from './AttachmentList';
+import { ChatModeToggle } from './ChatModeToggle';
+import { ModelSelector } from './ModelSelector';
+import { FileUploadButton } from './FileUploadButton';
+import { SendButton } from './SendButton';
 import {
   getModelCapabilities,
   canModelProcessFileType,
   getFileUploadAcceptString,
   getMaxFileSizeForModel,
   getModelCapabilityDescription,
-} from "@/lib/model-capabilities";
-import { formatModelName } from "@/lib/model-utils";
+} from '@/lib/model-capabilities';
+import { formatModelName } from '@/lib/model-utils';
 
 export function ChatInput() {
   const {
@@ -35,17 +35,17 @@ export function ChatInput() {
     removeOptimisticMessage,
   } = useChat();
 
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState('');
   const [selectedModel, setSelectedModel] = useState(() => {
     // Initialize with last used model from localStorage, fallback to 'openai/o3'
-    if (typeof window !== "undefined") {
-      const lastUsedModel = localStorage.getItem("lastUsedModel");
-      return lastUsedModel || "openai/o3-mini";
+    if (typeof window !== 'undefined') {
+      const lastUsedModel = localStorage.getItem('lastUsedModel');
+      return lastUsedModel || 'openai/o3-mini';
     }
-    return "openai/o3-mini";
+    return 'openai/o3-mini';
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [streamingMessage, setStreamingMessage] = useState("");
+  const [streamingMessage, setStreamingMessage] = useState('');
   const [isModelModalOpen, setIsModelModalOpen] = useState(false);
 
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -60,11 +60,11 @@ export function ChatInput() {
   useEffect(() => {
     if (activeConversation && activeConversation.model) {
       // Check if this is a consensus conversation
-      if (activeConversation.model.startsWith("consensus:")) {
+      if (activeConversation.model.startsWith('consensus:')) {
         setIsConsensusMode(true);
         // Extract the models from the consensus string
-        const modelsString = activeConversation.model.replace("consensus:", "");
-        const models = modelsString ? modelsString.split(",") : [];
+        const modelsString = activeConversation.model.replace('consensus:', '');
+        const models = modelsString ? modelsString.split(',') : [];
         setSelectedModels(models);
       } else {
         setIsConsensusMode(false);
@@ -74,12 +74,12 @@ export function ChatInput() {
       // Reset to defaults for new conversations
       setIsConsensusMode(false);
       // Load last used model from localStorage for new conversations
-      const lastUsedModel = localStorage.getItem("lastUsedModel");
-      setSelectedModel(lastUsedModel || "openai/o3-mini");
+      const lastUsedModel = localStorage.getItem('lastUsedModel');
+      setSelectedModel(lastUsedModel || 'openai/o3-mini');
 
       // Load last used consensus models from localStorage
       const lastUsedConsensusModels = localStorage.getItem(
-        "lastUsedConsensusModels"
+        'lastUsedConsensusModels'
       );
       if (lastUsedConsensusModels) {
         try {
@@ -124,7 +124,7 @@ export function ChatInput() {
   useEffect(() => {
     if (selectedModels.length > 0 && !activeConversation) {
       localStorage.setItem(
-        "lastUsedConsensusModels",
+        'lastUsedConsensusModels',
         JSON.stringify(selectedModels)
       );
     }
@@ -133,13 +133,13 @@ export function ChatInput() {
   // Save selected model to localStorage when it changes
   useEffect(() => {
     if (selectedModel && !activeConversation) {
-      localStorage.setItem("lastUsedModel", selectedModel);
+      localStorage.setItem('lastUsedModel', selectedModel);
     }
   }, [selectedModel, activeConversation]);
 
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, [message]);
@@ -150,12 +150,12 @@ export function ChatInput() {
 
     const userMessage = message;
     const messageAttachments = [...attachments];
-    setMessage("");
+    setMessage('');
     setIsLoading(true);
-    setStreamingMessage("");
+    setStreamingMessage('');
 
     if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = 'auto';
     }
 
     let conversationId: string | null = null;
@@ -168,31 +168,31 @@ export function ChatInput() {
 
         userMessageId = addOptimisticMessage({
           conversation_id: conversationId!,
-          role: "user",
+          role: 'user',
           content: userMessage,
           attachments: messageAttachments,
         });
 
         assistantMessageId = addOptimisticMessage({
           conversation_id: conversationId!,
-          role: "assistant",
-          content: "",
+          role: 'assistant',
+          content: '',
           isLoading: true,
         });
       } else {
-        const createConversationResponse = await fetch("/api/conversations", {
-          method: "POST",
+        const createConversationResponse = await fetch('/api/conversations', {
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            title: "New Chat",
+            title: 'New Chat',
             model: selectedModel,
           }),
         });
 
         if (!createConversationResponse.ok) {
-          throw new Error("Failed to create conversation");
+          throw new Error('Failed to create conversation');
         }
 
         const conversationData = await createConversationResponse.json();
@@ -201,26 +201,26 @@ export function ChatInput() {
         // Add the new conversation to the list but don't set it as active yet
         addNewConversation(conversationData.conversation);
 
-        window.history.pushState(null, "", `/chat/${conversationId}`);
+        window.history.pushState(null, '', `/chat/${conversationId}`);
 
         userMessageId = addOptimisticMessage({
           conversation_id: conversationId!,
-          role: "user",
+          role: 'user',
           content: userMessage,
           attachments: messageAttachments,
         });
 
         assistantMessageId = addOptimisticMessage({
           conversation_id: conversationId!,
-          role: "assistant",
-          content: "",
+          role: 'assistant',
+          content: '',
           isLoading: true,
         });
       }
-      const response = await fetch("/api/chat", {
-        method: "POST",
+      const response = await fetch('/api/chat', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           message: userMessage,
@@ -233,30 +233,30 @@ export function ChatInput() {
       if (!response.ok) {
         if (userMessageId) removeOptimisticMessage(userMessageId);
         if (assistantMessageId) removeOptimisticMessage(assistantMessageId);
-        throw new Error("Failed to send message");
+        throw new Error('Failed to send message');
       }
 
       if (!response.body) {
         if (userMessageId) removeOptimisticMessage(userMessageId);
         if (assistantMessageId) removeOptimisticMessage(assistantMessageId);
-        throw new Error("No response body");
+        throw new Error('No response body');
       }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let assistantContent = "";
+      let assistantContent = '';
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
+        const lines = chunk.split('\n');
 
         for (const line of lines) {
-          if (line.startsWith("data: ")) {
+          if (line.startsWith('data: ')) {
             const data = line.slice(6);
-            if (data === "[DONE]") continue;
+            if (data === '[DONE]') continue;
 
             try {
               const parsed = JSON.parse(data);
@@ -293,7 +293,7 @@ export function ChatInput() {
                       }
                     } catch (error) {
                       console.error(
-                        "Error setting active conversation:",
+                        'Error setting active conversation:',
                         error
                       );
                     }
@@ -301,17 +301,17 @@ export function ChatInput() {
                 }
               }
             } catch (e) {
-              console.error("Error parsing streaming data:", e, "Data:", data);
+              console.error('Error parsing streaming data:', e, 'Data:', data);
             }
           }
         }
       }
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error('Error sending message:', error);
 
       // Show error message in chat if we have an assistant message to update
       if (assistantMessageId) {
-        let errorMessage = "An unexpected error occurred";
+        let errorMessage = 'An unexpected error occurred';
         if (error instanceof Error) {
           errorMessage = error.message;
         }
@@ -322,15 +322,15 @@ export function ChatInput() {
         if (conversationId) {
           try {
             await fetch(`/api/conversations/${conversationId}/messages`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                role: "assistant",
+                role: 'assistant',
                 content: `❌ **Error**: ${errorMessage}`,
               }),
             });
           } catch (dbError) {
-            console.error("Failed to save error message to database:", dbError);
+            console.error('Failed to save error message to database:', dbError);
           }
         }
       } else {
@@ -339,7 +339,7 @@ export function ChatInput() {
           removeOptimisticMessage(userMessageId);
         }
 
-        let errorMessage = "Failed to send message";
+        let errorMessage = 'Failed to send message';
         if (error instanceof Error) {
           errorMessage = error.message;
         }
@@ -351,7 +351,7 @@ export function ChatInput() {
       }
     } finally {
       setIsLoading(false);
-      setStreamingMessage("");
+      setStreamingMessage('');
       setAttachments([]);
 
       setTimeout(() => {
@@ -373,11 +373,11 @@ export function ChatInput() {
 
     const userMessage = message;
     const messageAttachments = [...attachments];
-    setMessage("");
+    setMessage('');
     setIsLoading(true);
 
     if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = 'auto';
     }
 
     let conversationId: string | null = null;
@@ -390,38 +390,38 @@ export function ChatInput() {
 
         userMessageId = addOptimisticMessage({
           conversation_id: conversationId!,
-          role: "user",
+          role: 'user',
           content: userMessage,
           attachments: messageAttachments,
         });
 
         assistantMessageId = addOptimisticMessage({
           conversation_id: conversationId!,
-          role: "assistant",
-          content: "",
+          role: 'assistant',
+          content: '',
           isLoading: true,
           isConsensus: true,
           consensusResponses: selectedModels.map((model) => ({
             model,
-            content: "",
+            content: '',
             isLoading: true,
             responseTime: 0,
           })),
         });
       } else {
-        const createConversationResponse = await fetch("/api/conversations", {
-          method: "POST",
+        const createConversationResponse = await fetch('/api/conversations', {
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            title: "New Chat",
-            model: `consensus:${selectedModels.join(",")}`,
+            title: 'New Chat',
+            model: `consensus:${selectedModels.join(',')}`,
           }),
         });
 
         if (!createConversationResponse.ok) {
-          throw new Error("Failed to create conversation");
+          throw new Error('Failed to create conversation');
         }
 
         const conversationData = await createConversationResponse.json();
@@ -430,34 +430,34 @@ export function ChatInput() {
         // Add the new conversation to the list but don't set it as active yet
         addNewConversation(conversationData.conversation);
 
-        window.history.pushState(null, "", `/chat/${conversationId}`);
+        window.history.pushState(null, '', `/chat/${conversationId}`);
 
         userMessageId = addOptimisticMessage({
           conversation_id: conversationId!,
-          role: "user",
+          role: 'user',
           content: userMessage,
           attachments: messageAttachments,
         });
 
         assistantMessageId = addOptimisticMessage({
           conversation_id: conversationId!,
-          role: "assistant",
-          content: "",
+          role: 'assistant',
+          content: '',
           isLoading: true,
           isConsensus: true,
           consensusResponses: selectedModels.map((model) => ({
             model,
-            content: "",
+            content: '',
             isLoading: true,
             responseTime: 0,
           })),
         });
       }
 
-      const response = await fetch("/api/chat/consensus", {
-        method: "POST",
+      const response = await fetch('/api/chat/consensus', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           message: userMessage,
@@ -470,13 +470,13 @@ export function ChatInput() {
       if (!response.ok) {
         if (userMessageId) removeOptimisticMessage(userMessageId);
         if (assistantMessageId) removeOptimisticMessage(assistantMessageId);
-        throw new Error("Failed to send consensus message");
+        throw new Error('Failed to send consensus message');
       }
 
       if (!response.body) {
         if (userMessageId) removeOptimisticMessage(userMessageId);
         if (assistantMessageId) removeOptimisticMessage(assistantMessageId);
-        throw new Error("No response body");
+        throw new Error('No response body');
       }
 
       const reader = response.body.getReader();
@@ -484,7 +484,7 @@ export function ChatInput() {
       let consensusResponses: ConsensusResponse[] = selectedModels.map(
         (model) => ({
           model,
-          content: "",
+          content: '',
           isLoading: true,
           responseTime: 0,
         })
@@ -495,17 +495,17 @@ export function ChatInput() {
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
+        const lines = chunk.split('\n');
 
         for (const line of lines) {
-          if (line.startsWith("data: ")) {
+          if (line.startsWith('data: ')) {
             const data = line.slice(6);
-            if (data === "[DONE]") continue;
+            if (data === '[DONE]') continue;
 
             try {
               const parsed = JSON.parse(data);
 
-              if (parsed.type === "consensus_update" && assistantMessageId) {
+              if (parsed.type === 'consensus_update' && assistantMessageId) {
                 const { modelIndex, content } = parsed;
                 if (modelIndex < consensusResponses.length) {
                   consensusResponses[modelIndex] = {
@@ -521,7 +521,7 @@ export function ChatInput() {
                   );
                 }
               } else if (
-                parsed.type === "consensus_complete" &&
+                parsed.type === 'consensus_complete' &&
                 assistantMessageId
               ) {
                 const { modelIndex, content, responseTime } = parsed;
@@ -540,7 +540,7 @@ export function ChatInput() {
                   );
                 }
               } else if (
-                parsed.type === "consensus_error" &&
+                parsed.type === 'consensus_error' &&
                 assistantMessageId
               ) {
                 const { modelIndex, error, responseTime } = parsed;
@@ -559,14 +559,14 @@ export function ChatInput() {
                   );
                 }
               } else if (
-                parsed.type === "title_update" &&
+                parsed.type === 'title_update' &&
                 parsed.conversationId &&
                 parsed.title
               ) {
                 // Handle title update for consensus - update conversation title without switching chats
                 updateConversationTitle(parsed.conversationId, parsed.title);
               } else if (
-                parsed.type === "consensus_final" &&
+                parsed.type === 'consensus_final' &&
                 assistantMessageId
               ) {
                 finalizeMessage(
@@ -589,7 +589,7 @@ export function ChatInput() {
                       }
                     } catch (error) {
                       console.error(
-                        "Error setting active conversation:",
+                        'Error setting active conversation:',
                         error
                       );
                     }
@@ -598,9 +598,9 @@ export function ChatInput() {
               }
             } catch (e) {
               console.error(
-                "Error parsing consensus streaming data:",
+                'Error parsing consensus streaming data:',
                 e,
-                "Data:",
+                'Data:',
                 data
               );
             }
@@ -608,10 +608,10 @@ export function ChatInput() {
         }
       }
     } catch (error) {
-      console.error("Error sending consensus message:", error);
+      console.error('Error sending consensus message:', error);
 
       if (assistantMessageId) {
-        let errorMessage = "An unexpected error occurred";
+        let errorMessage = 'An unexpected error occurred';
         if (error instanceof Error) {
           errorMessage = error.message;
         }
@@ -622,7 +622,7 @@ export function ChatInput() {
           removeOptimisticMessage(userMessageId);
         }
 
-        let errorMessage = "Failed to send consensus message";
+        let errorMessage = 'Failed to send consensus message';
         if (error instanceof Error) {
           errorMessage = error.message;
         }
@@ -680,9 +680,9 @@ export function ChatInput() {
     });
 
     if (errors.length > 0) {
-      alert(`Upload errors:\n${errors.join("\n")}`);
+      alert(`Upload errors:\n${errors.join('\n')}`);
       if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+        fileInputRef.current.value = '';
       }
       return;
     }
@@ -694,17 +694,17 @@ export function ChatInput() {
     try {
       const uploadPromises = validFiles.map(async (file) => {
         const formData = new FormData();
-        formData.append("file", file);
-        formData.append("model", selectedModel);
+        formData.append('file', file);
+        formData.append('model', selectedModel);
 
-        const response = await fetch("/api/upload", {
-          method: "POST",
+        const response = await fetch('/api/upload', {
+          method: 'POST',
           body: formData,
         });
 
         if (!response.ok) {
           const error = await response.json();
-          throw new Error(error.error || "Failed to upload file");
+          throw new Error(error.error || 'Failed to upload file');
         }
 
         return await response.json();
@@ -713,12 +713,12 @@ export function ChatInput() {
       const uploadedFiles = await Promise.all(uploadPromises);
       setAttachments((prev) => [...prev, ...uploadedFiles]);
     } catch (error) {
-      console.error("Error uploading files:", error);
-      alert("Error uploading files. Please try again.");
+      console.error('Error uploading files:', error);
+      alert('Error uploading files. Please try again.');
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+        fileInputRef.current.value = '';
       }
     }
   };
@@ -757,7 +757,7 @@ export function ChatInput() {
                 className="w-full min-h-[40px] max-h-32 resize-none bg-transparent border-none outline-none focus:outline-none disabled:opacity-50 pr-24 text-white placeholder-white/60 p-3"
                 rows={1}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
+                  if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     if (isConsensusMode) {
                       handleConsensusSubmit(e);
@@ -801,7 +801,7 @@ export function ChatInput() {
                 if (!isConsensusMode && selectedModels.length === 0) {
                   // Load last used consensus models from localStorage
                   const lastUsedConsensusModels = localStorage.getItem(
-                    "lastUsedConsensusModels"
+                    'lastUsedConsensusModels'
                   );
                   if (lastUsedConsensusModels) {
                     try {

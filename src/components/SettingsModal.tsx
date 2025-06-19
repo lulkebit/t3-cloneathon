@@ -3,7 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from '@/contexts/ChatContext';
-import { X, Key, Save, Loader2, ExternalLink, Shield, Eye, EyeOff } from 'lucide-react';
+import {
+  X,
+  Key,
+  Save,
+  Loader2,
+  ExternalLink,
+  Shield,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -74,12 +83,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             className="glass-strong rounded-3xl max-w-lg w-full p-8 relative border border-white/20"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-3xl"></div>
-            
+
             <div className="flex items-center justify-between mb-8 relative z-10">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
@@ -92,7 +101,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </div>
                 <h2 className="text-2xl font-bold text-white">Settings</h2>
               </motion.div>
-              
+
               <motion.button
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -141,7 +150,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   className="text-xs text-white/50 mt-2 flex items-center gap-2"
                 >
                   <Shield size={12} />
-                  Your API key is stored securely and only used for OpenRouter requests.
+                  Your API key is stored securely and only used for OpenRouter
+                  requests.
                 </motion.p>
               </div>
 
@@ -157,9 +167,13 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     <Key size={20} className="text-blue-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white mb-2">Get your OpenRouter API Key</h3>
+                    <h3 className="font-semibold text-white mb-2">
+                      Get your OpenRouter API Key
+                    </h3>
                     <p className="text-sm text-white/70 mb-4 leading-relaxed">
-                      You need an OpenRouter API key to use this chat application. OpenRouter provides access to various AI models through a unified API.
+                      You need an OpenRouter API key to use this chat
+                      application. OpenRouter provides access to various AI
+                      models through a unified API.
                     </p>
                     <motion.a
                       href="https://openrouter.ai/keys"
@@ -182,17 +196,23 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   transition={{ delay: 0.4 }}
                   className="glass rounded-2xl p-4 border border-white/10"
                 >
-                  <h4 className="font-medium text-white mb-3">Current Status</h4>
+                  <h4 className="font-medium text-white mb-3">
+                    Current Status
+                  </h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center justify-between">
                       <span className="text-white/60">Email:</span>
-                      <span className="font-mono text-white/80">{profile.email}</span>
+                      <span className="font-mono text-white/80">
+                        {profile.email}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-white/60">API Key:</span>
                       {profile.openrouter_api_key ? (
                         <span className="font-mono text-green-400">
-                          {showApiKey ? profile.openrouter_api_key : maskApiKey(profile.openrouter_api_key)}
+                          {showApiKey
+                            ? profile.openrouter_api_key
+                            : maskApiKey(profile.openrouter_api_key)}
                         </span>
                       ) : (
                         <span className="text-red-400">Not configured</span>
@@ -218,7 +238,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               >
                 Cancel
               </motion.button>
-              
+
               <motion.button
                 onClick={handleSave}
                 disabled={isLoading || !apiKey.trim()}
@@ -258,4 +278,4 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       )}
     </AnimatePresence>
   );
-} 
+}

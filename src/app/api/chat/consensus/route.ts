@@ -6,20 +6,34 @@ import { ConsensusResponse } from '@/types/chat';
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { conversationId, message, models, attachments = [] } = await request.json();
+    const {
+      conversationId,
+      message,
+      models,
+      attachments = [],
+    } = await request.json();
 
     if ((!message || message.trim() === '') && attachments.length === 0) {
-      return NextResponse.json({ error: 'Message or attachments required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Message or attachments required' },
+        { status: 400 }
+      );
     }
 
     if (!models || !Array.isArray(models) || models.length === 0) {
-      return NextResponse.json({ error: 'At least one model is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'At least one model is required' },
+        { status: 400 }
+      );
     }
 
     const { data: profile } = await supabase
@@ -29,7 +43,10 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (!profile?.openrouter_api_key) {
-      return NextResponse.json({ error: 'OpenRouter API key not configured' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'OpenRouter API key not configured' },
+        { status: 400 }
+      );
     }
 
     let conversation = null;
@@ -45,10 +62,11 @@ export async function POST(request: NextRequest) {
 
       if (existingConversation) {
         conversation = existingConversation;
-        
+
         const { data: existingMessages } = await supabase
           .from('messages')
-          .select(`
+          .select(
+            `
             *,
             attachments (
               id,
@@ -58,7 +76,8 @@ export async function POST(request: NextRequest) {
               file_url,
               created_at
             )
-          `)
+          `
+          )
           .eq('conversation_id', conversationId)
           .order('created_at', { ascending: true });
 
@@ -78,7 +97,10 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (conversationError || !newConversation) {
-        return NextResponse.json({ error: 'Failed to create conversation' }, { status: 500 });
+        return NextResponse.json(
+          { error: 'Failed to create conversation' },
+          { status: 500 }
+        );
       }
 
       conversation = newConversation;
@@ -95,7 +117,10 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (messageError || !userMessage) {
-      return NextResponse.json({ error: 'Failed to save user message' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Failed to save user message' },
+        { status: 500 }
+      );
     }
 
     // Save attachments if any
@@ -119,12 +144,12 @@ export async function POST(request: NextRequest) {
 
     // Build the current message content array format for OpenRouter Vision API
     const contentParts: any[] = [];
-    
+
     // Add text content if present
     if (message && message.trim()) {
       contentParts.push({
-        type: "text",
-        text: message
+        type: 'text',
+        text: message,
       });
     }
 
@@ -134,10 +159,10 @@ export async function POST(request: NextRequest) {
         if (attachment.file_type.startsWith('image/')) {
           // For images, use image_url format
           contentParts.push({
-            type: "image_url",
+            type: 'image_url',
             image_url: {
-              url: attachment.file_url
-            }
+              url: attachment.file_url,
+            },
           });
         } else if (attachment.file_type === 'application/pdf') {
           // For PDFs, we need to fetch and encode as base64
@@ -146,27 +171,27 @@ export async function POST(request: NextRequest) {
             const arrayBuffer = await response.arrayBuffer();
             const base64Data = Buffer.from(arrayBuffer).toString('base64');
             const dataUrl = `data:application/pdf;base64,${base64Data}`;
-            
+
             contentParts.push({
-              type: "file",
+              type: 'file',
               file: {
                 filename: attachment.filename,
-                file_data: dataUrl
-              }
+                file_data: dataUrl,
+              },
             });
           } catch (error) {
             console.error('Failed to process PDF attachment:', error);
             // Fallback to text description if PDF processing fails
             contentParts.push({
-              type: "text",
-              text: `[PDF Document: ${attachment.filename} - Unable to process file content]`
+              type: 'text',
+              text: `[PDF Document: ${attachment.filename} - Unable to process file content]`,
             });
           }
         } else {
           // For other file types, add as text description
           contentParts.push({
-            type: "text",
-            text: `[File: ${attachment.filename}]`
+            type: 'text',
+            text: `[File: ${attachment.filename}]`,
           });
         }
       }
@@ -174,17 +199,21 @@ export async function POST(request: NextRequest) {
 
     // Helper function to format message content with attachments
     const formatMessageContent = async (msg: any) => {
-      if (msg.role === 'assistant' || !msg.attachments || msg.attachments.length === 0) {
+      if (
+        msg.role === 'assistant' ||
+        !msg.attachments ||
+        msg.attachments.length === 0
+      ) {
         return msg.content;
       }
 
       const msgContentParts: any[] = [];
-      
+
       // Add text content if present
       if (msg.content && msg.content.trim()) {
         msgContentParts.push({
-          type: "text",
-          text: msg.content
+          type: 'text',
+          text: msg.content,
         });
       }
 
@@ -192,10 +221,10 @@ export async function POST(request: NextRequest) {
       for (const attachment of msg.attachments) {
         if (attachment.file_type.startsWith('image/')) {
           msgContentParts.push({
-            type: "image_url",
+            type: 'image_url',
             image_url: {
-              url: attachment.file_url
-            }
+              url: attachment.file_url,
+            },
           });
         } else if (attachment.file_type === 'application/pdf') {
           try {
@@ -203,31 +232,32 @@ export async function POST(request: NextRequest) {
             const arrayBuffer = await response.arrayBuffer();
             const base64Data = Buffer.from(arrayBuffer).toString('base64');
             const dataUrl = `data:application/pdf;base64,${base64Data}`;
-            
+
             msgContentParts.push({
-              type: "file",
+              type: 'file',
               file: {
                 filename: attachment.filename,
-                file_data: dataUrl
-              }
+                file_data: dataUrl,
+              },
             });
           } catch (error) {
             console.error('Failed to process PDF attachment:', error);
             msgContentParts.push({
-              type: "text",
-              text: `[PDF Document: ${attachment.filename} - Unable to process file content]`
+              type: 'text',
+              text: `[PDF Document: ${attachment.filename} - Unable to process file content]`,
             });
           }
         } else {
           msgContentParts.push({
-            type: "text",
-            text: `[File: ${attachment.filename}]`
+            type: 'text',
+            text: `[File: ${attachment.filename}]`,
           });
         }
       }
 
-      return msgContentParts.length > 1 || (msgContentParts.length === 1 && msgContentParts[0].type !== 'text') 
-        ? msgContentParts 
+      return msgContentParts.length > 1 ||
+        (msgContentParts.length === 1 && msgContentParts[0].type !== 'text')
+        ? msgContentParts
         : msgContentParts[0]?.text || msg.content;
     };
 
@@ -235,16 +265,18 @@ export async function POST(request: NextRequest) {
     const formattedMessages = await Promise.all(
       messages.map(async (msg) => ({
         role: msg.role,
-        content: await formatMessageContent(msg)
+        content: await formatMessageContent(msg),
       }))
     );
 
     const conversationHistory = formattedMessages;
 
     // Add current user message with proper content format
-    const currentMessageContent = contentParts.length > 1 || (contentParts.length === 1 && contentParts[0].type !== 'text') 
-      ? contentParts 
-      : contentParts[0]?.text || message || '';
+    const currentMessageContent =
+      contentParts.length > 1 ||
+      (contentParts.length === 1 && contentParts[0].type !== 'text')
+        ? contentParts
+        : contentParts[0]?.text || message || '';
 
     conversationHistory.push({
       role: 'user',
@@ -258,92 +290,115 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          const consensusResponses: ConsensusResponse[] = models.map((model: string) => ({
-            model,
-            content: '',
-            isLoading: true,
-            responseTime: 0,
-          }));
+          const consensusResponses: ConsensusResponse[] = models.map(
+            (model: string) => ({
+              model,
+              content: '',
+              isLoading: true,
+              responseTime: 0,
+            })
+          );
 
           // Send initial state
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-            type: 'consensus_start',
-            models: models,
-            responses: consensusResponses
-          })}\n\n`));
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({
+                type: 'consensus_start',
+                models: models,
+                responses: consensusResponses,
+              })}\n\n`
+            )
+          );
 
           // Create promises for all model requests
-          const modelPromises = models.map(async (model: string, index: number) => {
-            const startTime = Date.now();
-            try {
-              let fullResponse = '';
-              
-              await openRouter.createChatCompletion(
-                model,
-                conversationHistory,
-                (chunk: string) => {
-                  fullResponse += chunk;
-                  consensusResponses[index] = {
-                    ...consensusResponses[index],
-                    content: fullResponse,
-                    isStreaming: true,
-                    isLoading: false,
-                  };
-                  
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                    type: 'consensus_update',
-                    modelIndex: index,
-                    model: model,
-                    content: fullResponse,
-                    isStreaming: true
-                  })}\n\n`));
-                },
-                request.headers.get('referer') || undefined
-              );
+          const modelPromises = models.map(
+            async (model: string, index: number) => {
+              const startTime = Date.now();
+              try {
+                let fullResponse = '';
 
-              const responseTime = Date.now() - startTime;
-              consensusResponses[index] = {
-                ...consensusResponses[index],
-                content: fullResponse,
-                isStreaming: false,
-                isLoading: false,
-                responseTime,
-              };
+                await openRouter.createChatCompletion(
+                  model,
+                  conversationHistory,
+                  (chunk: string) => {
+                    fullResponse += chunk;
+                    consensusResponses[index] = {
+                      ...consensusResponses[index],
+                      content: fullResponse,
+                      isStreaming: true,
+                      isLoading: false,
+                    };
 
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                type: 'consensus_complete',
-                modelIndex: index,
-                model: model,
-                content: fullResponse,
-                responseTime
-              })}\n\n`));
+                    controller.enqueue(
+                      encoder.encode(
+                        `data: ${JSON.stringify({
+                          type: 'consensus_update',
+                          modelIndex: index,
+                          model: model,
+                          content: fullResponse,
+                          isStreaming: true,
+                        })}\n\n`
+                      )
+                    );
+                  },
+                  request.headers.get('referer') || undefined
+                );
 
-            } catch (error) {
-              const responseTime = Date.now() - startTime;
-              consensusResponses[index] = {
-                ...consensusResponses[index],
-                error: error instanceof Error ? error.message : 'Unknown error',
-                isLoading: false,
-                isStreaming: false,
-                responseTime,
-              };
+                const responseTime = Date.now() - startTime;
+                consensusResponses[index] = {
+                  ...consensusResponses[index],
+                  content: fullResponse,
+                  isStreaming: false,
+                  isLoading: false,
+                  responseTime,
+                };
 
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                type: 'consensus_error',
-                modelIndex: index,
-                model: model,
-                error: error instanceof Error ? error.message : 'Unknown error',
-                responseTime
-              })}\n\n`));
+                controller.enqueue(
+                  encoder.encode(
+                    `data: ${JSON.stringify({
+                      type: 'consensus_complete',
+                      modelIndex: index,
+                      model: model,
+                      content: fullResponse,
+                      responseTime,
+                    })}\n\n`
+                  )
+                );
+              } catch (error) {
+                const responseTime = Date.now() - startTime;
+                consensusResponses[index] = {
+                  ...consensusResponses[index],
+                  error:
+                    error instanceof Error ? error.message : 'Unknown error',
+                  isLoading: false,
+                  isStreaming: false,
+                  responseTime,
+                };
+
+                controller.enqueue(
+                  encoder.encode(
+                    `data: ${JSON.stringify({
+                      type: 'consensus_error',
+                      modelIndex: index,
+                      model: model,
+                      error:
+                        error instanceof Error
+                          ? error.message
+                          : 'Unknown error',
+                      responseTime,
+                    })}\n\n`
+                  )
+                );
+              }
             }
-          });
+          );
 
           // Wait for all models to complete
           await Promise.all(modelPromises);
 
           // Save the consensus message to database
           const consensusContent = JSON.stringify(consensusResponses);
-          
+
           const { data: assistantMessage } = await supabase
             .from('messages')
             .insert({
@@ -358,29 +413,38 @@ export async function POST(request: NextRequest) {
           if (messages.length === 0) {
             try {
               // Use the best response for title generation (first successful one)
-              const bestResponse = consensusResponses.find(r => r.content && !r.error)?.content || '';
-              
-              const titleResponse = await fetch(`${request.headers.get('origin') || 'http://localhost:3000'}/api/generate-title`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': request.headers.get('Authorization') || '',
-                  'Cookie': request.headers.get('Cookie') || '',
-                },
-                body: JSON.stringify({
-                  userMessage: message,
-                  assistantResponse: bestResponse,
-                  conversationId: conversation.id,
-                }),
-              });
-              
+              const bestResponse =
+                consensusResponses.find((r) => r.content && !r.error)
+                  ?.content || '';
+
+              const titleResponse = await fetch(
+                `${request.headers.get('origin') || 'http://localhost:3000'}/api/generate-title`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: request.headers.get('Authorization') || '',
+                    Cookie: request.headers.get('Cookie') || '',
+                  },
+                  body: JSON.stringify({
+                    userMessage: message,
+                    assistantResponse: bestResponse,
+                    conversationId: conversation.id,
+                  }),
+                }
+              );
+
               if (titleResponse.ok) {
                 const titleData = await titleResponse.json();
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                  type: 'title_update',
-                  title: titleData.title,
-                  conversationId: conversation.id
-                })}\n\n`));
+                controller.enqueue(
+                  encoder.encode(
+                    `data: ${JSON.stringify({
+                      type: 'title_update',
+                      title: titleData.title,
+                      conversationId: conversation.id,
+                    })}\n\n`
+                  )
+                );
               }
             } catch (titleError) {
               console.error('Failed to generate title:', titleError);
@@ -388,21 +452,28 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-            type: 'consensus_final',
-            messageId: assistantMessage?.id,
-            responses: consensusResponses
-          })}\n\n`));
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({
+                type: 'consensus_final',
+                messageId: assistantMessage?.id,
+                responses: consensusResponses,
+              })}\n\n`
+            )
+          );
 
           controller.enqueue(encoder.encode('data: [DONE]\n\n'));
           controller.close();
-
         } catch (error) {
           console.error('Consensus error:', error);
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-            type: 'error',
-            error: error instanceof Error ? error.message : 'Unknown error'
-          })}\n\n`));
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({
+                type: 'error',
+                error: error instanceof Error ? error.message : 'Unknown error',
+              })}\n\n`
+            )
+          );
           controller.close();
         }
       },
@@ -412,12 +483,14 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
+        Connection: 'keep-alive',
       },
     });
-
   } catch (error) {
     console.error('Error in consensus endpoint:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
-} 
+}

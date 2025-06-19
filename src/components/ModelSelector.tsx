@@ -1,7 +1,15 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Brain, Search, X, Check, FileImage, FileText, Type } from 'lucide-react';
+import {
+  Brain,
+  Search,
+  X,
+  Check,
+  FileImage,
+  FileText,
+  Type,
+} from 'lucide-react';
 import { getPopularModels } from '@/lib/openrouter';
 import { getModelCapabilities } from '@/lib/model-capabilities';
 
@@ -12,20 +20,25 @@ interface ModelSelectorProps {
   onClose: () => void;
 }
 
-export function ModelSelector({ selectedModel, onModelSelect, isOpen, onClose }: ModelSelectorProps) {
+export function ModelSelector({
+  selectedModel,
+  onModelSelect,
+  isOpen,
+  onClose,
+}: ModelSelectorProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const popularModels = getPopularModels();
 
   const getProviderLogo = (provider: string) => {
     const providerLogos: Record<string, string> = {
-      'anthropic': '/logos/anthropic.svg',
-      'openai': '/logos/openai.svg',
-      'google': '/logos/google.svg',
+      anthropic: '/logos/anthropic.svg',
+      openai: '/logos/openai.svg',
+      google: '/logos/google.svg',
       'meta-llama': '/logos/meta.svg',
-      'mistralai': '/logos/mistral.svg',
-      'deepseek': '/logos/deepseek.svg'
+      mistralai: '/logos/mistral.svg',
+      deepseek: '/logos/deepseek.svg',
     };
-    
+
     return providerLogos[provider.toLowerCase()] || null;
   };
 
@@ -34,15 +47,17 @@ export function ModelSelector({ selectedModel, onModelSelect, isOpen, onClose }:
     if (parts.length === 2) {
       const [provider, modelName] = parts;
       return {
-        name: modelName.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        name: modelName
+          .replace(/-/g, ' ')
+          .replace(/\b\w/g, (l) => l.toUpperCase()),
         provider: provider,
-        logo: getProviderLogo(provider)
+        logo: getProviderLogo(provider),
       };
     }
     return {
       name: model,
       provider: 'Other',
-      logo: null
+      logo: null,
     };
   };
 
@@ -51,14 +66,20 @@ export function ModelSelector({ selectedModel, onModelSelect, isOpen, onClose }:
     const icons = [];
 
     icons.push(
-      <div key="text" className="w-5 h-5 flex items-center justify-center rounded-md bg-white/10 border border-white/20">
+      <div
+        key="text"
+        className="w-5 h-5 flex items-center justify-center rounded-md bg-white/10 border border-white/20"
+      >
         <Type size={12} className="text-white/80" />
       </div>
     );
 
     if (capabilities.supportsImages) {
       icons.push(
-        <div key="images" className="w-5 h-5 flex items-center justify-center rounded-md bg-blue-500/20 border border-blue-400/30">
+        <div
+          key="images"
+          className="w-5 h-5 flex items-center justify-center rounded-md bg-blue-500/20 border border-blue-400/30"
+        >
           <FileImage size={12} className="text-blue-400" />
         </div>
       );
@@ -66,7 +87,10 @@ export function ModelSelector({ selectedModel, onModelSelect, isOpen, onClose }:
 
     if (capabilities.supportsPDF) {
       icons.push(
-        <div key="pdf" className="w-5 h-5 flex items-center justify-center rounded-md bg-red-500/20 border border-red-400/30">
+        <div
+          key="pdf"
+          className="w-5 h-5 flex items-center justify-center rounded-md bg-red-500/20 border border-red-400/30"
+        >
           <FileText size={12} className="text-red-400" />
         </div>
       );
@@ -76,7 +100,7 @@ export function ModelSelector({ selectedModel, onModelSelect, isOpen, onClose }:
   };
 
   const filteredAndSortedModels = useMemo(() => {
-    const filtered = popularModels.filter(model => {
+    const filtered = popularModels.filter((model) => {
       const modelInfo = formatModelName(model);
       const searchTerm = searchQuery.toLowerCase();
       return (
@@ -86,25 +110,28 @@ export function ModelSelector({ selectedModel, onModelSelect, isOpen, onClose }:
       );
     });
 
-    const grouped = filtered.reduce((acc, model) => {
-      const modelInfo = formatModelName(model);
-      const provider = modelInfo.provider || 'Other';
-      
-      if (!acc[provider]) {
-        acc[provider] = [];
-      }
-      acc[provider].push(model);
-      
-      return acc;
-    }, {} as Record<string, string[]>);
+    const grouped = filtered.reduce(
+      (acc, model) => {
+        const modelInfo = formatModelName(model);
+        const provider = modelInfo.provider || 'Other';
+
+        if (!acc[provider]) {
+          acc[provider] = [];
+        }
+        acc[provider].push(model);
+
+        return acc;
+      },
+      {} as Record<string, string[]>
+    );
 
     const sortedProviders = Object.keys(grouped).sort();
     const result: Array<{ provider: string; models: string[] }> = [];
-    
-    sortedProviders.forEach(provider => {
+
+    sortedProviders.forEach((provider) => {
       result.push({
         provider,
-        models: grouped[provider].sort()
+        models: grouped[provider].sort(),
       });
     });
 
@@ -119,7 +146,7 @@ export function ModelSelector({ selectedModel, onModelSelect, isOpen, onClose }:
       onClick={onClose}
     >
       <div className="absolute inset-0 bg-black/40 backdrop-blur-md" />
-      
+
       <div
         className="relative w-full max-w-5xl max-h-[85vh] glass-strong backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl flex flex-col opacity-100 scale-100 overflow-hidden modal-enter"
         onClick={(e) => e.stopPropagation()}
@@ -131,22 +158,30 @@ export function ModelSelector({ selectedModel, onModelSelect, isOpen, onClose }:
             </div>
             <div>
               <h2 className="text-2xl font-bold text-white">Select AI Model</h2>
-              <p className="text-white/60 text-sm mt-1">Choose the perfect AI model for your task</p>
+              <p className="text-white/60 text-sm mt-1">
+                Choose the perfect AI model for your task
+              </p>
             </div>
           </div>
-          
+
           <button
             onClick={onClose}
             className="cursor-pointer p-3 rounded-xl hover:bg-white/10 transition-all duration-200 group"
             title="Close"
           >
-            <X size={20} className="text-white/60 group-hover:text-white transition-colors" />
+            <X
+              size={20}
+              className="text-white/60 group-hover:text-white transition-colors"
+            />
           </button>
         </div>
 
         <div className="px-8 pt-6 pb-4">
           <div className="relative">
-            <Search size={18} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/40" />
+            <Search
+              size={18}
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/40"
+            />
             <input
               type="text"
               placeholder="Search models by name or provider..."
@@ -187,12 +222,12 @@ export function ModelSelector({ selectedModel, onModelSelect, isOpen, onClose }:
                     {models.length} model{models.length !== 1 ? 's' : ''}
                   </span>
                 </div>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   {models.map((model) => {
                     const modelInfo = formatModelName(model);
                     const isSelected = selectedModel === model;
-                    
+
                     return (
                       <button
                         key={model}
@@ -210,11 +245,14 @@ export function ModelSelector({ selectedModel, onModelSelect, isOpen, onClose }:
                           <>
                             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-blue-600/5 rounded-2xl"></div>
                             <div className="absolute top-3 right-3 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shadow-lg ring-2 ring-blue-400/30 z-10">
-                              <Check size={14} className="text-white font-bold" />
+                              <Check
+                                size={14}
+                                className="text-white font-bold"
+                              />
                             </div>
                           </>
                         )}
-                        
+
                         <div className="flex flex-col items-center gap-3">
                           <div className="w-8 h-8 flex items-center justify-center rounded-xl glass border border-white/15">
                             {modelInfo.logo ? (
@@ -225,16 +263,18 @@ export function ModelSelector({ selectedModel, onModelSelect, isOpen, onClose }:
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
                                   target.style.display = 'none';
-                                  target.nextElementSibling?.classList.remove('hidden');
+                                  target.nextElementSibling?.classList.remove(
+                                    'hidden'
+                                  );
                                 }}
                               />
                             ) : null}
-                            <Brain 
-                              size={14} 
+                            <Brain
+                              size={14}
                               className={`text-white/60 ${modelInfo.logo ? 'hidden' : ''}`}
                             />
                           </div>
-                          
+
                           <div className="flex flex-col items-center gap-2">
                             <div className="font-semibold text-white text-sm text-center">
                               {modelInfo.name}
@@ -255,4 +295,4 @@ export function ModelSelector({ selectedModel, onModelSelect, isOpen, onClose }:
       </div>
     </div>
   );
-} 
+}

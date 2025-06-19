@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React from "react";
-import { Copy, Check, RotateCcw, Loader2 } from "lucide-react";
+import React from 'react';
+import { Copy, Check, RotateCcw, Loader2 } from 'lucide-react';
 
 interface MessageActionsProps {
   messageId: string;
@@ -41,7 +41,7 @@ export function MessageActions({
         </button>
 
         <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/copy:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-          {copiedId === messageId ? "Copied!" : "Copy"}
+          {copiedId === messageId ? 'Copied!' : 'Copy'}
         </div>
       </div>
 
@@ -60,7 +60,7 @@ export function MessageActions({
           </button>
 
           <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/retry:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-            {retryingId === messageId ? "Retrying..." : "Retry"}
+            {retryingId === messageId ? 'Retrying...' : 'Retry'}
           </div>
         </div>
       )}

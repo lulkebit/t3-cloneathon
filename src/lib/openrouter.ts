@@ -13,7 +13,7 @@ export class OpenRouterService {
     try {
       const response = await fetch(`${OPENROUTER_BASE_URL}/models`, {
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          Authorization: `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
         },
       });
@@ -40,7 +40,7 @@ export class OpenRouterService {
       const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          Authorization: `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
           ...(referer && { 'HTTP-Referer': referer }),
           'X-Title': 'T3 Cloneathon Chat',
@@ -56,7 +56,9 @@ export class OpenRouterService {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error?.message || 'Failed to create completion');
+        throw new Error(
+          errorData.error?.message || 'Failed to create completion'
+        );
       }
 
       if (onChunk && response.body) {
@@ -84,8 +86,7 @@ export class OpenRouterService {
                     fullResponse += content;
                     onChunk(content);
                   }
-                } catch (e) {
-                }
+                } catch (e) {}
               }
             }
           }
@@ -108,7 +109,7 @@ export class OpenRouterService {
     try {
       const response = await fetch(`${OPENROUTER_BASE_URL}/models`, {
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          Authorization: `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
         },
       });
@@ -142,5 +143,5 @@ export const getPopularModels = (): string[] => [
   'deepseek/deepseek-chat-v3-0324:free',
   'deepseek/deepseek-r1-0528:free',
   'x-ai/grok-3-beta',
-  'x-ai/grok-3-mini-beta'
-]; 
+  'x-ai/grok-3-mini-beta',
+];

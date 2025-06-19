@@ -3,7 +3,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from '@/contexts/ChatContext';
-import { User, Sparkles, FileImage, FileText, Download, Users } from 'lucide-react';
+import {
+  User,
+  Sparkles,
+  FileImage,
+  FileText,
+  Download,
+  Users,
+} from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { LoadingIndicator } from './LoadingIndicator';
 import { TypeWriter } from './TypeWriter';
@@ -14,14 +21,14 @@ import { ConsensusResponse } from '@/types/chat';
 
 const getProviderLogo = (model: string) => {
   const providerLogos: Record<string, string> = {
-    'anthropic': '/logos/anthropic.svg',
-    'openai': '/logos/openai.svg',
-    'google': '/logos/google.svg',
+    anthropic: '/logos/anthropic.svg',
+    openai: '/logos/openai.svg',
+    google: '/logos/google.svg',
     'meta-llama': '/logos/meta.svg',
-    'mistralai': '/logos/mistral.svg',
-    'deepseek': '/logos/deepseek.svg'
+    mistralai: '/logos/mistral.svg',
+    deepseek: '/logos/deepseek.svg',
   };
-  
+
   const provider = model.split('/')[0];
   return providerLogos[provider.toLowerCase()] || null;
 };
@@ -30,23 +37,29 @@ const formatModelName = (model: string) => {
   const parts = model.split('/');
   if (parts.length === 2) {
     const [provider, modelName] = parts;
-    return modelName.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return modelName
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, (l) => l.toUpperCase());
   }
   return model;
 };
 
 const getUserDisplayName = (user: any) => {
   if (!user?.user_metadata) return 'You';
-  
+
   const metadata = user.user_metadata;
-  return metadata.full_name || 
-         metadata.name || 
-         metadata.display_name || 
-         metadata.first_name ||
-         (metadata.given_name && metadata.family_name ? `${metadata.given_name} ${metadata.family_name}` : null) ||
-         metadata.given_name ||
-         metadata.nickname ||
-         'You';
+  return (
+    metadata.full_name ||
+    metadata.name ||
+    metadata.display_name ||
+    metadata.first_name ||
+    (metadata.given_name && metadata.family_name
+      ? `${metadata.given_name} ${metadata.family_name}`
+      : null) ||
+    metadata.given_name ||
+    metadata.nickname ||
+    'You'
+  );
 };
 
 const formatFileSize = (bytes: number) => {
@@ -62,7 +75,8 @@ interface ChatMessagesProps {
 }
 
 export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
-  const { messages, activeConversation, isLoading, refreshMessages, user } = useChat();
+  const { messages, activeConversation, isLoading, refreshMessages, user } =
+    useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -88,9 +102,9 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
 
   const handleRetry = async (messageId: string, messageIndex: number) => {
     if (!activeConversation || retryingId) return;
-    
+
     setRetryingId(messageId);
-    
+
     try {
       const userMessage = messages[messageIndex - 1];
       if (!userMessage || userMessage.role !== 'user') {
@@ -98,9 +112,12 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
         return;
       }
 
-      const deleteResponse = await fetch(`/api/conversations/${activeConversation.id}/messages/${messageId}`, {
-        method: 'DELETE',
-      });
+      const deleteResponse = await fetch(
+        `/api/conversations/${activeConversation.id}/messages/${messageId}`,
+        {
+          method: 'DELETE',
+        }
+      );
 
       if (!deleteResponse.ok) {
         throw new Error('Failed to delete message');
@@ -146,8 +163,7 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
                   await refreshMessages(activeConversation.id);
                   break;
                 }
-              } catch (e) {
-              }
+              } catch (e) {}
             }
           }
         }
@@ -180,20 +196,20 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
         <div className="text-center max-w-md">
           <div className="w-20 h-20 mx-auto mb-6 glass-strong rounded-3xl flex items-center justify-center relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20"></div>
-            <img 
-              src="/ai.png" 
-              alt="AI Assistant" 
+            <img
+              src="/ai.png"
+              alt="AI Assistant"
               className="w-14 h-14 object-contain relative z-10"
             />
           </div>
-          
+
           <h3 className="text-2xl font-bold text-white mb-4">
             Welcome to Convex Chat
           </h3>
-          
+
           <p className="text-white/60 leading-relaxed">
-            Start a new conversation to chat with various AI models through OpenRouter.
-            Choose your preferred model and begin chatting!
+            Start a new conversation to chat with various AI models through
+            OpenRouter. Choose your preferred model and begin chatting!
           </p>
 
           <div className="flex items-center justify-center gap-2 mt-6 text-sm text-white/40">
@@ -207,7 +223,7 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
 
   return (
     <div ref={scrollContainerRef} className="flex-1 overflow-y-auto relative">
-      <ScrollToBottomButton 
+      <ScrollToBottomButton
         scrollContainerRef={scrollContainerRef}
         onScrollToBottom={scrollToBottom}
         isSidebarCollapsed={isSidebarCollapsed}
@@ -218,24 +234,31 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
             key={message.id}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             className={`group ${message.role === 'user' ? 'flex flex-col items-end' : ''}`}
           >
-            <div className={`flex items-center gap-3 mb-3 ${
-              message.role === 'user' ? 'flex-row-reverse' : ''
-            }`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center overflow-hidden ${
-                message.role === 'user' 
-                  ? 'bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-400/30' 
-                  : (message.isConsensus || (message.content && message.content.startsWith('[{') && message.content.includes('"model"')))
-                    ? 'bg-gradient-to-br from-purple-500/20 to-indigo-500/20 border border-purple-400/30'
-                    : 'bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-400/30'
-              }`}>
+            <div
+              className={`flex items-center gap-3 mb-3 ${
+                message.role === 'user' ? 'flex-row-reverse' : ''
+              }`}
+            >
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center overflow-hidden ${
+                  message.role === 'user'
+                    ? 'bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-400/30'
+                    : message.isConsensus ||
+                        (message.content &&
+                          message.content.startsWith('[{') &&
+                          message.content.includes('"model"'))
+                      ? 'bg-gradient-to-br from-purple-500/20 to-indigo-500/20 border border-purple-400/30'
+                      : 'bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-400/30'
+                }`}
+              >
                 {message.role === 'user' ? (
                   user?.user_metadata?.avatar_url ? (
-                    <img 
-                      src={user.user_metadata.avatar_url} 
-                      alt="User Avatar" 
+                    <img
+                      src={user.user_metadata.avatar_url}
+                      alt="User Avatar"
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -244,23 +267,30 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
                 ) : (
                   (() => {
                     // Check if this is a consensus message
-                    const isConsensusMessage = message.isConsensus || (message.content && message.content.startsWith('[{') && message.content.includes('"model"'));
-                    
+                    const isConsensusMessage =
+                      message.isConsensus ||
+                      (message.content &&
+                        message.content.startsWith('[{') &&
+                        message.content.includes('"model"'));
+
                     if (isConsensusMessage) {
                       return <Users size={16} className="text-purple-400" />;
                     }
-                    
-                    const logoUrl = activeConversation?.model ? getProviderLogo(activeConversation.model) : null;
+
+                    const logoUrl = activeConversation?.model
+                      ? getProviderLogo(activeConversation.model)
+                      : null;
                     if (logoUrl) {
                       return (
-                        <img 
-                          src={logoUrl} 
-                          alt="Provider Logo" 
+                        <img
+                          src={logoUrl}
+                          alt="Provider Logo"
                           className="w-4 h-4 object-contain"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.style.display = 'none';
-                            const botIcon = target.nextElementSibling as HTMLElement;
+                            const botIcon =
+                              target.nextElementSibling as HTMLElement;
                             if (botIcon) {
                               botIcon.classList.remove('hidden');
                             }
@@ -268,27 +298,39 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
                         />
                       );
                     }
-                    
+
                     // Fallback to AI image for assistant messages
-                    return <img src="/ai.png" alt="AI Assistant" className="w-4 h-4 object-contain" />;
+                    return (
+                      <img
+                        src="/ai.png"
+                        alt="AI Assistant"
+                        className="w-4 h-4 object-contain"
+                      />
+                    );
                   })()
                 )}
               </div>
 
-              <div className={`flex items-center gap-2 ${
-                message.role === 'user' ? 'flex-row-reverse' : ''
-              }`}>
-                <span className={`text-sm font-medium ${
-                  message.role === 'user' ? 'text-white/90' : 'text-blue-400'
-                }`}>
-                  {message.role === 'user' 
+              <div
+                className={`flex items-center gap-2 ${
+                  message.role === 'user' ? 'flex-row-reverse' : ''
+                }`}
+              >
+                <span
+                  className={`text-sm font-medium ${
+                    message.role === 'user' ? 'text-white/90' : 'text-blue-400'
+                  }`}
+                >
+                  {message.role === 'user'
                     ? getUserDisplayName(user)
-                    : (message.isConsensus || (message.content && message.content.startsWith('[{') && message.content.includes('"model"')))
+                    : message.isConsensus ||
+                        (message.content &&
+                          message.content.startsWith('[{') &&
+                          message.content.includes('"model"'))
                       ? 'Multi-Model Consensus'
-                      : activeConversation?.model 
+                      : activeConversation?.model
                         ? formatModelName(activeConversation.model)
-                        : 'Assistant'
-                  }
+                        : 'Assistant'}
                 </span>
                 <span className="text-xs text-white/40">
                   {new Date(message.created_at).toLocaleTimeString([], {
@@ -299,24 +341,36 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
               </div>
             </div>
 
-            <div className={`relative ${
-              message.role === 'user' 
-                ? 'mr-11' 
-                : 'ml-11'
-            }`} style={{
-              maxWidth: message.role === 'assistant' ? 'calc(100% - 2.75rem - 2.75rem)' : 'calc(100% - 2.75rem - 2.75rem)'
-            }}>
-              <div className={`${
-                message.role === 'user' ? 'text-right' : 'text-left'
-              }`}>
+            <div
+              className={`relative ${
+                message.role === 'user' ? 'mr-11' : 'ml-11'
+              }`}
+              style={{
+                maxWidth:
+                  message.role === 'assistant'
+                    ? 'calc(100% - 2.75rem - 2.75rem)'
+                    : 'calc(100% - 2.75rem - 2.75rem)',
+              }}
+            >
+              <div
+                className={`${
+                  message.role === 'user' ? 'text-right' : 'text-left'
+                }`}
+              >
                 {message.role === 'user' ? (
-                  <div className={`prose prose-sm max-w-none ${
-                    message.role === 'user' ? 'text-right' : 'text-left'
-                  }`}>
+                  <div
+                    className={`prose prose-sm max-w-none ${
+                      message.role === 'user' ? 'text-right' : 'text-left'
+                    }`}
+                  >
                     {message.attachments && message.attachments.length > 0 && (
-                      <div className={`mb-3 flex flex-wrap gap-2 ${
-                        message.role === 'user' ? 'justify-end' : 'justify-start'
-                      }`}>
+                      <div
+                        className={`mb-3 flex flex-wrap gap-2 ${
+                          message.role === 'user'
+                            ? 'justify-end'
+                            : 'justify-start'
+                        }`}
+                      >
                         {message.attachments.map((attachment, index) => (
                           <div
                             key={attachment.id || index}
@@ -325,7 +379,10 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
                             <div className="flex items-center gap-2 flex-1 min-w-0">
                               {attachment.file_type.startsWith('image/') ? (
                                 <div className="flex items-center gap-2">
-                                  <FileImage size={16} className="text-blue-400 flex-shrink-0" />
+                                  <FileImage
+                                    size={16}
+                                    className="text-blue-400 flex-shrink-0"
+                                  />
                                   <div className="min-w-0 flex-1">
                                     <div className="text-white/80 truncate text-xs">
                                       {attachment.filename}
@@ -337,7 +394,10 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
                                 </div>
                               ) : (
                                 <div className="flex items-center gap-2">
-                                  <FileText size={16} className="text-red-400 flex-shrink-0" />
+                                  <FileText
+                                    size={16}
+                                    className="text-red-400 flex-shrink-0"
+                                  />
                                   <div className="min-w-0 flex-1">
                                     <div className="text-white/80 truncate text-xs">
                                       {attachment.filename}
@@ -355,16 +415,19 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
                               rel="noopener noreferrer"
                               className="cursor-pointer p-1 rounded hover:bg-white/10 transition-colors flex-shrink-0"
                             >
-                              <Download size={14} className="text-white/60 hover:text-white" />
+                              <Download
+                                size={14}
+                                className="text-white/60 hover:text-white"
+                              />
                             </a>
                           </div>
                         ))}
                       </div>
                     )}
-                    
+
                     {message.content && (
-                      <MarkdownRenderer 
-                        content={message.content} 
+                      <MarkdownRenderer
+                        content={message.content}
                         isUserMessage={true}
                         className="text-right"
                       />
@@ -373,7 +436,10 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
                 ) : (
                   <div className="relative">
                     <div>
-                      {message.isConsensus || (message.content && message.content.startsWith('[{') && message.content.includes('"model"')) ? (
+                      {message.isConsensus ||
+                      (message.content &&
+                        message.content.startsWith('[{') &&
+                        message.content.includes('"model"')) ? (
                         (() => {
                           let consensusResponses: ConsensusResponse[] = [];
                           try {
@@ -382,21 +448,32 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
                             } else if (message.content) {
                               // Try to parse the content as consensus responses
                               const parsed = JSON.parse(message.content);
-                              if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].model) {
+                              if (
+                                Array.isArray(parsed) &&
+                                parsed.length > 0 &&
+                                parsed[0].model
+                              ) {
                                 consensusResponses = parsed;
                               } else {
                                 // If it's not consensus data, fall back to regular rendering
-                                return <MarkdownRenderer content={message.content} />;
+                                return (
+                                  <MarkdownRenderer content={message.content} />
+                                );
                               }
                             }
                           } catch (e) {
-                            console.error('Error parsing consensus responses:', e);
+                            console.error(
+                              'Error parsing consensus responses:',
+                              e
+                            );
                             // If parsing fails, render as regular markdown
-                            return <MarkdownRenderer content={message.content} />;
+                            return (
+                              <MarkdownRenderer content={message.content} />
+                            );
                           }
-                          
+
                           return (
-                            <ConsensusMessage 
+                            <ConsensusMessage
                               responses={consensusResponses}
                               isStreaming={message.isStreaming}
                             />
@@ -405,8 +482,8 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
                       ) : message.isLoading ? (
                         <LoadingIndicator />
                       ) : message.isStreaming ? (
-                        <TypeWriter 
-                          text={message.content} 
+                        <TypeWriter
+                          text={message.content}
                           isComplete={false}
                           speed={15}
                           typingMode="character"
@@ -415,8 +492,13 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
                         <MarkdownRenderer content={message.content} />
                       )}
                     </div>
-                    
-                    {!(message.isConsensus || (message.content && message.content.startsWith('[{') && message.content.includes('"model"'))) && (
+
+                    {!(
+                      message.isConsensus ||
+                      (message.content &&
+                        message.content.startsWith('[{') &&
+                        message.content.includes('"model"'))
+                    ) && (
                       <MessageActions
                         messageId={message.id}
                         messageIndex={index}
@@ -436,8 +518,8 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
           </motion.div>
         ))}
       </div>
-      
+
       <div ref={messagesEndRef} />
     </div>
   );
-} 
+}

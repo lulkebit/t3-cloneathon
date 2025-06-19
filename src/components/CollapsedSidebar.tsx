@@ -10,7 +10,11 @@ interface CollapsedSidebarProps {
   onNewChat: () => void;
 }
 
-export function CollapsedSidebar({ isVisible, onToggleExpand, onNewChat }: CollapsedSidebarProps) {
+export function CollapsedSidebar({
+  isVisible,
+  onToggleExpand,
+  onNewChat,
+}: CollapsedSidebarProps) {
   return (
     <AnimatePresence>
       {isVisible && (
@@ -18,7 +22,7 @@ export function CollapsedSidebar({ isVisible, onToggleExpand, onNewChat }: Colla
           initial={{ opacity: 0, x: -50, scale: 0.8 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={{ opacity: 0, x: -50, scale: 0.8 }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
+          transition={{ duration: 0.3, ease: 'easeInOut' }}
           className="fixed left-4 top-4 z-50 flex flex-col gap-2"
         >
           <div className="relative group/expand">
@@ -30,7 +34,7 @@ export function CollapsedSidebar({ isVisible, onToggleExpand, onNewChat }: Colla
             >
               <ChevronRight size={16} />
             </motion.button>
-            
+
             <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/expand:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
               Expand Sidebar
             </div>
@@ -45,7 +49,7 @@ export function CollapsedSidebar({ isVisible, onToggleExpand, onNewChat }: Colla
             >
               <Plus size={16} />
             </motion.button>
-            
+
             <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/newchat:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
               New Chat
             </div>
@@ -54,4 +58,4 @@ export function CollapsedSidebar({ isVisible, onToggleExpand, onNewChat }: Colla
       )}
     </AnimatePresence>
   );
-} 
+}

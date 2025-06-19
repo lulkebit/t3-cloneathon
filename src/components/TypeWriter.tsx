@@ -11,12 +11,12 @@ interface TypeWriterProps {
   typingMode?: 'character' | 'word';
 }
 
-export function TypeWriter({ 
-  text, 
-  isComplete = false, 
+export function TypeWriter({
+  text,
+  isComplete = false,
   speed = 25,
   onComplete,
-  typingMode = 'character'
+  typingMode = 'character',
 }: TypeWriterProps) {
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -27,10 +27,10 @@ export function TypeWriter({
   // Cursor blinking effect
   useEffect(() => {
     const blinkCursor = () => {
-      setShowCursor(prev => !prev);
+      setShowCursor((prev) => !prev);
       cursorTimeoutRef.current = setTimeout(blinkCursor, 530);
     };
-    
+
     if (!isComplete) {
       blinkCursor();
     } else {
@@ -48,7 +48,7 @@ export function TypeWriter({
   useEffect(() => {
     setDisplayedText(text);
     setIsTyping(!isComplete && text.length > 0);
-    
+
     if (isComplete && onComplete) {
       onComplete();
     }
@@ -60,10 +60,12 @@ export function TypeWriter({
 
     const container = containerRef.current;
     const lastTextNode = findLastTextNode(container);
-    
+
     if (lastTextNode && lastTextNode.parentElement) {
       // Remove any existing cursor
-      const existingCursor = container.querySelector('.typewriter-cursor-inline');
+      const existingCursor = container.querySelector(
+        '.typewriter-cursor-inline'
+      );
       if (existingCursor) {
         existingCursor.remove();
       }
@@ -77,7 +79,10 @@ export function TypeWriter({
 
       // Insert cursor after the last text node
       if (lastTextNode.nextSibling) {
-        lastTextNode.parentElement.insertBefore(cursor, lastTextNode.nextSibling);
+        lastTextNode.parentElement.insertBefore(
+          cursor,
+          lastTextNode.nextSibling
+        );
       } else {
         lastTextNode.parentElement.appendChild(cursor);
       }
@@ -94,8 +99,8 @@ export function TypeWriter({
 
     let lastTextNode: Text | null = null;
     let node;
-    
-    while (node = walker.nextNode()) {
+
+    while ((node = walker.nextNode())) {
       if (node.textContent && node.textContent.trim()) {
         lastTextNode = node as Text;
       }
@@ -106,7 +111,7 @@ export function TypeWriter({
 
   return (
     <div className="relative">
-      <div 
+      <div
         ref={containerRef}
         className="prose prose-invert max-w-none streaming-message"
       >
@@ -114,4 +119,4 @@ export function TypeWriter({
       </div>
     </div>
   );
-} 
+}

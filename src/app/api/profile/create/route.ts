@@ -4,7 +4,10 @@ import { createClient } from '@/lib/supabase-server';
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -33,12 +36,18 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Error creating profile:', error);
-      return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Failed to create profile' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ profile });
   } catch (error) {
     console.error('Error in profile creation:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
-} 
+}

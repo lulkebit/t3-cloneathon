@@ -13,7 +13,11 @@ interface ChatModeToggleProps {
   onConsenusModeToggle: () => void;
   onMultiModelSelectorOpen: () => void;
   onSingleModelSelectorOpen: () => void;
-  formatModelName: (model: string) => { name: string; provider: string; logo: string | null };
+  formatModelName: (model: string) => {
+    name: string;
+    provider: string;
+    logo: string | null;
+  };
 }
 
 export function ChatModeToggle({
@@ -40,18 +44,19 @@ export function ChatModeToggle({
             activeConversation !== null
               ? 'cursor-not-allowed opacity-50'
               : 'cursor-pointer'
-          } ${
-            isLoading || activeConversation !== null ? 'opacity-50' : ''
-          } ${
+          } ${isLoading || activeConversation !== null ? 'opacity-50' : ''} ${
             isConsensusMode
               ? 'glass-strong border-purple-400/30 bg-purple-500/10 text-purple-300'
               : 'glass-hover border-white/10 text-white/80 hover:text-white hover:scale-[1.02]'
           }`}
         >
-          <Users size={16} className={isConsensusMode ? 'text-purple-400' : 'text-white/60'} />
+          <Users
+            size={16}
+            className={isConsensusMode ? 'text-purple-400' : 'text-white/60'}
+          />
           <span>Consensus Mode</span>
         </button>
-        
+
         {activeConversation !== null && (
           <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/consensus-toggle:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
             Mode locked for existing conversation
@@ -69,15 +74,16 @@ export function ChatModeToggle({
               activeConversation !== null
                 ? 'cursor-not-allowed opacity-50 text-white/40'
                 : 'cursor-pointer glass-hover text-white/80 hover:text-white hover:scale-[1.02]'
-            } ${
-              isLoading || activeConversation !== null ? 'opacity-50' : ''
-            }`}
+            } ${isLoading || activeConversation !== null ? 'opacity-50' : ''}`}
           >
             <Brain size={16} className="text-purple-400" />
-            <span>{selectedModels.length} Model{selectedModels.length !== 1 ? 's' : ''}</span>
+            <span>
+              {selectedModels.length} Model
+              {selectedModels.length !== 1 ? 's' : ''}
+            </span>
             <ChevronDown size={14} className="text-white/40" />
           </button>
-          
+
           {activeConversation !== null && (
             <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/model-selector:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
               Models locked for existing conversation
@@ -93,9 +99,7 @@ export function ChatModeToggle({
               activeConversation !== null
                 ? 'cursor-not-allowed opacity-50 text-white/40'
                 : 'cursor-pointer glass-hover text-white/80 hover:text-white hover:scale-[1.02]'
-            } ${
-              isLoading || activeConversation !== null ? 'opacity-50' : ''
-            }`}
+            } ${isLoading || activeConversation !== null ? 'opacity-50' : ''}`}
           >
             <div className="w-5 h-5 flex items-center justify-center rounded flex-shrink-0">
               {selectedModelInfo.logo ? (
@@ -110,15 +114,15 @@ export function ChatModeToggle({
                   }}
                 />
               ) : null}
-              <Bot 
-                size={14} 
+              <Bot
+                size={14}
                 className={`text-blue-400 ${selectedModelInfo.logo ? 'hidden' : ''}`}
               />
             </div>
             <span>{selectedModelInfo.name}</span>
             <ChevronDown size={14} className="text-white/40" />
           </button>
-          
+
           {activeConversation !== null && (
             <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/single-model-selector:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
               Model locked for existing conversation
@@ -128,4 +132,4 @@ export function ChatModeToggle({
       )}
     </div>
   );
-} 
+}

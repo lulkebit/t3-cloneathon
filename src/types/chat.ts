@@ -77,4 +77,4 @@ export interface MultiModelRequest {
   models: string[];
   conversationId?: string;
   attachments?: Attachment[];
-} 
+}

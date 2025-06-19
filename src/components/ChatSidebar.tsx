@@ -5,7 +5,13 @@ import Link from 'next/link';
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from '@/contexts/ChatContext';
-import { Plus, MessageSquare, Trash2, Settings, ChevronLeft } from 'lucide-react';
+import {
+  Plus,
+  MessageSquare,
+  Trash2,
+  Settings,
+  ChevronLeft,
+} from 'lucide-react';
 import { SidebarConversationItem } from './SidebarConversationItem';
 import { CollapsedSidebar } from './CollapsedSidebar';
 
@@ -14,7 +20,10 @@ interface ChatSidebarProps {
   onToggleCollapse: () => void;
 }
 
-export function ChatSidebar({ isCollapsed, onToggleCollapse }: ChatSidebarProps) {
+export function ChatSidebar({
+  isCollapsed,
+  onToggleCollapse,
+}: ChatSidebarProps) {
   const {
     conversations,
     activeConversation,
@@ -26,7 +35,9 @@ export function ChatSidebar({ isCollapsed, onToggleCollapse }: ChatSidebarProps)
   } = useChat();
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(
+    null
+  );
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState<string>('');
   const [isRenaming, setIsRenaming] = useState<boolean>(false);
@@ -55,22 +66,32 @@ export function ChatSidebar({ isCollapsed, onToggleCollapse }: ChatSidebarProps)
     setConfirmingDeleteId(null);
   };
 
-  const handleEditClick = (e: React.MouseEvent, conversationId: string, currentTitle: string) => {
+  const handleEditClick = (
+    e: React.MouseEvent,
+    conversationId: string,
+    currentTitle: string
+  ) => {
     e.stopPropagation();
     setEditingId(conversationId);
     setEditTitle(currentTitle);
     setConfirmingDeleteId(null); // Cancel any pending delete
   };
 
-  const handleSaveEdit = async (e: React.MouseEvent, conversationId: string) => {
+  const handleSaveEdit = async (
+    e: React.MouseEvent,
+    conversationId: string
+  ) => {
     e.stopPropagation();
     if (editTitle.trim() === '') {
       return;
     }
-    
+
     setIsRenaming(true);
     try {
-      const success = await renameConversation(conversationId, editTitle.trim());
+      const success = await renameConversation(
+        conversationId,
+        editTitle.trim()
+      );
       if (success) {
         setEditingId(null);
         setEditTitle('');
@@ -99,10 +120,15 @@ export function ChatSidebar({ isCollapsed, onToggleCollapse }: ChatSidebarProps)
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    const diffInDays = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
+    );
 
     if (diffInDays === 0) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
     } else if (diffInDays === 1) {
       return 'Yesterday';
     } else if (diffInDays < 7) {
@@ -133,11 +159,11 @@ export function ChatSidebar({ isCollapsed, onToggleCollapse }: ChatSidebarProps)
             initial={{ opacity: 0, x: -256, width: 0 }}
             animate={{ opacity: 1, x: 0, width: 256 }}
             exit={{ opacity: 0, x: -256, width: 0 }}
-            transition={{ duration: 0.4, ease: "easeInOut" }}
+            transition={{ duration: 0.4, ease: 'easeInOut' }}
             className="bg-black/20 backdrop-blur-sm border-r border-white/5 flex flex-col h-full overflow-hidden"
           >
             {isLoading ? (
-              <motion.div 
+              <motion.div
                 className="p-4 flex flex-col h-full"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -164,7 +190,7 @@ export function ChatSidebar({ isCollapsed, onToggleCollapse }: ChatSidebarProps)
               </motion.div>
             ) : (
               <>
-                <motion.div 
+                <motion.div
                   className="p-4 border-b border-white/5 flex items-center gap-2"
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -201,7 +227,7 @@ export function ChatSidebar({ isCollapsed, onToggleCollapse }: ChatSidebarProps)
                   </div>
                 </motion.div>
 
-                <motion.div 
+                <motion.div
                   className="flex-1 overflow-y-auto p-2 space-y-1"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -219,11 +245,14 @@ export function ChatSidebar({ isCollapsed, onToggleCollapse }: ChatSidebarProps)
                         <motion.div
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
-                          transition={{ delay: 0.6, type: "spring" }}
+                          transition={{ delay: 0.6, type: 'spring' }}
                         >
-                          <MessageSquare size={20} className="text-white/20 mx-auto mb-2" />
+                          <MessageSquare
+                            size={20}
+                            className="text-white/20 mx-auto mb-2"
+                          />
                         </motion.div>
-                        <motion.p 
+                        <motion.p
                           className="text-white/40 text-xs"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
@@ -245,9 +274,16 @@ export function ChatSidebar({ isCollapsed, onToggleCollapse }: ChatSidebarProps)
                           isRenaming={isRenaming}
                           index={index}
                           onConversationClick={() => {
-                            if (deletingId !== conversation.id && editingId !== conversation.id) {
+                            if (
+                              deletingId !== conversation.id &&
+                              editingId !== conversation.id
+                            ) {
                               setActiveConversation(conversation);
-                              window.history.replaceState(null, '', `/chat/${conversation.id}`);
+                              window.history.replaceState(
+                                null,
+                                '',
+                                `/chat/${conversation.id}`
+                              );
                             }
                           }}
                           onEditClick={handleEditClick}
@@ -264,7 +300,7 @@ export function ChatSidebar({ isCollapsed, onToggleCollapse }: ChatSidebarProps)
                   </AnimatePresence>
                 </motion.div>
 
-                <motion.div 
+                <motion.div
                   className="p-4 border-t border-white/5"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -291,4 +327,4 @@ export function ChatSidebar({ isCollapsed, onToggleCollapse }: ChatSidebarProps)
       </AnimatePresence>
     </>
   );
-} 
+}

@@ -19,7 +19,11 @@ interface ConversationItemProps {
   isRenaming: boolean;
   index: number;
   onConversationClick: () => void;
-  onEditClick: (e: React.MouseEvent, conversationId: string, currentTitle: string) => void;
+  onEditClick: (
+    e: React.MouseEvent,
+    conversationId: string,
+    currentTitle: string
+  ) => void;
   onDeleteClick: (e: React.MouseEvent, conversationId: string) => void;
   onCancelDelete: (e: React.MouseEvent) => void;
   onSaveEdit: (e: React.MouseEvent, conversationId: string) => void;
@@ -59,18 +63,18 @@ export function SidebarConversationItem({
       initial={{ opacity: 0, y: 20, x: -20 }}
       animate={{ opacity: 1, y: 0, x: 0 }}
       exit={{ opacity: 0, x: -20, scale: 0.9 }}
-      transition={{ 
+      transition={{
         delay: 0.5 + index * 0.05,
         duration: 0.3,
-        ease: "easeOut"
+        ease: 'easeOut',
       }}
       onClick={onConversationClick}
       className={`group p-2 rounded-md transition-colors relative ${
         deletingId === conversation.id
           ? 'cursor-not-allowed opacity-50'
           : editingId === conversation.id
-          ? 'cursor-default'
-          : 'cursor-pointer'
+            ? 'cursor-default'
+            : 'cursor-pointer'
       } ${
         isActive
           ? 'bg-white/10 text-white/90'
@@ -103,7 +107,7 @@ export function SidebarConversationItem({
                 <div className="w-4 h-4 bg-purple-500/20 border border-purple-400/30 rounded-full flex items-center justify-center">
                   <Users size={8} className="text-purple-400" />
                 </div>
-                
+
                 <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/consensus:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
                   Multi-Model Consensus Chat
                 </div>
@@ -134,8 +138,13 @@ export function SidebarConversationItem({
               <span className="text-[10px] text-purple-400/60 font-medium">
                 {(() => {
                   // Extract the models part after 'consensus:'
-                  const modelsString = conversation.model.replace('consensus:', '');
-                  const modelCount = modelsString ? modelsString.split(',').length : 0;
+                  const modelsString = conversation.model.replace(
+                    'consensus:',
+                    ''
+                  );
+                  const modelCount = modelsString
+                    ? modelsString.split(',').length
+                    : 0;
                   return modelCount > 0 ? `${modelCount} Models` : 'Consensus';
                 })()}
               </span>
@@ -152,7 +161,7 @@ export function SidebarConversationItem({
           >
             <motion.div
               animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
               className="w-3 h-3 border border-red-400/60 border-t-transparent rounded-full"
             />
             <span className="text-[10px] text-red-400/80 font-medium">
@@ -160,17 +169,17 @@ export function SidebarConversationItem({
             </span>
           </motion.div>
         )}
-        
+
         {/* Gradient background for buttons */}
-        <div 
+        <div
           className="absolute top-0 right-0 bottom-0 w-32 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 rounded-r-md"
           style={{
             background: isActive
               ? 'linear-gradient(to right, transparent 10%, #27252b 50%)'
-              : 'linear-gradient(to right, transparent 10%, #1a191e 50%)'
+              : 'linear-gradient(to right, transparent 10%, #1a191e 50%)',
           }}
         />
-        
+
         {/* Action buttons - positioned as overlay */}
         <div className="absolute top-1 right-1 flex items-center gap-1 z-20">
           {editingId === conversation.id ? (
@@ -183,13 +192,21 @@ export function SidebarConversationItem({
                     ? 'bg-green-500/10 cursor-not-allowed'
                     : 'cursor-pointer bg-green-500/20 hover:bg-green-500/30'
                 }`}
-                whileHover={isRenaming || editTitle.trim() === '' ? {} : { scale: 1.05 }}
-                whileTap={isRenaming || editTitle.trim() === '' ? {} : { scale: 0.95 }}
+                whileHover={
+                  isRenaming || editTitle.trim() === '' ? {} : { scale: 1.05 }
+                }
+                whileTap={
+                  isRenaming || editTitle.trim() === '' ? {} : { scale: 0.95 }
+                }
               >
                 {isRenaming ? (
                   <motion.div
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: 'linear',
+                    }}
                     className="w-4 h-4 border border-white/40 border-t-transparent rounded-full"
                   />
                 ) : (
@@ -217,13 +234,19 @@ export function SidebarConversationItem({
                     ? 'bg-red-500/10 cursor-not-allowed'
                     : 'cursor-pointer bg-red-500/20 hover:bg-red-500/30'
                 }`}
-                whileHover={deletingId === conversation.id ? {} : { scale: 1.05 }}
+                whileHover={
+                  deletingId === conversation.id ? {} : { scale: 1.05 }
+                }
                 whileTap={deletingId === conversation.id ? {} : { scale: 0.95 }}
               >
                 {deletingId === conversation.id ? (
                   <motion.div
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: 'linear',
+                    }}
                     className="w-4 h-4 border border-white/40 border-t-transparent rounded-full"
                   />
                 ) : (
@@ -244,7 +267,9 @@ export function SidebarConversationItem({
           ) : (
             <>
               <motion.button
-                onClick={(e) => onEditClick(e, conversation.id, conversation.title)}
+                onClick={(e) =>
+                  onEditClick(e, conversation.id, conversation.title)
+                }
                 disabled={deletingId === conversation.id}
                 className="cursor-pointer opacity-0 group-hover:opacity-60 hover:opacity-100 p-1.5 transition-opacity rounded hover:bg-blue-500/20 backdrop-blur-sm"
                 whileHover={{ scale: 1.1 }}
@@ -267,4 +292,4 @@ export function SidebarConversationItem({
       </div>
     </motion.div>
   );
-} 
+}

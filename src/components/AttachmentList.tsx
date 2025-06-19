@@ -10,7 +10,10 @@ interface AttachmentListProps {
   onRemoveAttachment: (index: number) => void;
 }
 
-export function AttachmentList({ attachments, onRemoveAttachment }: AttachmentListProps) {
+export function AttachmentList({
+  attachments,
+  onRemoveAttachment,
+}: AttachmentListProps) {
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -46,7 +49,7 @@ export function AttachmentList({ attachments, onRemoveAttachment }: AttachmentLi
             <div className="flex-shrink-0">
               {getFileIcon(attachment.file_type)}
             </div>
-            
+
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <p className="text-sm text-white/80 font-medium truncate">
@@ -57,17 +60,13 @@ export function AttachmentList({ attachments, onRemoveAttachment }: AttachmentLi
                 </span>
               </div>
               {attachment.file_type.startsWith('image/') && (
-                <p className="text-xs text-white/40 mt-1">
-                  Image file
-                </p>
+                <p className="text-xs text-white/40 mt-1">Image file</p>
               )}
               {attachment.file_type === 'application/pdf' && (
-                <p className="text-xs text-white/40 mt-1">
-                  PDF document
-                </p>
+                <p className="text-xs text-white/40 mt-1">PDF document</p>
               )}
             </div>
-            
+
             <motion.button
               type="button"
               onClick={() => onRemoveAttachment(index)}
@@ -75,11 +74,14 @@ export function AttachmentList({ attachments, onRemoveAttachment }: AttachmentLi
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
             >
-              <X size={14} className="text-white/40 group-hover/remove:text-red-400" />
+              <X
+                size={14}
+                className="text-white/40 group-hover/remove:text-red-400"
+              />
             </motion.button>
           </motion.div>
         ))}
       </AnimatePresence>
     </div>
   );
-} 
+}
