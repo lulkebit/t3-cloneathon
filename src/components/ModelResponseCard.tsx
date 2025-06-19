@@ -110,7 +110,6 @@ export function ModelResponseCard({
                 <span className="hidden sm:inline">Loading...</span>
               </div>
             )}
-
             {/* Quality Score Badge */}
             {hasQualityMetrics && response.qualityMetrics && (
               <QualityScoreBadge
