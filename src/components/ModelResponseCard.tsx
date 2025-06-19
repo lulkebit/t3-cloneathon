@@ -292,15 +292,13 @@ export function ModelResponseCard({
             </div>
 
             {/* Quality Metrics Display */}
-            {hasQualityMetrics && response.qualityMetrics && (
-              <div
-                className={`quality-metrics mt-4 pt-4 border-t border-white/20 ${
-                  showQualityMetrics ? 'expanded' : 'collapsed'
-                }`}
-              >
-                <QualityMetricsDisplay metrics={response.qualityMetrics} />
-              </div>
-            )}
+            {hasQualityMetrics &&
+              showQualityMetrics &&
+              response.qualityMetrics && (
+                <div className="mt-4 pt-4 border-t border-white/20">
+                  <QualityMetricsDisplay metrics={response.qualityMetrics} />
+                </div>
+              )}
           </div>
         </div>
       )}
