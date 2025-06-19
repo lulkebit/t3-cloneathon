@@ -3,12 +3,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from '@/contexts/ChatContext';
-import { User, Sparkles, Copy, Check, RotateCcw, Loader2, FileImage, FileText, Download, Users } from 'lucide-react';
+import { User, Sparkles, FileImage, FileText, Download, Users } from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { LoadingIndicator } from './LoadingIndicator';
 import { TypeWriter } from './TypeWriter';
 import { ConsensusMessage } from './ConsensusMessage';
 import { ScrollToBottomButton } from './ScrollToBottomButton';
+import { MessageActions } from './MessageActions';
 import { ConsensusResponse } from '@/types/chat';
 
 const getProviderLogo = (model: string) => {
@@ -416,42 +417,17 @@ export function ChatMessages({ isSidebarCollapsed }: ChatMessagesProps) {
                     </div>
                     
                     {!(message.isConsensus || (message.content && message.content.startsWith('[{') && message.content.includes('"model"'))) && (
-                      <div className="flex justify-start gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        <div className="relative group/copy">
-                          <button
-                            onClick={() => handleCopy(message.id, message.content)}
-                            className="cursor-pointer p-2 rounded-lg hover:bg-white/10 transition-colors duration-150"
-                          >
-                            {copiedId === message.id ? (
-                              <Check size={16} className="text-green-400" />
-                            ) : (
-                              <Copy size={16} className="text-white/60 hover:text-white" />
-                            )}
-                          </button>
-                          
-                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/copy:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-                            {copiedId === message.id ? 'Copied!' : 'Copy'}
-                          </div>
-                        </div>
-
-                      <div className="relative group/retry">
-                        <button
-                          onClick={() => handleRetry(message.id, index)}
-                          disabled={retryingId === message.id || !activeConversation}
-                          className="cursor-pointer p-2 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
-                        >
-                          {retryingId === message.id ? (
-                            <Loader2 size={16} className="text-blue-400 animate-spin" />
-                          ) : (
-                            <RotateCcw size={16} className="text-white/60 hover:text-white" />
-                          )}
-                        </button>
-                        
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover/retry:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-                          {retryingId === message.id ? 'Retrying...' : 'Retry'}
-                        </div>
-                      </div>
-                    </div>
+                      <MessageActions
+                        messageId={message.id}
+                        messageIndex={index}
+                        content={message.content}
+                        copiedId={copiedId}
+                        retryingId={retryingId}
+                        isAssistantMessage={message.role === 'assistant'}
+                        canRetry={!!activeConversation}
+                        onCopy={handleCopy}
+                        onRetry={handleRetry}
+                      />
                     )}
                   </div>
                 )}
