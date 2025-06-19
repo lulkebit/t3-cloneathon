@@ -1,10 +1,7 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
-
+import React, { useState, useRef, useEffect } from 'react';
 import { useChat } from '@/contexts/ChatContext';
-import { Bot } from 'lucide-react';
-
 import { Attachment, ConsensusResponse } from '@/types/chat';
 import { MultiModelSelector } from './MultiModelSelector';
 import { AttachmentList } from './AttachmentList';
@@ -15,17 +12,13 @@ import { SendButton } from './SendButton';
 import {
   getModelCapabilities,
   canModelProcessFileType,
-  getFileUploadAcceptString,
   getMaxFileSizeForModel,
-  getModelCapabilityDescription,
 } from '@/lib/model-capabilities';
 import { formatModelName } from '@/lib/model-utils';
 
 export function ChatInput() {
   const {
     activeConversation,
-    refreshConversations,
-    refreshMessages,
     setActiveConversation,
     updateConversationTitle,
     addNewConversation,
