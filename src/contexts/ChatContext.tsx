@@ -314,31 +314,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const renameConversation = async (conversationId: string, newTitle: string): Promise<boolean> => {
-    try {
-      const response = await fetch(`/api/conversations?id=${conversationId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ title: newTitle }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        // Update local state with the updated conversation
-        updateConversationTitle(conversationId, data.conversation.title);
-        return true;
-      } else {
-        console.error('Failed to rename conversation:', await response.text());
-        return false;
-      }
-    } catch (error) {
-      console.error('Error renaming conversation:', error);
-      return false;
-    }
-  };
-
   const addNewConversation = (conversation: Conversation) => {
     setConversations((prev) => [conversation, ...prev]);
     // Mark this as a new conversation to prevent immediate refreshMessages
