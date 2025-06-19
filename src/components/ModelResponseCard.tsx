@@ -215,7 +215,6 @@ export function ModelResponseCard({
                 Loading...
               </div>
             )}
-
             {/* Quality Score Badge */}
             {hasQualityMetrics && response.qualityMetrics && (
               <QualityScoreBadge
