@@ -94,4 +94,51 @@ export async function POST(request: NextRequest) {
     console.error('Error creating conversation:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const conversationId = searchParams.get('id');
+    const { title } = await request.json();
+
+    if (!conversationId) {
+      return NextResponse.json({ error: 'Missing conversation ID' }, { status: 400 });
+    }
+
+    if (!title || title.trim() === '') {
+      return NextResponse.json({ error: 'Title cannot be empty' }, { status: 400 });
+    }
+
+    const { data: conversation, error } = await supabase
+      .from('conversations')
+      .update({ 
+        title: title.trim(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', conversationId)
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: 'Failed to update conversation title' }, { status: 500 });
+    }
+
+    if (!conversation) {
+      return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ conversation });
+  } catch (error) {
+    console.error('Error updating conversation title:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 } 
