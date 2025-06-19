@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { OpenRouterService } from '@/lib/openrouter';
+import { ResponseQualityAnalyzer } from '@/lib/response-quality-analyzer';
 
 export async function POST(request: NextRequest) {
   try {
@@ -285,6 +286,7 @@ export async function POST(request: NextRequest) {
       async start(controller) {
         try {
           let assistantResponse = '';
+          let qualityMetrics: any = null;
 
           const response = await openRouter.createChatCompletion(
             model,
@@ -295,14 +297,71 @@ export async function POST(request: NextRequest) {
                 encoder.encode(`data: ${JSON.stringify({ chunk })}\n\n`)
               );
             },
-            request.headers.get('origin') || undefined
+            request.headers.get('origin') || undefined,
+            true // Enable quality scoring
           );
 
-          await supabase.from('messages').insert({
-            conversation_id: conversation.id,
-            role: 'assistant',
-            content: assistantResponse,
-          });
+          assistantResponse = response.content;
+          qualityMetrics = response.qualityMetrics;
+
+          // Save assistant message with quality metrics
+          const { data: savedMessage } = await supabase
+            .from('messages')
+            .insert({
+              conversation_id: conversation.id,
+              role: 'assistant',
+              content: assistantResponse,
+            })
+            .select()
+            .single();
+
+          // Save quality metrics if available and message was saved
+          if (qualityMetrics && savedMessage) {
+            try {
+              await supabase.from('message_quality_metrics').insert({
+                message_id: savedMessage.id,
+                quality_score: qualityMetrics.qualityScore,
+                coherence_score: qualityMetrics.coherenceScore,
+                relevance_score: qualityMetrics.relevanceScore,
+                completeness_score: qualityMetrics.completenessScore,
+                clarity_score: qualityMetrics.clarityScore,
+                response_time: qualityMetrics.responseTime,
+                word_count: qualityMetrics.wordCount,
+                sentence_count: qualityMetrics.sentenceCount,
+                average_sentence_length: qualityMetrics.averageSentenceLength,
+                readability_score: qualityMetrics.readabilityScore,
+                prompt_tokens: qualityMetrics.tokenUsage.promptTokens,
+                completion_tokens: qualityMetrics.tokenUsage.completionTokens,
+                total_tokens: qualityMetrics.tokenUsage.totalTokens,
+                cost: qualityMetrics.cost,
+                temperature: qualityMetrics.temperature,
+                top_p: qualityMetrics.topP,
+                finish_reason: qualityMetrics.finishReason,
+                calculated_at: qualityMetrics.calculatedAt,
+              });
+
+              // Send quality metrics to client
+              controller.enqueue(
+                encoder.encode(
+                  `data: ${JSON.stringify({
+                    qualityMetrics: {
+                      ...qualityMetrics,
+                      category: ResponseQualityAnalyzer.getQualityCategory(
+                        qualityMetrics.qualityScore
+                      ),
+                      insights:
+                        ResponseQualityAnalyzer.getQualityInsights(
+                          qualityMetrics
+                        ),
+                    },
+                  })}\n\n`
+                )
+              );
+            } catch (metricsError) {
+              console.error('Failed to save quality metrics:', metricsError);
+              // Don't fail the main request if metrics saving fails
+            }
+          }
 
           // Generate title for new conversations after first response
           if (messages.length === 0) {

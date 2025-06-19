@@ -1,11 +1,15 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { MessageHeader } from './MessageHeader';
 import { AttachmentDisplay } from './AttachmentDisplay';
 import { MessageContent } from './MessageContent';
 import { MessageActions } from './MessageActions';
+import {
+  QualityMetricsDisplay,
+  QualityScoreBadge,
+} from './QualityMetricsDisplay';
 
 interface MessageItemProps {
   message: any;
@@ -28,11 +32,16 @@ export function MessageItem({
   onCopy,
   onRetry,
 }: MessageItemProps) {
+  const [showQualityMetrics, setShowQualityMetrics] = useState(false);
+
   const isConsensusMessage =
     message.isConsensus ||
     (message.content &&
       message.content.startsWith('[{') &&
       message.content.includes('"model"'));
+
+  const hasQualityMetrics =
+    message.qualityMetrics && message.role === 'assistant';
 
   return (
     <motion.div
@@ -85,6 +94,32 @@ export function MessageItem({
                 isStreaming={message.isStreaming}
                 isUserMessage={false}
               />
+
+              {/* Quality Score Badge */}
+              {hasQualityMetrics && !isConsensusMessage && (
+                <div className="flex items-center gap-2 mt-3 mb-2">
+                  <QualityScoreBadge
+                    score={message.qualityMetrics.qualityScore}
+                    className="cursor-pointer"
+                    onClick={() => setShowQualityMetrics(!showQualityMetrics)}
+                  />
+                  <button
+                    onClick={() => setShowQualityMetrics(!showQualityMetrics)}
+                    className="cursor-pointer text-xs text-white/40 hover:text-white/60 transition-colors"
+                  >
+                    {showQualityMetrics ? 'Hide' : 'Show'} Details
+                  </button>
+                </div>
+              )}
+
+              {/* Quality Metrics Display */}
+              {hasQualityMetrics &&
+                showQualityMetrics &&
+                !isConsensusMessage && (
+                  <div className="mt-3 mb-2">
+                    <QualityMetricsDisplay metrics={message.qualityMetrics} />
+                  </div>
+                )}
 
               {!isConsensusMessage && (
                 <MessageActions

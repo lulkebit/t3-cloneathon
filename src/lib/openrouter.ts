@@ -1,4 +1,12 @@
-import { ChatMessage, OpenRouterModel } from '@/types/chat';
+import {
+  ChatMessage,
+  OpenRouterModel,
+  ResponseQualityMetrics,
+} from '@/types/chat';
+import {
+  ResponseQualityAnalyzer,
+  QualityAnalysisInput,
+} from './response-quality-analyzer';
 
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
 
@@ -34,9 +42,22 @@ export class OpenRouterService {
     model: string,
     messages: ChatMessage[],
     onChunk?: (chunk: string) => void,
-    referer?: string
-  ): Promise<string> {
+    referer?: string,
+    enableQualityScoring: boolean = true
+  ): Promise<{ content: string; qualityMetrics?: ResponseQualityMetrics }> {
+    const startTime = Date.now();
+
     try {
+      const requestBody = {
+        model,
+        messages,
+        stream: !!onChunk,
+        max_tokens: 4000,
+        temperature: 0.7,
+        // Enable usage tracking for quality metrics
+        usage: { include: true },
+      };
+
       const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
         method: 'POST',
         headers: {
@@ -45,13 +66,7 @@ export class OpenRouterService {
           ...(referer && { 'HTTP-Referer': referer }),
           'X-Title': 'T3 Cloneathon Chat',
         },
-        body: JSON.stringify({
-          model,
-          messages,
-          stream: !!onChunk,
-          max_tokens: 4000,
-          temperature: 0.7,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -61,10 +76,13 @@ export class OpenRouterService {
         );
       }
 
+      let fullResponse = '';
+      let responseData: any = null;
+      let responseTime = 0;
+
       if (onChunk && response.body) {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
-        let fullResponse = '';
 
         try {
           while (true) {
@@ -82,9 +100,16 @@ export class OpenRouterService {
                 try {
                   const parsed = JSON.parse(data);
                   const content = parsed.choices?.[0]?.delta?.content;
+
                   if (content) {
                     fullResponse += content;
                     onChunk(content);
+                  }
+
+                  // Capture final response data with usage info
+                  if (parsed.usage && !responseData) {
+                    responseData = parsed;
+                    responseTime = Date.now() - startTime;
                   }
                 } catch (e) {}
               }
@@ -93,12 +118,57 @@ export class OpenRouterService {
         } finally {
           reader.releaseLock();
         }
-
-        return fullResponse;
       } else {
-        const data = await response.json();
-        return data.choices?.[0]?.message?.content || '';
+        responseData = await response.json();
+        fullResponse = responseData.choices?.[0]?.message?.content || '';
+        responseTime = Date.now() - startTime;
       }
+
+      let qualityMetrics: ResponseQualityMetrics | undefined;
+
+      // Calculate quality metrics if enabled and we have a valid response
+      if (enableQualityScoring && fullResponse.trim() && messages.length > 0) {
+        try {
+          // Get the user's prompt (last user message)
+          const userMessage = messages
+            .slice()
+            .reverse()
+            .find((msg) => msg.role === 'user');
+
+          if (userMessage) {
+            const prompt =
+              typeof userMessage.content === 'string'
+                ? userMessage.content
+                : JSON.stringify(userMessage.content);
+
+            const analysisInput: QualityAnalysisInput = {
+              response: fullResponse,
+              prompt,
+              responseTime,
+              tokenUsage: {
+                promptTokens: responseData?.usage?.prompt_tokens || 0,
+                completionTokens: responseData?.usage?.completion_tokens || 0,
+                totalTokens: responseData?.usage?.total_tokens || 0,
+              },
+              cost: responseData?.usage?.cost,
+              temperature: requestBody.temperature,
+              topP: undefined, // Could be added to request if needed
+              finishReason: responseData?.choices?.[0]?.finish_reason,
+            };
+
+            qualityMetrics =
+              ResponseQualityAnalyzer.analyzeResponse(analysisInput);
+          }
+        } catch (qualityError) {
+          console.error('Error calculating quality metrics:', qualityError);
+          // Don't fail the entire request if quality analysis fails
+        }
+      }
+
+      return {
+        content: fullResponse,
+        qualityMetrics,
+      };
     } catch (error) {
       console.error('Error creating chat completion:', error);
       throw error;

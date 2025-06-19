@@ -45,6 +45,26 @@ export async function GET(
           file_size,
           file_url,
           created_at
+        ),
+        message_quality_metrics (
+          quality_score,
+          coherence_score,
+          relevance_score,
+          completeness_score,
+          clarity_score,
+          readability_score,
+          response_time,
+          word_count,
+          sentence_count,
+          average_sentence_length,
+          prompt_tokens,
+          completion_tokens,
+          total_tokens,
+          cost,
+          temperature,
+          top_p,
+          finish_reason,
+          calculated_at
         )
       `
       )
@@ -58,7 +78,47 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ messages });
+    // Transform messages to include qualityMetrics
+    const transformedMessages = messages?.map((message: any) => {
+      const qualityData = message.message_quality_metrics?.[0];
+
+      if (qualityData) {
+        return {
+          ...message,
+          qualityMetrics: {
+            qualityScore: qualityData.quality_score || 0,
+            coherenceScore: qualityData.coherence_score || 0,
+            relevanceScore: qualityData.relevance_score || 0,
+            completenessScore: qualityData.completeness_score || 0,
+            clarityScore: qualityData.clarity_score || 0,
+            readabilityScore: qualityData.readability_score || 0,
+            responseTime: qualityData.response_time || 0,
+            wordCount: qualityData.word_count || 0,
+            sentenceCount: qualityData.sentence_count || 0,
+            averageSentenceLength: qualityData.average_sentence_length || 0,
+            tokenUsage: {
+              promptTokens: qualityData.prompt_tokens || 0,
+              completionTokens: qualityData.completion_tokens || 0,
+              totalTokens: qualityData.total_tokens || 0,
+            },
+            cost: qualityData.cost || 0,
+            temperature: qualityData.temperature,
+            topP: qualityData.top_p,
+            finishReason: qualityData.finish_reason,
+            calculatedAt: qualityData.calculated_at,
+          },
+          // Remove the raw quality metrics data
+          message_quality_metrics: undefined,
+        };
+      }
+
+      return {
+        ...message,
+        message_quality_metrics: undefined,
+      };
+    });
+
+    return NextResponse.json({ messages: transformedMessages });
   } catch (error) {
     console.error('Error fetching messages:', error);
     return NextResponse.json(

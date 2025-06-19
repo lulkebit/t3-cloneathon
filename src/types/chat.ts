@@ -7,6 +7,38 @@ export interface Attachment {
   created_at: string;
 }
 
+export interface ResponseQualityMetrics {
+  // Basic metrics from OpenRouter API
+  responseTime: number; // in milliseconds
+  tokenUsage: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+  cost?: number; // in USD
+
+  // Quality scoring metrics
+  qualityScore: number; // 0-100 overall quality score
+  coherenceScore: number; // 0-100 how coherent the response is
+  relevanceScore: number; // 0-100 how relevant to the prompt
+  completenessScore: number; // 0-100 how complete the answer is
+  clarityScore: number; // 0-100 how clear and understandable
+
+  // Additional metrics
+  wordCount: number;
+  sentenceCount: number;
+  averageSentenceLength: number;
+  readabilityScore: number; // Flesch reading ease score
+
+  // Model-specific metrics
+  temperature?: number;
+  topP?: number;
+  finishReason?: string;
+
+  // Calculated at: timestamp
+  calculatedAt: string;
+}
+
 export interface Message {
   id: string;
   conversation_id: string;
@@ -19,6 +51,9 @@ export interface Message {
   attachments?: Attachment[];
   isConsensus?: boolean;
   consensusResponses?: ConsensusResponse[];
+
+  // Quality metrics for assistant messages
+  qualityMetrics?: ResponseQualityMetrics;
 }
 
 export interface ConsensusResponse {
@@ -28,6 +63,7 @@ export interface ConsensusResponse {
   isLoading?: boolean;
   error?: string;
   responseTime?: number;
+  qualityMetrics?: ResponseQualityMetrics;
 }
 
 export interface Conversation {
