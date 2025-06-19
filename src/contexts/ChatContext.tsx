@@ -309,7 +309,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
             msg.conversation_id === conversationId &&
             (msg.isStreaming || msg.isLoading)
         );
-
         // Only schedule a refresh if this was actually the last optimistic message
         // and we're not in a new conversation
         if (remainingActiveOptimistic.length === 0) {
