@@ -436,7 +436,6 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
           responseTime: 0,
         })),
       });
-
       const response = await fetch('/api/chat/consensus', {
         method: 'POST',
         headers: {
