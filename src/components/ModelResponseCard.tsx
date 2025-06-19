@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Brain,
   Clock,
@@ -9,9 +9,14 @@ import {
   ChevronUp,
   Copy,
   Check,
+  BarChart3,
 } from 'lucide-react';
 import { ConsensusResponse } from '@/types/chat';
 import { MarkdownRenderer } from './MarkdownRenderer';
+import {
+  QualityMetricsDisplay,
+  QualityScoreBadge,
+} from './QualityMetricsDisplay';
 
 interface ModelResponseCardProps {
   response: ConsensusResponse;
@@ -38,8 +43,12 @@ export function ModelResponseCard({
   formatResponseTime,
   isSideBySide = false,
 }: ModelResponseCardProps) {
+  const [showQualityMetrics, setShowQualityMetrics] = useState(false);
+
   const modelInfo = formatModelName(response.model);
   const hasContent = response.content && response.content.trim().length > 0;
+  const hasQualityMetrics =
+    response.qualityMetrics && !response.error && !response.isLoading;
 
   return (
     <div
@@ -98,11 +107,34 @@ export function ModelResponseCard({
             </div>
           )}
 
+          {/* Quality Score Badge */}
+          {hasQualityMetrics && response.qualityMetrics && (
+            <QualityScoreBadge
+              score={response.qualityMetrics.qualityScore}
+              className="text-xs"
+            />
+          )}
+
           {response.responseTime && (
             <div className="flex items-center gap-1 text-white/40 text-xs">
               <Clock size={12} />
               {formatResponseTime(response.responseTime)}
             </div>
+          )}
+
+          {hasQualityMetrics && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowQualityMetrics(!showQualityMetrics);
+              }}
+              className="cursor-pointer p-1 rounded hover:bg-white/10 transition-colors"
+            >
+              <BarChart3
+                size={14}
+                className={`${showQualityMetrics ? 'text-purple-400' : 'text-white/40'} hover:text-white/60`}
+              />
+            </button>
           )}
 
           {hasContent && !response.isLoading && (
@@ -141,6 +173,15 @@ export function ModelResponseCard({
             className={`mt-4 ${isSideBySide ? 'h-full overflow-y-auto' : ''}`}
           >
             <MarkdownRenderer content={response.content} />
+
+            {/* Quality Metrics Display */}
+            {hasQualityMetrics &&
+              showQualityMetrics &&
+              response.qualityMetrics && (
+                <div className="mt-4 pt-4 border-t border-white/20">
+                  <QualityMetricsDisplay metrics={response.qualityMetrics} />
+                </div>
+              )}
           </div>
         </div>
       )}

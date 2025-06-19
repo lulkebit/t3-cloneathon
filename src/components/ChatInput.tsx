@@ -16,7 +16,11 @@ import {
 } from '@/lib/model-capabilities';
 import { formatModelName } from '@/lib/model-utils';
 
-export function ChatInput() {
+interface ChatInputProps {
+  quickActionPrompt?: string;
+}
+
+export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
   const {
     activeConversation,
     setActiveConversation,
@@ -49,6 +53,24 @@ export function ChatInput() {
     useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Handle quick action prompt changes
+  useEffect(() => {
+    if (quickActionPrompt) {
+      setMessage(quickActionPrompt + ' ');
+      // Focus the textarea after setting the message
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+          // Place cursor at the end
+          textareaRef.current.setSelectionRange(
+            textareaRef.current.value.length,
+            textareaRef.current.value.length
+          );
+        }
+      }, 100);
+    }
+  }, [quickActionPrompt]);
 
   useEffect(() => {
     if (activeConversation && activeConversation.model) {
@@ -154,25 +176,13 @@ export function ChatInput() {
     let conversationId: string | null = null;
     let userMessageId: string | undefined;
     let assistantMessageId: string | undefined;
+    let isNewConversation = false;
 
     try {
       if (activeConversation) {
         conversationId = activeConversation.id;
-
-        userMessageId = addOptimisticMessage({
-          conversation_id: conversationId!,
-          role: 'user',
-          content: userMessage,
-          attachments: messageAttachments,
-        });
-
-        assistantMessageId = addOptimisticMessage({
-          conversation_id: conversationId!,
-          role: 'assistant',
-          content: '',
-          isLoading: true,
-        });
       } else {
+        isNewConversation = true;
         const createConversationResponse = await fetch('/api/conversations', {
           method: 'POST',
           headers: {
@@ -198,21 +208,25 @@ export function ChatInput() {
         setActiveConversation(conversationData.conversation);
         window.history.pushState(null, '', `/chat/${conversationId}`);
 
-        // THIRD: Add optimistic messages after conversation is properly set
-        userMessageId = addOptimisticMessage({
-          conversation_id: conversationId!,
-          role: 'user',
-          content: userMessage,
-          attachments: messageAttachments,
-        });
-
-        assistantMessageId = addOptimisticMessage({
-          conversation_id: conversationId!,
-          role: 'assistant',
-          content: '',
-          isLoading: true,
-        });
+        // Small delay to ensure state is properly updated
+        await new Promise((resolve) => setTimeout(resolve, 50));
       }
+
+      // Add optimistic messages only after conversation is properly set
+      userMessageId = addOptimisticMessage({
+        conversation_id: conversationId!,
+        role: 'user',
+        content: userMessage,
+        attachments: messageAttachments,
+      });
+
+      assistantMessageId = addOptimisticMessage({
+        conversation_id: conversationId!,
+        role: 'assistant',
+        content: '',
+        isLoading: true,
+      });
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -241,6 +255,7 @@ export function ChatInput() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let assistantContent = '';
+      let hasStartedStreaming = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -258,6 +273,7 @@ export function ChatInput() {
               const parsed = JSON.parse(data);
               if (parsed.chunk && assistantMessageId) {
                 assistantContent += parsed.chunk;
+                hasStartedStreaming = true;
                 updateStreamingMessage(assistantMessageId, assistantContent);
               } else if (parsed.error && assistantMessageId) {
                 // Handle error from API - show error message in chat
@@ -272,13 +288,23 @@ export function ChatInput() {
                 // Handle title update - update conversation title without switching chats
                 updateConversationTitle(parsed.conversationId, parsed.title);
               } else if (parsed.done && assistantMessageId) {
-                finalizeMessage(assistantMessageId, assistantContent);
+                // Ensure we have content before finalizing
+                const finalContent = assistantContent || parsed.content || '';
+                finalizeMessage(assistantMessageId, finalContent);
               }
             } catch (e) {
               console.error('Error parsing streaming data:', e, 'Data:', data);
             }
           }
         }
+      }
+
+      // Fallback: if streaming never started and we have an assistant message, finalize it
+      if (!hasStartedStreaming && assistantMessageId) {
+        finalizeMessage(
+          assistantMessageId,
+          assistantContent || 'No response received'
+        );
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -292,8 +318,8 @@ export function ChatInput() {
 
         finalizeMessage(assistantMessageId, `❌ **Error**: ${errorMessage}`);
 
-        // Try to save error to database
-        if (conversationId) {
+        // Try to save error to database for new conversations
+        if (conversationId && isNewConversation) {
           try {
             await fetch(`/api/conversations/${conversationId}/messages`, {
               method: 'POST',
@@ -318,10 +344,6 @@ export function ChatInput() {
           errorMessage = error.message;
         }
         alert(`Error: ${errorMessage}`);
-      }
-
-      if (assistantMessageId && !conversationId) {
-        removeOptimisticMessage(assistantMessageId);
       }
     } finally {
       setIsLoading(false);
@@ -357,32 +379,13 @@ export function ChatInput() {
     let conversationId: string | null = null;
     let userMessageId: string | undefined;
     let assistantMessageId: string | undefined;
+    let isNewConversation = false;
 
     try {
       if (activeConversation) {
         conversationId = activeConversation.id;
-
-        userMessageId = addOptimisticMessage({
-          conversation_id: conversationId!,
-          role: 'user',
-          content: userMessage,
-          attachments: messageAttachments,
-        });
-
-        assistantMessageId = addOptimisticMessage({
-          conversation_id: conversationId!,
-          role: 'assistant',
-          content: '',
-          isLoading: true,
-          isConsensus: true,
-          consensusResponses: selectedModels.map((model) => ({
-            model,
-            content: '',
-            isLoading: true,
-            responseTime: 0,
-          })),
-        });
       } else {
+        isNewConversation = true;
         const createConversationResponse = await fetch('/api/conversations', {
           method: 'POST',
           headers: {
@@ -408,29 +411,31 @@ export function ChatInput() {
         setActiveConversation(conversationData.conversation);
         window.history.pushState(null, '', `/chat/${conversationId}`);
 
-        // THIRD: Add optimistic messages after conversation is properly set
-        userMessageId = addOptimisticMessage({
-          conversation_id: conversationId!,
-          role: 'user',
-          content: userMessage,
-          attachments: messageAttachments,
-        });
-
-        assistantMessageId = addOptimisticMessage({
-          conversation_id: conversationId!,
-          role: 'assistant',
-          content: '',
-          isLoading: true,
-          isConsensus: true,
-          consensusResponses: selectedModels.map((model) => ({
-            model,
-            content: '',
-            isLoading: true,
-            responseTime: 0,
-          })),
-        });
+        // Small delay to ensure state is properly updated
+        await new Promise((resolve) => setTimeout(resolve, 50));
       }
 
+      // Add optimistic messages only after conversation is properly set
+      userMessageId = addOptimisticMessage({
+        conversation_id: conversationId!,
+        role: 'user',
+        content: userMessage,
+        attachments: messageAttachments,
+      });
+
+      assistantMessageId = addOptimisticMessage({
+        conversation_id: conversationId!,
+        role: 'assistant',
+        content: '',
+        isLoading: true,
+        isConsensus: true,
+        consensusResponses: selectedModels.map((model) => ({
+          model,
+          content: '',
+          isLoading: true,
+          responseTime: 0,
+        })),
+      });
       const response = await fetch('/api/chat/consensus', {
         method: 'POST',
         headers: {
@@ -467,6 +472,8 @@ export function ChatInput() {
         })
       );
 
+      let hasStartedStreaming = false;
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -492,6 +499,7 @@ export function ChatInput() {
                     isLoading: false,
                   };
 
+                  hasStartedStreaming = true;
                   updateStreamingMessage(
                     assistantMessageId,
                     JSON.stringify(consensusResponses)
@@ -562,6 +570,11 @@ export function ChatInput() {
           }
         }
       }
+
+      // Fallback: if streaming never started and we have an assistant message, finalize it
+      if (!hasStartedStreaming && assistantMessageId) {
+        finalizeMessage(assistantMessageId, JSON.stringify(consensusResponses));
+      }
     } catch (error) {
       console.error('Error sending consensus message:', error);
 
@@ -572,6 +585,22 @@ export function ChatInput() {
         }
 
         finalizeMessage(assistantMessageId, `❌ **Error**: ${errorMessage}`);
+
+        // Try to save error to database for new conversations
+        if (conversationId && isNewConversation) {
+          try {
+            await fetch(`/api/conversations/${conversationId}/messages`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                role: 'assistant',
+                content: `❌ **Error**: ${errorMessage}`,
+              }),
+            });
+          } catch (dbError) {
+            console.error('Failed to save error message to database:', dbError);
+          }
+        }
       } else {
         if (userMessageId) {
           removeOptimisticMessage(userMessageId);
@@ -582,10 +611,6 @@ export function ChatInput() {
           errorMessage = error.message;
         }
         alert(`Error: ${errorMessage}`);
-      }
-
-      if (assistantMessageId && !conversationId) {
-        removeOptimisticMessage(assistantMessageId);
       }
     } finally {
       setIsLoading(false);

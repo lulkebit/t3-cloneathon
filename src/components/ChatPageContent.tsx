@@ -24,6 +24,14 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
   } = useChat();
   const [showSettings, setShowSettings] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [quickActionPrompt, setQuickActionPrompt] = useState<string>('');
+
+  // Handle quick action selection
+  const handleQuickAction = (prompt: string) => {
+    setQuickActionPrompt(prompt);
+    // Reset after a short delay to allow the effect to trigger
+    setTimeout(() => setQuickActionPrompt(''), 100);
+  };
 
   useDynamicTitle(activeConversation);
 
@@ -159,9 +167,12 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
         transition={{ delay: 0.2, type: 'spring', stiffness: 300, damping: 30 }}
         className="flex-1 flex flex-col relative"
       >
-        <ChatMessages isSidebarCollapsed={isSidebarCollapsed} />
+        <ChatMessages
+          isSidebarCollapsed={isSidebarCollapsed}
+          onQuickAction={handleQuickAction}
+        />
 
-        <ChatInput />
+        <ChatInput quickActionPrompt={quickActionPrompt} />
       </motion.div>
     </motion.div>
   );

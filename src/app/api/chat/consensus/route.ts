@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { OpenRouterService } from '@/lib/openrouter';
 import { ConsensusResponse } from '@/types/chat';
+import { ResponseQualityAnalyzer } from '@/lib/response-quality-analyzer';
 
 export async function POST(request: NextRequest) {
   try {
@@ -317,7 +318,7 @@ export async function POST(request: NextRequest) {
               try {
                 let fullResponse = '';
 
-                await openRouter.createChatCompletion(
+                const response = await openRouter.createChatCompletion(
                   model,
                   conversationHistory,
                   (chunk: string) => {
@@ -341,16 +342,21 @@ export async function POST(request: NextRequest) {
                       )
                     );
                   },
-                  request.headers.get('referer') || undefined
+                  request.headers.get('referer') || undefined,
+                  true // Enable quality scoring
                 );
 
+                fullResponse = response.content;
                 const responseTime = Date.now() - startTime;
+                const qualityMetrics = response.qualityMetrics;
+
                 consensusResponses[index] = {
                   ...consensusResponses[index],
                   content: fullResponse,
                   isStreaming: false,
                   isLoading: false,
                   responseTime,
+                  qualityMetrics,
                 };
 
                 controller.enqueue(
@@ -361,6 +367,19 @@ export async function POST(request: NextRequest) {
                       model: model,
                       content: fullResponse,
                       responseTime,
+                      qualityMetrics: qualityMetrics
+                        ? {
+                            ...qualityMetrics,
+                            category:
+                              ResponseQualityAnalyzer.getQualityCategory(
+                                qualityMetrics.qualityScore
+                              ),
+                            insights:
+                              ResponseQualityAnalyzer.getQualityInsights(
+                                qualityMetrics
+                              ),
+                          }
+                        : undefined,
                     })}\n\n`
                   )
                 );

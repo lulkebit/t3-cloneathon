@@ -22,6 +22,7 @@ import {
   ChevronRight,
   Menu,
   X,
+  BarChart3,
 } from 'lucide-react';
 
 type SettingsSection = 'profile' | 'api' | 'appearance' | 'general';

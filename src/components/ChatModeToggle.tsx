@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Users, Bot, Brain, ChevronDown } from 'lucide-react';
+import { Users, Bot, Brain, ChevronDown, BarChart3 } from 'lucide-react';
 
 interface ChatModeToggleProps {
   isConsensusMode: boolean;
@@ -130,6 +130,12 @@ export function ChatModeToggle({
           )}
         </div>
       )}
+
+      {/* Quality Scoring Indicator */}
+      <div className="flex items-center gap-2 text-xs text-white/50 ml-3">
+        <BarChart3 size={14} className="text-purple-400" />
+        <span>Quality Analysis Enabled</span>
+      </div>
     </div>
   );
 }

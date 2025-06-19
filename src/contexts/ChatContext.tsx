@@ -1,6 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+} from 'react';
 import { Conversation, Message, Profile } from '@/types/chat';
 import { createClient } from '@/lib/supabase-client';
 
@@ -43,6 +50,12 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [newConversationIds, setNewConversationIds] = useState<Set<string>>(
     new Set()
   );
+
+  // Track pending operations to prevent race conditions
+  const [pendingOperations, setPendingOperations] = useState<Set<string>>(
+    new Set()
+  );
+  const refreshTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   useEffect(() => {
     const handlePopState = () => {
@@ -98,44 +111,86 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const refreshMessages = async (conversationId: string) => {
-    try {
-      const response = await fetch(
-        `/api/conversations/${conversationId}/messages`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        const serverMessages = data.messages || [];
+  const refreshMessages = useCallback(
+    async (conversationId: string, force = false) => {
+      // Prevent multiple concurrent refreshes for the same conversation
+      const operationKey = `refresh-${conversationId}`;
+      if (pendingOperations.has(operationKey) && !force) {
+        return;
+      }
 
-        setMessages((prev) => {
-          // Keep only ACTIVE optimistic messages (still streaming or loading)
-          const activeOptimisticMessages = prev.filter(
-            (msg) =>
-              msg.isOptimistic &&
-              msg.conversation_id === conversationId &&
-              (msg.isStreaming || msg.isLoading)
-          );
+      // Additional safety: don't refresh if we just refreshed recently (unless forced)
+      const lastRefreshKey = `lastRefresh-${conversationId}`;
+      const now = Date.now();
+      const lastRefresh = refreshTimeouts.current.get(lastRefreshKey);
+      if (!force && lastRefresh && now - Number(lastRefresh) < 1000) {
+        return; // Don't refresh if we refreshed less than 1 second ago
+      }
 
-          // If we have active optimistic messages, preserve them
-          if (activeOptimisticMessages.length > 0) {
-            // Only keep optimistic messages, server messages will come later
+      try {
+        setPendingOperations((prev) => new Set([...prev, operationKey]));
+        refreshTimeouts.current.set(lastRefreshKey, now as any);
+
+        const response = await fetch(
+          `/api/conversations/${conversationId}/messages`
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const serverMessages = data.messages || [];
+
+          setMessages((prev) => {
+            // Check if we have any active optimistic messages for this conversation
+            const activeOptimisticMessages = prev.filter(
+              (msg) =>
+                msg.isOptimistic &&
+                msg.conversation_id === conversationId &&
+                (msg.isStreaming || msg.isLoading)
+            );
+
+            // If we have active optimistic messages and this isn't a forced refresh, preserve them
+            if (activeOptimisticMessages.length > 0 && !force) {
+              return prev; // Don't update, keep optimistic messages
+            }
+
+            // Only update if the server messages are actually different
+            const existingMessages = prev.filter(
+              (msg) => msg.conversation_id === conversationId
+            );
+            const hasChanges =
+              serverMessages.length !== existingMessages.length ||
+              serverMessages.some((serverMsg: any, index: number) => {
+                const existingMsg = existingMessages[index];
+                return (
+                  !existingMsg ||
+                  existingMsg.id !== serverMsg.id ||
+                  existingMsg.content !== serverMsg.content
+                );
+              });
+
+            if (!hasChanges && !force) {
+              return prev; // No changes, don't update
+            }
+
+            // Safe to replace with server messages
             return [
               ...prev.filter((msg) => msg.conversation_id !== conversationId),
-              ...activeOptimisticMessages,
+              ...serverMessages,
             ];
-          }
-
-          // No active optimistic messages, safe to use server messages
-          return [
-            ...prev.filter((msg) => msg.conversation_id !== conversationId),
-            ...serverMessages,
-          ];
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+      } finally {
+        setPendingOperations((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(operationKey);
+          return newSet;
         });
       }
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-    }
-  };
+    },
+    [pendingOperations]
+  );
 
   const refreshProfile = async () => {
     try {
@@ -239,16 +294,23 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           : msg
       );
 
-      // Check if this was the last active optimistic message for this conversation
-      if (conversationId) {
+      // Schedule a server refresh after all optimistic operations are complete
+      if (conversationId && messageToFinalize?.isOptimistic) {
+        // Clear any existing timeout for this conversation
+        const existingTimeout = refreshTimeouts.current.get(conversationId);
+        if (existingTimeout) {
+          clearTimeout(existingTimeout);
+        }
+
+        // Check if this was the last active optimistic message for this conversation
         const remainingActiveOptimistic = updatedMessages.filter(
           (msg) =>
             msg.isOptimistic &&
             msg.conversation_id === conversationId &&
             (msg.isStreaming || msg.isLoading)
         );
-
-        // If no more active optimistic messages, refresh from server to get final state
+        // Only schedule a refresh if this was actually the last optimistic message
+        // and we're not in a new conversation
         if (remainingActiveOptimistic.length === 0) {
           // Remove from new conversations set to allow future refreshes
           setNewConversationIds((prev) => {
@@ -256,7 +318,17 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
             newSet.delete(conversationId);
             return newSet;
           });
-          setTimeout(() => refreshMessages(conversationId), 100);
+
+          // Only schedule refresh for conversations that might need server sync
+          // Skip if we just finalized a user message (no need to refresh for user messages)
+          if (messageToFinalize.role === 'assistant') {
+            const timeout = setTimeout(() => {
+              refreshMessages(conversationId, true);
+              refreshTimeouts.current.delete(conversationId);
+            }, 1000); // Reduced back to 1 second since we're more selective
+
+            refreshTimeouts.current.set(conversationId, timeout);
+          }
         }
       }
 
@@ -345,7 +417,15 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       // Clear messages when no conversation is selected
       setMessages([]);
     }
-  }, [activeConversation]);
+  }, [activeConversation, refreshMessages, newConversationIds]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      refreshTimeouts.current.forEach((timeout) => clearTimeout(timeout));
+      refreshTimeouts.current.clear();
+    };
+  }, []);
 
   return (
     <ChatContext.Provider
