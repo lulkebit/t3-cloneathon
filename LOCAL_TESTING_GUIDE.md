@@ -367,6 +367,6 @@ If you encounter issues during setup:
 3. Ensure all environment variables are set properly
 4. Review Supabase dashboard for any configuration issues
 
-For additional questions or issues not covered in this guide, please [open an issue](../../issues/new) in this repository.
+For additional questions or issues not covered in this guide, please [open an issue](/../../../issues/new) in this repository.
 
 Happy testing! 🚀

@@ -78,11 +78,20 @@ This project is my submission for the **T3 Chat Cloneathon** - a competition to 
 
 4. **Start Chatting:** You're ready to explore all features immediately!
 
-### Local Development Note
+### Local Development Setup
 
-**⚠️ Local testing is currently not supported and not recommended.** The application relies on Supabase database functions with specialized configurations that are complex to replicate locally. The live demo provides the full, intended experience with all features working seamlessly.
+For developers who want to run the application locally for development or testing purposes, we provide a comprehensive setup guide:
 
-For the best testing experience and to evaluate all competition features, please use the deployed version above.
+📖 **[Local Testing Guide](./LOCAL_TESTING_GUIDE.md)** - Complete instructions for setting up the app locally with Supabase
+
+The guide includes:
+
+- Step-by-step Supabase configuration
+- Database schema and setup
+- Environment variable configuration
+- Troubleshooting tips and common issues
+
+For quick evaluation of features, the [live demo](https://t3-cloneathon.lukeschroeter.de/) provides the complete experience without any setup required.
 
 ## 🎯 Key Features Deep Dive
 
